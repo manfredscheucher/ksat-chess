@@ -1,0 +1,200 @@
+# sat-chess-kotlin: specification log
+
+Source of truth for what Manfred asked for, what was decided, and how ambiguous
+requests were interpreted. A fresh reviewer should be able to check the
+implementation against this file.
+
+## 1. Original request (2026-10-20, paraphrased from German)
+
+- Port `../sat-chess` (Python, SAT encoding of chess game paths, retrograde puzzles)
+  to **Kotlin Multiplatform**. JVM is fine for testing; **web is the long-term target**.
+- Use the **ksat interface** (`org.bytefred.ksat`, as in luckySweep) for solving in Kotlin.
+- Build a **nice web page** (similar to `../ktoy`) where one can build chess boards / puzzles,
+  with **bundled examples** ("load examples", configuration visible, boards editable).
+- Think about the **best puzzle format**: puzzles are not only "start at A, k moves to B".
+  A is often the initial board, but may be a custom position or **open** (asked for);
+  B may be specified or open; k may be given in **moves or half-moves (plies)**;
+  some puzzles ask "k moves until checkmate".
+- Board editing: drag and drop, or click a square and get a dialog, or a **piece palette
+  next to the board** (select a piece, click squares to place it; clicking the same piece
+  again empties the square, otherwise overwrite). Settings can switch between input modes.
+- Research licensing: Manfred wants to publish the repo under MIT. Can the chess.com
+  (5 easy retrograde puzzles) and janko.at puzzles be bundled?
+- Keep a project doc (this file) "as always".
+- Use parallel agents / fresh reviewers to discuss the best approach.
+
+## 2. Decisions (answers to Claude's questions, 2026-10-20)
+
+| Topic | Decision |
+|---|---|
+| Encoding | Optimizing the encoding is allowed right away ("gern optimieren"). Kotlin performance is assumed to be within a small factor of native. |
+| Python repo | Manfred first said "pull sat-chess along", then "you can leave sat-chess completely alone, the language doesn't matter for building the instance". **Interpretation: `../sat-chess` stays untouched.** The Kotlin port gets a JVM CLI that can export DIMACS, so hard instances can still go to native CaDiCaL/kissat. *(Flagged to Manfred; reversible.)* |
+| Web target | Kotlin/JS + Compose (like ktoy) and the **solver runs in a Web Worker**, so the UI stays responsive, with cancel and progress. |
+| Puzzle data | **Small hand-picked selection + credits**: the 5 chess.com puzzles plus roughly 20 janko.at shorties. Only FEN, plies, composer/source/link. Descriptions are written by us, no copied prose. A separate `puzzles/NOTICE.md` says puzzle data is not covered by MIT and gives a removal contact. No bulk import (no yacpdb dump). |
+| Model v1 | All of: free **side to move**, goal **checkmate**, goal **stalemate**, **castling rights / en passant** settable at A. Manfred: "you see what is needed, implement it all; design the web UI nicely, discuss with reviewers". |
+
+## 3. Licensing research summary (not legal advice)
+
+- chess.com ToS: site content is chess.com's, forum posts belong to their posters; no
+  reuse rights for third parties. → Never copy article or forum text, diagrams or images.
+- janko.at Impressum: "Copyright (c) 1999-2020 by Angela and Otto Janko. Alle Rechte
+  vorbehalten." The WFCC Codex (hosted there) asks for composer + source + date on reprints.
+- yacpdb: no license found → treat as all rights reserved; not bundled.
+- Copyright of chess positions/moves is untested for composed problems; games/moves are
+  generally treated as facts. EU database right only bites on substantial extraction.
+- Practice: bundle FEN + stipulation + attribution, own descriptions, separate NOTICE,
+  takedown contact.
+
+## 4. Puzzle model and file format
+
+A puzzle is a **window of N plies** (`t = 0..N`) over one game, with constraints.
+All SAT answers are **existential**: "there is a line where ...". So a "mate in k" goal
+means *both sides cooperate* (helpmate / proof game style). A real **directmate**
+("White mates against every defence") needs a for-all quantifier and is **out of scope**.
+*(Flagged to Manfred, who wrote "k moves until checkmate".)*
+
+```json
+{
+  "id": "chess-com-5/4",
+  "title": "Bishop sacrifice on e8",
+  "composer": "Tibor Orban",
+  "source": { "name": "chess.com article (M. Klein, 2017)",
+              "url": "https://www.chess.com/article/view/can-you-solve-these-5-easy-retrograde-puzzles",
+              "year": 2017 },
+  "description": "Own short text.",
+  "question": "proofGame",
+  "plies": 8,
+  "start": { "board": "startpos", "sideToMove": "w", "castling": "auto", "enPassant": "-" },
+  "positions": { "8": "rnbqkbnr/pp3ppp/2p1p3/8/4P3/8/PPPP1PPP/RNBQK1NR" },
+  "squares": { "0": { "h4": "QRBNqrbn" } },
+  "moves": { "0": "f3", "2": "Kf2", "5": { "piece": "p", "capture": true } },
+  "goal": "none",
+  "shortest": false,
+  "project": ["moves", "board@0"],
+  "rules": { "oneKingEach": true, "checkRules": true, "materialSane": true },
+  "expected": 1
+}
+```
+
+- **Board strings**: FEN piece placement, `?` = unknown square (anything, including empty).
+  All `?` / omitted = open. `startpos` = the initial position.
+- `start.board` constrains t=0 (A). `positions` constrains any other ply (usually N = B).
+- `squares`: optional per-ply **square domains**, e.g. h4 must hold one of `QRBNqrbn`
+  (`.` = empty allowed). Keeps FEN strings pure.
+- `moves`: optional per-ply **move patterns**, either SAN (`"Kf2"`) or an object with any of
+  `piece, from, to, capture, promo, castle, check`. Covers "White played f3, Kf2, Kg3, Kh4",
+  "Black's last move was a capture", "White castled".
+- `sideToMove` at A: `w`, `b`, or `?` (the driver solves twice, once per side). The side
+  to move at B is derived and shown in the UI.
+- `castling`: `auto` (a right exists iff king and rook are on their home squares; the
+  Codex convention "castling is allowed unless disproved"), a FEN field (`KQkq`, `Kq`, `-`),
+  or `?` (each right free, still requiring king and rook at home).
+- `enPassant`: `-` or a target square (`e3`). No `?`: by Codex convention e.p. is only
+  allowed when proved; to ask "was the last move a double push?" start the window one ply
+  earlier. A given square also enforces the pawn on e4, e2/e3 empty, and Black to move.
+- `goal` at ply N: `none`, `check`, `checkmate`, `stalemate` (all cooperative, see above).
+- `shortest`: also prove that N−2 plies are not enough (UNSAT).
+- `project` = what makes two solutions distinct; a list of ply-scoped items:
+  `moves`, `board@t`, `square@t:h4`, `piece@t:K`, `sideToMove@0`.
+  Default `["moves", "board@0"]` (= the whole path, since every board follows from A + moves).
+  Puzzles like "where is the white king?" use `["piece@0:K"]`; "which piece on h4?" uses
+  `["square@0:h4"]`.
+- `rules`: `oneKingEach`, `checkRules` (for converted Python oddities), and
+  `materialSane` (default on whenever a board has `?`): at most 8 pawns and 16 men per
+  side, promoted pieces ≤ missing pawns, bishops by square colour, no pawn on rank 1/8.
+  This is still **not** full retro-legality; puzzles that need deeper retro reasoning are
+  marked "position only" in the examples.
+- `question`: UI preset that filled the fields (`proofGame`, `lastMoves`, `helpmate`,
+  `unknownPiece`, `custom`). Informational for the solver.
+- `expected`: known solution count under `project`, or null. Used by tests and shown in
+  the results ("unique", "3 solutions, expected 3").
+- UI shows plies and moves together ("13 plies = PG 6.5"); the file always stores plies.
+- Python `.puzzle` files convert 1:1 (`0` → `start.board`, other int keys → `positions`,
+  `no_king`/`no_check`/`black_first`/`project_piece` → fields).
+
+## 5. Encoding (changes vs. the Python encoder)
+
+Ported semantics, with these optimizations / generalizations / fixes:
+
+1. Move variables only for **geometrically possible (from, to) pairs** (queen lines +
+   knight jumps, about 1,800 instead of 4,096 per ply). Exactly-one move per ply: keep
+   strong propagation (benchmark against Python's row/col factoring before replacing it).
+2. Validity and board-sync clauses only for pieces that can make that move shape.
+3. Exactly-one king per colour with a sequential counter instead of 2,016 pairwise clauses.
+4. Side to move is a parameter of the encoding (fixes Python's half-done `black_first`,
+   which only changed the t=0 check test).
+5. Castling rights and en passant are state variables at **every** ply incl. t=0 and t=N.
+6. No pawns on rank 1/8 at any ply (Python allowed them from `?` squares).
+7. Auxiliary variables (AMO ladders etc.) are functionally determined where cheap;
+   enumeration always blocks over the **projected** variables only. Exported DIMACS is
+   for SAT, not for #SAT model counting, unless stated.
+8. **Checkmate / stalemate at ply N**: encoded necessary conditions (check / no check;
+   every king flight square own-occupied or attacked in an extra attack layer that treats
+   the king's square as empty), then a **lazy refinement loop**: each candidate is checked
+   by the reference move generator; non-mates are blocked over the full state at N
+   (board, side, castling, e.p.) and solving continues. Refinement blocks and enumeration
+   blocks are kept separate. Exact; keeps the CNF small.
+9. A reference **legal move generator** (perft-verified) is used for tests, the mate /
+   stalemate check, SAN with disambiguation, and to **validate every solution**.
+10. Castling clauses are explicit both ways (incl. king path not attacked).
+
+## 6. Architecture
+
+| Module | Targets | Content |
+|---|---|---|
+| `:core` | jvm, js | chess model, FEN, move generator, puzzle format (kotlinx.serialization), encoder, decoder, solver driver over `Ksat` |
+| `:cli` | jvm | command line: solve a puzzle file, enumerate, write DIMACS, run the bundled set |
+| `:worker` | js | Web Worker bundle: receives a puzzle as JSON, streams stats/solutions back |
+| `:composeApp` | jvm, js | Compose UI. JVM solves on `Dispatchers.Default`, JS posts to the worker |
+
+ksat modules are built from the sibling checkout `~/github/sat-solvers-kotlin`
+(projectDir remap, same as luckySweep). Web dev-server port **8608**.
+
+## 7. Web UI
+
+Reviewed by a fresh UX reviewer; decisions:
+
+- **Input**: one hybrid mode by default. Pick a piece in the palette (12 pieces, empty,
+  `?`), click squares to place it; clicking a square that already holds the selected piece
+  empties it; otherwise it overwrites. Pieces on the board can always be dragged; dragging
+  off the board removes them. Settings offer one alternative, "click opens a dialog",
+  because Manfred asked for switchable input modes.
+- **Question preset first** (Proof game / Last move(s)? / Helpmate in k / Find unknown
+  piece / Custom). The preset fills A, B, N, goal and projection. Solver choice,
+  projection, rules and square domains live under "Advanced".
+- **Plies vs moves**: one number with a unit toggle plus a live sentence, e.g.
+  "13 plies = PG 6.5 · White starts · Black moves last · White to move at B".
+- **Timeline**: `(A)─1─2─…─(B)` chips; the icon shows fixed / partial / open (derived from
+  the number of `?`, not a mode switch). Clicking a ply opens its board; "+" adds an
+  intermediate board constraint or a move pattern.
+
+Desktop:
+```
+[Examples][New][Import/Export][Share]                       [Settings]
+Question: [Proof game v]  N: [13] plies|moves  Goal: [none v]  "PG 6.5 ..."
+Timeline: (A)--1--2--...--(B)
++ board (selected ply) +  + palette 6x2 + empty + ?  +
+|                      |  | [Initial][Clear][All ?]  |
++----------------------+  | FEN: [..............]    |
+                          +--------------------------+
+[ Solve ]  vars/clauses - time - found 2   [Cancel]       [Advanced v]
+Results: answer summary / solution list (SAN) -> replay board
+```
+
+Phone width: single column; timeline scrolls sideways; full-width board; palette as a
+2x7 strip below; Question and Advanced as collapsible cards; sticky Solve/Cancel bar;
+results as their own view.
+
+- **Results**: for non-path projections show the answer first ("h4: Rook (3 lines),
+  Queen (1)"), expandable to lines. Replay with slider, clickable SAN list, arrow keys,
+  from/to highlight. Each solution carries a "verified by move generator" badge;
+  "unique" / "N solutions, expected M".
+- **Worker**: the solver call is synchronous, so progress is per solution, not mid-solve;
+  Cancel = `worker.terminate()` and respawn.
+- **Share**: the puzzle JSON goes into the URL hash; Import/Export as a JSON file.
+
+## 8. Open points / follow-ups
+
+- Public release: the sibling projectDir remap does not work for strangers cloning the
+  repo; needs `sat-solvers-kotlin` as a submodule (remote op, Manfred's job).
+- Piece graphics: cburnett set (BSD/GPL/GFDL tri-licensed, used by lichess), credited in NOTICE.
