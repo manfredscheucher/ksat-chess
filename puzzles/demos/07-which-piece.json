@@ -1,0 +1,27 @@
+{
+  "id": "demos/which-piece",
+  "title": "Which piece on a1?",
+  "composer": null,
+  "source": {
+    "name": "Own demo (sat-chess-kotlin)",
+    "url": null,
+    "year": 2026
+  },
+  "description": "Black to move and in check. The only candidate checker stands on a1 and is restricted to a white queen, rook, bishop or knight by a square domain. Only pieces that attack h8 along the long diagonal fit: bishop or queen.",
+  "question": "unknownPiece",
+  "plies": 0,
+  "start": {
+    "board": "7k/8/8/8/8/8/8/?3K3",
+    "sideToMove": "b"
+  },
+  "squares": {
+    "0": {
+      "a1": "QRBN"
+    }
+  },
+  "goal": "check",
+  "project": [
+    "square@0:a1"
+  ],
+  "expected": 2
+}

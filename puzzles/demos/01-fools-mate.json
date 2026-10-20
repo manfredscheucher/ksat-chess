@@ -1,0 +1,21 @@
+{
+  "id": "demos/fools-mate",
+  "title": "Fool's mate",
+  "composer": null,
+  "source": {
+    "name": "Own demo (sat-chess-kotlin)",
+    "url": null,
+    "year": 2026
+  },
+  "description": "The fastest possible checkmate: from the initial position, Black mates White after 2.0 moves (4 plies). Both sides cooperate, so the solver looks for every 4-ply line that ends in mate. The mating pattern is always the same queen check on the e1-h4 diagonal, but White's two pawn moves and Black's pawn move can vary.",
+  "question": "helpmate",
+  "plies": 4,
+  "start": {
+    "board": "startpos"
+  },
+  "goal": "checkmate",
+  "project": [
+    "moves"
+  ],
+  "expected": 8
+}

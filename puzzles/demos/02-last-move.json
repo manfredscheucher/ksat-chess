@@ -1,0 +1,23 @@
+{
+  "id": "demos/last-move",
+  "title": "What was the last move?",
+  "composer": null,
+  "source": {
+    "name": "Own demo (sat-chess-kotlin)",
+    "url": null,
+    "year": 2026
+  },
+  "description": "Black to move and in check from the knight on f7. The previous position is left completely open. Where did the knight come from? The white king cannot have moved, because every square next to a1 is occupied. Five knight origins remain.",
+  "question": "lastMoves",
+  "plies": 1,
+  "start": {
+    "board": "????????/????????/????????/????????/????????/????????/????????/????????"
+  },
+  "positions": {
+    "1": "7k/5N2/8/8/8/8/PP6/Kb6"
+  },
+  "project": [
+    "piece@0:N"
+  ],
+  "expected": 5
+}

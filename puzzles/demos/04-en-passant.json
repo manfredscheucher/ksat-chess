@@ -1,0 +1,24 @@
+{
+  "id": "demos/en-passant",
+  "title": "En passant",
+  "composer": null,
+  "source": {
+    "name": "Own demo (sat-chess-kotlin)",
+    "url": null,
+    "year": 2026
+  },
+  "description": "Black has just played d7-d5, so the start position carries the en passant square d6. In one ply the white pawn on e5 must end up on d6 while the black pawn on d5 disappears: only the en passant capture does that. Set enPassant to \"-\" and the puzzle has no solution.",
+  "question": "custom",
+  "plies": 1,
+  "start": {
+    "board": "rnbqkbnr/ppp1pppp/8/3pP3/8/8/PPPP1PPP/RNBQKBNR",
+    "enPassant": "d6"
+  },
+  "positions": {
+    "1": "rnbqkbnr/ppp1pppp/3P4/8/8/8/PPPP1PPP/RNBQKBNR"
+  },
+  "project": [
+    "moves"
+  ],
+  "expected": 1
+}

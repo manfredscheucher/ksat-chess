@@ -46,7 +46,10 @@ object Sq {
 /** Castling rights as FEN letters: 'K', 'Q' (white), 'k', 'q' (black). */
 enum class CastleRight(val fen: Char, val color: Color) {
     WHITE_KING('K', Color.WHITE), WHITE_QUEEN('Q', Color.WHITE),
-    BLACK_KING('k', Color.BLACK), BLACK_QUEEN('q', Color.BLACK),
+    BLACK_KING('k', Color.BLACK), BLACK_QUEEN('q', Color.BLACK);
+
+    /** True for O-O (towards the h-file), false for O-O-O. */
+    val isKingSide: Boolean get() = this == WHITE_KING || this == BLACK_KING
 }
 
 /**

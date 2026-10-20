@@ -1,0 +1,23 @@
+{
+  "id": "demos/promotion",
+  "title": "Promotion choices",
+  "composer": null,
+  "source": {
+    "name": "Own demo (sat-chess-kotlin)",
+    "url": null,
+    "year": 2026
+  },
+  "description": "The pawn on b7 moves to b8 and must promote. The square b8 is left open in the target position, and the result lists what can stand there afterwards: queen, rook, bishop or knight.",
+  "question": "custom",
+  "plies": 1,
+  "start": {
+    "board": "4k3/1P6/8/8/8/8/8/4K3"
+  },
+  "positions": {
+    "1": "1?2k3/8/8/8/8/8/8/4K3"
+  },
+  "project": [
+    "square@1:b8"
+  ],
+  "expected": 4
+}

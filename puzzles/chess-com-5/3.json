@@ -1,0 +1,24 @@
+{
+  "id": "chess-com-5/3",
+  "title": "King walk into mate",
+  "composer": null,
+  "source": {
+    "name": "chess.com article by FM Mike Klein",
+    "url": "https://www.chess.com/article/view/can-you-solve-these-5-easy-retrograde-puzzles",
+    "year": 2017
+  },
+  "description": "White plays f3, Kf2, Kg3 and Kh4. Find four black moves that end with the white king checkmated on h4. White may never step into check, so Black has to time the checks carefully.",
+  "question": "helpmate",
+  "plies": 8,
+  "start": {
+    "board": "startpos"
+  },
+  "moves": {
+    "0": "f3",
+    "2": "Kf2",
+    "4": "Kg3",
+    "6": "Kh4"
+  },
+  "goal": "checkmate",
+  "expected": null
+}

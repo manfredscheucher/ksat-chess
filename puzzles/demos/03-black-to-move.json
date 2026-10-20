@@ -1,0 +1,24 @@
+{
+  "id": "demos/black-to-move",
+  "title": "Black moves first",
+  "composer": null,
+  "source": {
+    "name": "Own demo (sat-chess-kotlin)",
+    "url": null,
+    "year": 2026
+  },
+  "description": "The game starts after 1.e4 with Black to move. Reach the Ruy Lopez position in 4 plies. Each side has two different moves to make and both orders work for each side, so there are four lines.",
+  "question": "proofGame",
+  "plies": 4,
+  "start": {
+    "board": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR",
+    "sideToMove": "b"
+  },
+  "positions": {
+    "4": "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R"
+  },
+  "project": [
+    "moves"
+  ],
+  "expected": 4
+}

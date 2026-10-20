@@ -1,0 +1,23 @@
+{
+  "id": "chess-com-5/2",
+  "title": "Where is the white king?",
+  "composer": null,
+  "source": {
+    "name": "chess.com article by FM Mike Klein",
+    "url": "https://www.chess.com/article/view/can-you-solve-these-5-easy-retrograde-puzzles",
+    "year": 2017
+  },
+  "description": "Given: black king d1, black rook b5, black bishop d5 and a white bishop on a4; the rest of the board is left open here. The white king must be somewhere. Which square can it legally stand on? Position only: the unique answer needs retro reasoning about how the position arose, which a 0-ply SAT window does not prove, so the solver lists every square that passes the static checks.",
+  "question": "unknownPiece",
+  "plies": 0,
+  "start": {
+    "board": "????????/????????/????????/?r?b????/B???????/????????/????????/???k????"
+  },
+  "project": [
+    "piece@0:K"
+  ],
+  "rules": {
+    "oneKingEach": false
+  },
+  "expected": null
+}
