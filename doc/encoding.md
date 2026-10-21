@@ -141,9 +141,9 @@ on a quiet machine.
   an `Info` event. Exact, and the CNF stays small; the price is extra solver calls when many
   checks are not mates.
 - `SolveOptions.refinement` (CLI `--refinement`) selects the refinement clause:
-  - `FULL_STATE` (default, as in the spec): the full state at ply N, about 850 literals.
-  - `ESCAPE_MOVE` (optional, not in the spec): take one legal move of the side to move (not
-    castling or e.p., which depend on rights / e.p. state; if only such moves exist, fall back to
+  - `FULL_STATE` (as first written in the spec): the full state at ply N, about 850 literals.
+  - `ESCAPE_MOVE` (default since 2026-10-21; exact, 5-13x fewer refinement calls): take one
+    legal move of the side to move (not castling or e.p., which depend on rights / e.p. state; if only such moves exist, fall back to
     the full state) and block only the squares that make it legal: from, to, the squares between,
     the king square after the move, its knight and king neighbours, and each of its 8 rays up to
     and including the first piece (on the board after the move; every such square has the same

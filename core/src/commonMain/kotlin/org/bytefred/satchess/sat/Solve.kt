@@ -15,7 +15,7 @@ data class SolveOptions(
     /** Stop after this many solutions; 0 = enumerate all. */
     val maxSolutions: Int = 1,
     val encoder: EncoderOptions = EncoderOptions(),
-    val refinement: Refinement = Refinement.FULL_STATE,
+    val refinement: Refinement = Refinement.ESCAPE_MOVE,
 )
 
 /** One solution, serializable so it can cross the Web Worker boundary. */

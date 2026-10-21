@@ -133,7 +133,8 @@ Ported semantics, with these optimizations / generalizations / fixes:
    the king's square as empty), then a **lazy refinement loop**: each candidate is checked
    by the reference move generator; non-mates are blocked over the full state at N
    (board, side, castling, e.p.) and solving continues. Refinement blocks and enumeration
-   blocks are kept separate. Exact; keeps the CNF small.
+   blocks are kept separate. Default refinement clause since 2026-10-21: `ESCAPE_MOVE`
+   (block only the squares that make one legal reply legal; still exact, far fewer rounds). Exact; keeps the CNF small.
 9. A reference **legal move generator** (perft-verified) is used for tests, the mate /
    stalemate check, SAN with disambiguation, and to **validate every solution**.
 10. Castling clauses are explicit both ways (incl. king path not attacked).

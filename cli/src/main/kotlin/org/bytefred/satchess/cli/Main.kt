@@ -26,7 +26,7 @@ options:
   --max N               stop after N solutions (default for solve: 1)
   --solver S            cadical (default), minisat, kissat, microsat
   --move-amo A          src-tgt (default) or row-col: exactly-one-move encoding (benchmarks)
-  --refinement R       full-state (default) or escape-move: clause excluding a non-mate final position
+  --refinement R        escape-move (default) or full-state: clause excluding a non-mate final position
   --dimacs out.cnf      solve: also write the CNF (one file per side if sideToMove is "?")
   --timeout SEC         run: stop a puzzle after SEC seconds (checked between solver calls)
   --verbose             print encoding size, timing and info events"""
@@ -70,7 +70,7 @@ private fun parse(args: List<String>): Options {
     var max: Int? = null
     var solver = Solver.CADICAL
     var moveAmo = MoveAmo.SRC_TGT
-    var refinement = Refinement.FULL_STATE
+    var refinement = Refinement.ESCAPE_MOVE
     var dimacs: String? = null
     var timeout: Long? = null
     var verbose = false
