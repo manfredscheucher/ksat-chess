@@ -201,19 +201,22 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
     "url": "https://www.chess.com/article/view/can-you-solve-these-5-easy-retrograde-puzzles",
     "year": 2017
   },
-  "description": "Given: black king d1, black rook b5, black bishop d5 and a white bishop on a4; the rest of the board is left open here. The white king must be somewhere. Which square can it legally stand on? Position only: the unique answer needs retro reasoning about how the position arose, which a 0-ply SAT window does not prove, so the solver lists every square that passes the static checks.",
+  "description": "Given: black king d1, black rook b5, black bishop d5 and a white bishop on a4; there are no other men, only the white king is missing. Every other square is either the white king or empty. Which squares pass the static legality checks? Position only: the article's unique answer needs retro reasoning about how the position arose, which a 0-ply window does not prove.",
   "question": "unknownPiece",
   "plies": 0,
   "start": {
-    "board": "????????/????????/????????/?r?b????/B???????/????????/????????/???k????"
+    "board": "????????/????????/????????/?r?b????/B???????/????????/????????/???k????",
+    "sideToMove": "?"
   },
   "project": [
     "piece@0:K"
   ],
-  "rules": {
-    "oneKingEach": false
-  },
-  "expected": null
+  "expected": null,
+  "squares": {
+    "0": {
+      "?": "K."
+    }
+  }
 }"""),
     ExampleSource("chess.com: 5 easy retrograde puzzles", """{
   "id": "chess-com-5/3",

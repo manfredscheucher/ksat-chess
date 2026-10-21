@@ -19,9 +19,13 @@ enum class Refinement {
     ESCAPE_MOVE,
 }
 
-/** Refinement clause for a final position [p] that has a legal move, per [mode]. */
+/**
+ * Refinement clause for a final position [p] that has a legal move, per [mode]. [Refinement.ESCAPE_MOVE]
+ * needs exactly one king of the side to move (the escape squares are taken around it); without
+ * one (no king, or two with `oneKingEach: false`) the full state is blocked instead.
+ */
 internal fun refinementClause(e: Encoding, model: (Int) -> Boolean, p: Position, mode: Refinement): IntArray {
-    val escape = if (mode == Refinement.ESCAPE_MOVE) {
+    val escape = if (mode == Refinement.ESCAPE_MOVE && kingCount(p) == 1) {
         Rules.legalMoves(p).firstOrNull { !isCastleOrEp(p, it) }
     } else {
         null
@@ -29,6 +33,9 @@ internal fun refinementClause(e: Encoding, model: (Int) -> Boolean, p: Position,
     if (escape == null) return e.finalState(model).map { -it }.toIntArray()
     return escapeSquares(p, escape).map { sq -> -e.at(e.plies, sq, p[sq]?.let { pieceIndex(it) } ?: EMPTY) }.toIntArray()
 }
+
+private fun kingCount(p: Position): Int =
+    p.board.count { it != null && it.color == p.sideToMove && it.type == PieceType.KING }
 
 /** Castling and e.p. depend on more than the board (rights, e.p. state); they never serve as witness. */
 private fun isCastleOrEp(p: Position, m: Move): Boolean {

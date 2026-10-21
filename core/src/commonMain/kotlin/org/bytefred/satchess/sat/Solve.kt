@@ -4,9 +4,13 @@ import kotlinx.serialization.Serializable
 import org.bytefred.ksat.SatResult
 import org.bytefred.ksat.facade.Ksat
 import org.bytefred.ksat.facade.Solver
+import org.bytefred.satchess.chess.BoardPattern
 import org.bytefred.satchess.chess.Color
+import org.bytefred.satchess.chess.Fen
+import org.bytefred.satchess.chess.Sq
 import org.bytefred.satchess.puzzle.Goal
 import org.bytefred.satchess.puzzle.Puzzle
+import org.bytefred.satchess.puzzle.UNKNOWN_SQUARES
 import kotlin.time.TimeSource
 
 @Serializable
@@ -42,16 +46,34 @@ sealed interface SolveEvent {
     @Serializable data class Info(val message: String) : SolveEvent
     /**
      * [complete] = search space exhausted (count is exact), false = stopped at maxSolutions or
-     * cancelled. [shortest]: null = not asked, true = plies - 2 proved impossible, false = a
-     * shorter solution exists (or the check was cancelled).
+     * cancelled. [shortestCheck]: outcome of the `shortest` check, null = not asked (or nothing
+     * found). [shortest] is the same as a flag: null = not asked, true = plies - 2 proved
+     * impossible, false = not proven (see [shortestCheck] for why).
      */
     @Serializable data class Done(
         val count: Int,
         val complete: Boolean,
         val millis: Long,
         val shortest: Boolean? = null,
+        val shortestCheck: ShortestCheck? = null,
     ) : SolveEvent
     @Serializable data class Failed(val message: String) : SolveEvent
+}
+
+/** Outcome of the `shortest` check: is the same puzzle solvable with plies - 2 (doc/encoding.md section 6)? */
+@Serializable
+enum class ShortestCheck {
+    /** plies - 2 is impossible (UNSAT): proven shortest. */
+    PROVEN,
+    /** The puzzle with plies - 2 and all its constraints has a solution: not shortest. */
+    NOT_SHORTEST,
+    /**
+     * Only a relaxed puzzle could be checked (move patterns and constraints at intermediate plies
+     * dropped) and it has a solution: neither proven nor refuted.
+     */
+    NOT_PROVEN_RELAXED,
+    /** Cancelled before the check finished. */
+    CANCELLED,
 }
 
 object PuzzleSolver {
@@ -65,11 +87,17 @@ object PuzzleSolver {
         isCancelled: () -> Boolean = { false },
         onEvent: (SolveEvent) -> Unit,
     ) {
+        val problems = puzzleProblems(puzzle)
+        if (problems.isNotEmpty()) {
+            onEvent(SolveEvent.Failed(problems.joinToString("; ")))
+            return
+        }
+        // Every path ends with Done or Failed: the UI waits for one of them.
         try {
             Run(puzzle, options, isCancelled, onEvent).run()
         } catch (e: IllegalArgumentException) {
             onEvent(SolveEvent.Failed(e.message ?: e.toString()))
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             onEvent(SolveEvent.Failed("internal error: ${e.message ?: e.toString()}"))
         }
     }
@@ -102,7 +130,7 @@ object PuzzleSolver {
                 onEvent(SolveEvent.Encoded(encoding.cnf.numVars, encoding.cnf.numClauses, millis()))
                 val projection = Projection(encoding)
                 val search = Search(encoding, projection, options.solver, options.refinement)
-                if (!projection.includesSide) for (names in found) search.addClause(projection.blockNames(names))
+                if (!projection.includesSide) for (names in found) projection.blockNames(names)?.let(search::addClause)
                 while (true) {
                     if (isCancelled()) {
                         onEvent(SolveEvent.Info("cancelled"))
@@ -124,51 +152,125 @@ object PuzzleSolver {
                 }
                 if (!complete) break
             }
-            val shortest = if (puzzle.shortest && count > 0) proveShortest() else null
-            onEvent(SolveEvent.Done(count, complete, millis(), shortest))
+            val check = if (puzzle.shortest && count > 0) checkShortest() else null
+            onEvent(SolveEvent.Done(count, complete, millis(), check?.let { it == ShortestCheck.PROVEN }, check))
         }
 
-        /** Solves the same puzzle with plies - 2 (see [shorterPuzzle]); true if that is impossible. */
-        private fun proveShortest(): Boolean? {
-            val shorter = shorterPuzzle(puzzle) ?: return true.also {
+        /** Solves the same puzzle with plies - 2 (see [shorterPuzzle]). */
+        private fun checkShortest(): ShortestCheck {
+            val shorter = shorterPuzzle(puzzle) ?: return ShortestCheck.PROVEN.also {
                 onEvent(SolveEvent.Info("shortest: fewer plies are impossible"))
             }
-            for (side in sides(shorter)) {
-                if (isCancelled()) return null
-                val encoding = Encoding(shorter, side, options.encoder)
+            val plies = shorter.puzzle.plies
+            for (side in sides(shorter.puzzle)) {
+                if (isCancelled()) return ShortestCheck.CANCELLED
+                val encoding = Encoding(shorter.puzzle, side, options.encoder)
                 val search = Search(encoding, Projection(encoding), options.solver, options.refinement)
-                if (search.next() != null) {
-                    onEvent(SolveEvent.Info("shortest: NOT shortest, ${shorter.plies} plies are enough"))
-                    return false
+                if (search.next() == null) continue
+                return if (shorter.relaxed) {
+                    onEvent(SolveEvent.Info("shortest: not proven, $plies plies are enough without the move patterns / intermediate constraints (relaxed check)"))
+                    ShortestCheck.NOT_PROVEN_RELAXED
+                } else {
+                    onEvent(SolveEvent.Info("shortest: NOT shortest, $plies plies are enough"))
+                    ShortestCheck.NOT_SHORTEST
                 }
             }
-            onEvent(SolveEvent.Info("shortest: ${shorter.plies} plies are impossible (UNSAT)"))
-            return true
+            onEvent(SolveEvent.Info("shortest: $plies plies are impossible (UNSAT)"))
+            return ShortestCheck.PROVEN
         }
     }
 
+    /** The plies - 2 puzzle of the "shortest" check; [relaxed] = some constraints were dropped. */
+    internal class ShorterPuzzle(val puzzle: Puzzle, val relaxed: Boolean)
+
     /**
-     * The puzzle with plies - 2 for the "shortest" check, or null if plies < 2. Constraints at
-     * ply 0 stay, constraints at the last ply move to the new last ply, constraints in between
-     * and move patterns are dropped (they have no counterpart in the shorter window).
+     * The puzzle with plies - 2 for the "shortest" check, or null if no shorter window can have a
+     * solution (plies < 2, or with plies = 2 the boards / domains at ply 0 and ply 2 contradict).
+     * Constraints and projection items at ply 0 stay, those at the last ply move to the new last
+     * ply (merged with ply 0 if that is the new last ply), those in between and move patterns are
+     * dropped (they have no counterpart in the shorter window). Expects [puzzleProblems] to be empty.
      */
-    internal fun shorterPuzzle(puzzle: Puzzle): Puzzle? {
+    internal fun shorterPuzzle(puzzle: Puzzle): ShorterPuzzle? {
         val n = puzzle.plies
         if (n < 2) return null
-        fun <V> remap(map: Map<String, V>): Map<String, V> = buildMap {
-            for ((key, value) in map) when (key.toIntOrNull()) {
-                0 -> put(key, value)
-                n -> put((n - 2).toString(), value)
+        val last = (n - 2).toString()
+        val firstBoard = puzzle.positions["0"]
+        val lastBoard = puzzle.positions[n.toString()]
+        val firstSquares = puzzle.squares["0"]
+        val lastSquares = puzzle.squares[n.toString()]
+        var start = puzzle.start
+        val positions = HashMap<String, String>()
+        val squares = HashMap<String, Map<String, String>>()
+        if (n > 2) {
+            firstBoard?.let { positions["0"] = it }
+            lastBoard?.let { positions[last] = it }
+            firstSquares?.let { squares["0"] = it }
+            lastSquares?.let { squares[last] = it }
+        } else {
+            // Ply 2 becomes ply 0: one board and one set of domains for both.
+            val boards = listOfNotNull(start.board, firstBoard)
+            val merged = mergeBoards(boards + listOfNotNull(lastBoard)) ?: return null
+            start = start.copy(board = merged)
+            val domains = intersectDomains(
+                expandUnknown(firstSquares, mergeBoards(boards)!!),
+                expandUnknown(lastSquares, lastBoard ?: OPEN_BOARD),
+            ) ?: return null
+            if (domains.isNotEmpty()) squares["0"] = domains
+        }
+        val project = puzzle.project.mapNotNull { item ->
+            when (parseProjectItem(item, n).ply) {
+                null, 0 -> item
+                n -> item.substringBefore('@') + "@$last" + item.substringAfter('@').dropWhile { it.isDigit() }
+                else -> null
             }
         }
-        return puzzle.copy(
+        fun dropsPlies(keys: Set<String>) = keys.any { it != "0" && it != n.toString() }
+        val relaxed = puzzle.moves.isNotEmpty() || dropsPlies(puzzle.positions.keys) || dropsPlies(puzzle.squares.keys)
+        val shorter = puzzle.copy(
             plies = n - 2,
-            positions = remap(puzzle.positions),
-            squares = remap(puzzle.squares),
+            start = start,
+            positions = positions,
+            squares = squares,
             moves = emptyMap(),
             shortest = false,
+            project = project,
         )
+        return ShorterPuzzle(shorter, relaxed)
     }
+}
+
+private val OPEN_BOARD = List(8) { "????????" }.joinToString("/")
+
+/** The board pattern that has the fixed cells of all [boards], or null if two of them differ. */
+internal fun mergeBoards(boards: List<String>): String? {
+    val cells = MutableList(64) { '?' }
+    for (board in boards) for ((sq, c) in Fen.parsePattern(board).cells.withIndex()) {
+        if (c == '?') continue
+        if (cells[sq] != '?' && cells[sq] != c) return null
+        cells[sq] = c
+    }
+    return Fen.patternToString(BoardPattern(cells))
+}
+
+/** [domains] with the [UNKNOWN_SQUARES] entry spelled out per '?' square of [board]. */
+private fun expandUnknown(domains: Map<String, String>?, board: String): Map<String, String> {
+    if (domains == null) return emptyMap()
+    val unknown = domains[UNKNOWN_SQUARES] ?: return domains
+    val cells = Fen.parsePattern(board).cells
+    val explicit = domains - UNKNOWN_SQUARES
+    return explicit + (0 until 64).filter { cells[it] == '?' && Sq.name(it) !in explicit }
+        .associate { Sq.name(it) to unknown }
+}
+
+/** Domains that hold on both sides (per square the common characters), or null if one becomes empty. */
+private fun intersectDomains(a: Map<String, String>, b: Map<String, String>): Map<String, String>? {
+    val result = HashMap(a)
+    for ((name, allowed) in b) {
+        val common = a[name]?.filter { it in allowed } ?: allowed
+        if (common.isEmpty()) return null
+        result[name] = common
+    }
+    return result
 }
 
 /**

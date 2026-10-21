@@ -10,6 +10,7 @@ import org.bytefred.satchess.chess.PieceType
 import org.bytefred.satchess.chess.Sq
 import org.bytefred.satchess.puzzle.Goal
 import org.bytefred.satchess.puzzle.Puzzle
+import org.bytefred.satchess.puzzle.UNKNOWN_SQUARES
 
 /** How "exactly one move per ply" is encoded (both are kept for benchmarking, see doc/encoding.md). */
 enum class MoveAmo {
@@ -151,10 +152,16 @@ class Encoding(
         }
         for ((key, domains) in puzzle.squares) {
             if (ply(key, "squares") != t) continue
+            val explicit = domains.keys.mapNotNullTo(HashSet()) { Sq.parse(it) }
             for ((name, allowed) in domains) {
-                val sq = Sq.parse(name) ?: throw IllegalArgumentException("squares: invalid square '$name'")
                 require(allowed.isNotEmpty()) { "squares: empty domain for $name at ply $t" }
-                cnf.add(allowed.map { at(t, sq, cellIndex(it, "squares $name")) })
+                val squares = if (name == UNKNOWN_SQUARES) {
+                    (0 until 64).filter { sq -> (patterns[t]?.cells?.get(sq) ?: '?') == '?' && sq !in explicit }
+                } else {
+                    listOf(Sq.parse(name) ?: throw IllegalArgumentException("squares: invalid square '$name'"))
+                }
+                val cells = allowed.map { cellIndex(it, "squares $name") }
+                for (sq in squares) cnf.add(cells.map { at(t, sq, it) })
             }
         }
         for (right in CastleRight.entries) {

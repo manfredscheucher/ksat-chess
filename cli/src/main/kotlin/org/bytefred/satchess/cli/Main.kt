@@ -7,8 +7,9 @@ import org.bytefred.satchess.sat.EncoderOptions
 import org.bytefred.satchess.sat.Encoding
 import org.bytefred.satchess.sat.MoveAmo
 import org.bytefred.satchess.sat.Projection
-import org.bytefred.satchess.sat.Refinement
 import org.bytefred.satchess.sat.PuzzleSolver
+import org.bytefred.satchess.sat.Refinement
+import org.bytefred.satchess.sat.ShortestCheck
 import org.bytefred.satchess.sat.SolveEvent
 import org.bytefred.satchess.sat.SolveOptions
 import java.io.File
@@ -121,12 +122,14 @@ private fun solve(file: File, options: Options): Boolean {
     options.dimacs?.let { writeDimacs(puzzle, it, options) }
     println("${puzzle.id.ifEmpty { file.name }}: ${puzzle.title}  (${puzzle.plies} plies, goal ${puzzle.goal.name.lowercase()})")
     var failed = false
+    var unverified = 0
     PuzzleSolver.solve(puzzle, options.solveOptions(defaultMax = 1)) { event ->
         when (event) {
             is SolveEvent.Encoded -> if (options.verbose) {
                 println("encoded: ${event.variables} variables, ${event.clauses} clauses (${event.millis} ms)")
             }
             is SolveEvent.Found -> {
+                if (!event.solution.verified) unverified++
                 val badge = if (event.solution.verified) "" else "  [NOT VERIFIED]"
                 println("#${event.index + 1}: ${event.solution.projectedKey}$badge")
                 if (options.verbose) println("    ${event.solution.moves.joinToString(" ") { it.uci }}  (${event.millis} ms)")
@@ -134,8 +137,9 @@ private fun solve(file: File, options: Options): Boolean {
             is SolveEvent.Info -> if (options.verbose) println("info: ${event.message}")
             is SolveEvent.Done -> {
                 val exact = if (event.complete) "" else " (stopped, more may exist)"
-                println("found ${event.count}$exact in ${event.millis} ms" + expectedNote(puzzle, event))
-                event.shortest?.let { println(if (it) "shortest: yes" else "shortest: NO, a shorter solution exists") }
+                val badges = if (unverified > 0) ", $unverified NOT VERIFIED" else ""
+                println("found ${event.count}$exact$badges in ${event.millis} ms" + expectedNote(puzzle, event))
+                event.shortestCheck?.let { println("shortest: ${shortestText(it)}") }
             }
             is SolveEvent.Failed -> {
                 System.err.println("error: ${event.message}")
@@ -144,6 +148,13 @@ private fun solve(file: File, options: Options): Boolean {
         }
     }
     return !failed
+}
+
+private fun shortestText(check: ShortestCheck): String = when (check) {
+    ShortestCheck.PROVEN -> "yes"
+    ShortestCheck.NOT_SHORTEST -> "NO, a shorter solution exists"
+    ShortestCheck.NOT_PROVEN_RELAXED -> "not proven (relaxed check without move patterns / intermediate constraints found a shorter solution)"
+    ShortestCheck.CANCELLED -> "not proven (cancelled)"
 }
 
 private fun expectedNote(puzzle: Puzzle, done: SolveEvent.Done): String {

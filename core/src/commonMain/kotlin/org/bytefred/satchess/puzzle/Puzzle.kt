@@ -20,7 +20,11 @@ data class Puzzle(
     val start: Start = Start(),
     /** Board constraints at plies other than 0, keyed by ply ("8" -> FEN placement with '?'). */
     val positions: Map<String, String> = emptyMap(),
-    /** Square domains per ply: "0" -> { "h4" -> "QRBNqrbn" } ('.' = empty allowed). */
+    /**
+     * Square domains per ply: "0" -> { "h4" -> "QRBNqrbn" } ('.' = empty allowed). The key
+     * [UNKNOWN_SQUARES] gives the domain of every '?' square of that ply's board without an
+     * entry of its own.
+     */
     val squares: Map<String, Map<String, String>> = emptyMap(),
     /** Move patterns per ply index (move from ply t to t+1): "0" -> SAN or object. */
     val moves: Map<String, MovePattern> = emptyMap(),
@@ -33,6 +37,9 @@ data class Puzzle(
     /** Known number of solutions under [project], or null. */
     val expected: Int? = null,
 )
+
+/** Key in [Puzzle.squares]: the domain of every '?' square of that ply's board (explicit squares override it). */
+const val UNKNOWN_SQUARES = "?"
 
 @Serializable
 data class Source(val name: String, val url: String? = null, val year: Int? = null)

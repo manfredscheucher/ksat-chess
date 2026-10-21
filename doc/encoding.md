@@ -47,7 +47,9 @@ Per board `t = 0..N`:
 - **King safety** (`rules.checkRules`): the king of the side *not* to move is not attacked by
   the side to move. At `t = 0` this is the "the side that just moved is not in check" rule, at
   `t > 0` it is "a move may not leave the own king in check".
-- Puzzle constraints: board patterns (`start.board` at 0, `positions`), square domains.
+- Puzzle constraints: board patterns (`start.board` at 0, `positions`), square domains (one
+  clause per square; the `"?"` key adds that clause for every `?` square of the ply's board
+  that has no entry of its own).
 
 Per ply `t < N`, mover `c = side(t)`:
 
@@ -143,8 +145,8 @@ on a quiet machine.
 - `SolveOptions.refinement` (CLI `--refinement`) selects the refinement clause:
   - `FULL_STATE` (as first written in the spec): the full state at ply N, about 850 literals.
   - `ESCAPE_MOVE` (default since 2026-10-21; exact, 5-13x fewer refinement calls): take one
-    legal move of the side to move (not castling or e.p., which depend on rights / e.p. state; if only such moves exist, fall back to
-    the full state) and block only the squares that make it legal: from, to, the squares between,
+    legal move of the side to move (not castling or e.p., which depend on rights / e.p. state; if only such moves exist, or the
+    side to move does not have exactly one king (`oneKingEach: false`), fall back to the full state) and block only the squares that make it legal: from, to, the squares between,
     the king square after the move, its knight and king neighbours, and each of its 8 rays up to
     and including the first piece (on the board after the move; every such square has the same
     content before the move except from / to, which are in the clause). Every position that
@@ -177,13 +179,28 @@ on a quiet machine.
   `sideToMove@0` only the pass.
 - `sideToMove: "?"`: two passes (white, then black). Unless `sideToMove@0` is projected, every
   solution of the first pass is also blocked in the second pass (translated by variable names),
-  so a projected value found with either side counts once.
+  so a projected value found with either side counts once. Move and promotion names include the
+  mover's colour (`mv0w:…` vs `mv0b:…`): White's Ra2-a1 and Black's ...Ra2-a1 are different
+  moves, so with `moves` projected nothing is blocked across passes (a pass-1 solution that has
+  a name the second encoding lacks cannot agree with any of its models and is skipped). Board,
+  square and piece names are colour-free, so e.g. `board@0` counts a board found with either
+  side once. (Fixed 2026-10-21: before, a black move with the same from / to as a white move of
+  the first pass was dropped.)
 - The projected key shown to the user is the SAN line for `moves` (two different moves can have
   the same SAN when the board is not projected), the placement for `board@t`, `h4 = R` /
   `h4 = empty` for squares, `K on e1` for pieces.
 - `shortest`: after enumeration (only if something was found) the puzzle is solved again with
-  `plies - 2`: constraints at ply 0 stay, constraints at the last ply move to the new last ply,
-  constraints in between and move patterns are dropped. `Done.shortest` = true if that is UNSAT.
+  `plies - 2`: constraints and projection items at ply 0 stay, those at the last ply move to the
+  new last ply (with `plies = 2` they are merged into ply 0: boards cell by cell, domains
+  intersected; a contradiction means no 0-ply solution), those in between and move patterns
+  are dropped. Dropping makes the check a **relaxation**: UNSAT still proves "shortest", but a
+  SAT answer only refutes it when nothing was dropped. `Done.shortestCheck`:
+  `PROVEN` (UNSAT), `NOT_SHORTEST` (SAT, nothing dropped), `NOT_PROVEN_RELAXED` (SAT of the
+  relaxed puzzle: neither proven nor refuted), `CANCELLED`. `Done.shortest` stays as a flag:
+  true = `PROVEN`, false = anything else, null = not checked.
+- Every path of `PuzzleSolver.solve` ends with `Done` or `Failed` (the UI waits for one); input
+  problems are reported up front by `puzzleProblems(puzzle)` (also used by the UI), any other
+  exception becomes `Failed("internal error: …")`.
 - Cancellation is polled between solver calls (a single solver call is not interruptible).
 - Exported DIMACS (`cli solve --dimacs`) is the plain CNF of a pass plus `c ind ... 0` lines
   listing the projected variables. It is meant for SAT solving; it is not a #SAT instance for

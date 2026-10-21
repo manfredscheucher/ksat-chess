@@ -80,7 +80,11 @@ means *both sides cooperate* (helpmate / proof game style). A real **directmate*
   All `?` / omitted = open. `startpos` = the initial position.
 - `start.board` constrains t=0 (A). `positions` constrains any other ply (usually N = B).
 - `squares`: optional per-ply **square domains**, e.g. h4 must hold one of `QRBNqrbn`
-  (`.` = empty allowed). Keeps FEN strings pure.
+  (`.` = empty allowed). Keeps FEN strings pure. The key `"?"` is the domain of every `?`
+  square of that ply's board (explicit square entries override it), e.g. "where is the white
+  king?": board `8/8/8/1r1b4/B7/8/8/3k4` with all other squares `?` and
+  `"squares": {"0": {"?": "K."}}` (each unknown square is a white king or empty; with
+  `oneKingEach` exactly one of them is the king). *(Requested by Manfred, 2026-10-21.)*
 - `moves`: optional per-ply **move patterns**, either SAN (`"Kf2"`) or an object with any of
   `piece, from, to, capture, promo, castle, check`. Covers "White played f3, Kf2, Kg3, Kh4",
   "Black's last move was a capture", "White castled".
@@ -190,6 +194,11 @@ results as their own view.
   Queen (1)"), expandable to lines. Replay with slider, clickable SAN list, arrow keys,
   from/to highlight. Each solution carries a "verified by move generator" badge;
   "unique" / "N solutions, expected M".
+- **Square options** (Manfred, 2026-10-21, on chess.com #2 "only the king is missing"):
+  instead of a bare '?', a square can hold a list of options (pieces and/or "empty"),
+  edited via checkboxes (dialog or next to the board); it must be VISIBLE whether a piece
+  is placed fixed or only possible there. Stored as `squares` domains; key "?" = domain
+  for all '?' squares of that ply.
 - **Group similar solutions** (Manfred, 2026-10-21): the plain list stays the default; a
   toggle groups solutions. Per move an event string "piece X goes to square Y (captures Z)"
   with full piece identity (colour + type), not bare SAN like "Nxf5". White events and
