@@ -1,8 +1,12 @@
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
+import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Input
+import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.PathSensitive
@@ -28,12 +32,12 @@ plugins {
 // Kotlin/JS executable (webpack output "solver-worker.js"); this Sync copies that bundle into a
 // generated resources dir that is registered as a jsMain resource dir, so both the dev-server
 // (jsBrowserDevelopmentRun) and the distribution (jsBrowserDistribution) serve it next to
-// index.html. A production/distribution build takes the minified production bundle, everything
-// else the faster development bundle.
-val workerVariant = if (gradle.startParameter.taskNames.any { "Production" in it || "Distribution" in it }) {
-    "production"
-} else {
-    "development"
+// index.html. Every build takes the minified production bundle (deterministic: build, assemble and
+// jsBrowserDistribution all ship the same worker); scripts/runWeb.sh passes -PworkerVariant=development
+// for the faster development bundle in the dev-server.
+val workerVariant = providers.gradleProperty("workerVariant").orElse("production").get()
+require(workerVariant == "production" || workerVariant == "development") {
+    "workerVariant must be 'production' or 'development', got '$workerVariant'"
 }
 val workerWebpackTask = ":worker:jsBrowser${workerVariant.replaceFirstChar { it.uppercase() }}Webpack"
 val syncSolverWorker = tasks.register<Sync>("syncSolverWorker") {
@@ -58,8 +62,10 @@ kotlin {
 
     sourceSets {
         commonMain {
-            // build-time GeneratedVersionInfo.kt (version + git commit/date), shown in About.
+            // build-time GeneratedVersionInfo.kt (version + git commit/date) and GeneratedLicenses.kt
+            // (license texts), both shown in About.
             kotlin.srcDir(layout.buildDirectory.dir("generated/versionInfo"))
+            kotlin.srcDir(layout.buildDirectory.dir("generated/licenses"))
         }
         commonMain.dependencies {
             implementation(project(":core"))
@@ -185,6 +191,81 @@ val generateVersionInfo = tasks.register("generateVersionInfo", GenerateVersionI
     outputDir.set(layout.buildDirectory.dir("generated/versionInfo"))
 }
 
+// ── build-time license notices (GeneratedLicenses.kt) ───────────────────────
+// The About dialog shows the notices a binary distribution must carry. The texts are read from the
+// license files themselves (single source of truth, nothing hand-copied): this project's LICENSE, the
+// piece graphics notice, the ksat solver ports (LICENSE + licenses/ of the sibling sat-solvers-kotlin
+// checkout) and the puzzle notice.
+@CacheableTask
+abstract class GenerateLicenses : DefaultTask() {
+    /** Notice titles, in display order; parallel to [sources]. */
+    @get:Input abstract val titles: ListProperty<String>
+    @get:InputFiles @get:PathSensitive(PathSensitivity.RELATIVE) abstract val sources: ConfigurableFileCollection
+    @get:Input abstract val packageName: Property<String>
+    @get:OutputDirectory abstract val outputDir: DirectoryProperty
+
+    @TaskAction
+    fun run() {
+        val files = sources.files.toList()
+        val names = titles.get()
+        require(files.size == names.size) { "titles and sources differ in length" }
+        fun literal(text: String) = buildString {
+            append('"')
+            for (c in text) when (c) {
+                '\\' -> append("\\\\")
+                '"' -> append("\\\"")
+                '$' -> append("\\$")
+                '\n' -> append("\\n")
+                '\r' -> Unit
+                '\t' -> append("\\t")
+                else -> append(c)
+            }
+            append('"')
+        }
+        val entries = names.zip(files).joinToString(",\n") { (title, file) ->
+            "        LicenseNotice(${literal(title)}, ${literal(file.readText(Charsets.UTF_8).trimEnd())})"
+        }
+        val dir = outputDir.get().asFile.apply { mkdirs() }
+        dir.resolve("GeneratedLicenses.kt").writeText(
+            """
+            |package ${packageName.get()}
+            |
+            |/** One license notice: what it covers, and the full text. */
+            |class LicenseNotice(val title: String, val text: String)
+            |
+            |/**
+            | * AUTO-GENERATED — DO NOT EDIT.
+            | * Generated at build time by the generateLicenses Gradle task from the license files.
+            | */
+            |object GeneratedLicenses {
+            |    val NOTICES: List<LicenseNotice> = listOf(
+            |$entries,
+            |    )
+            |}
+            |""".trimMargin(),
+            Charsets.UTF_8,
+        )
+    }
+}
+
+val satSolversDir = project(":ksat").projectDir.parentFile
+val licenseNotices = listOf(
+    "sat-chess-kotlin (MIT)" to rootProject.file("LICENSE"),
+    "Chess piece graphics: cburnett set (BSD 3-clause)" to file("NOTICE-pieces.md"),
+    "SAT solvers: ksat (MIT, Kotlin ports)" to satSolversDir.resolve("LICENSE"),
+    "MicroSAT (MIT)" to satSolversDir.resolve("licenses/microsat-LICENSE.txt"),
+    "MiniSat (MIT)" to satSolversDir.resolve("licenses/minisat-LICENSE.txt"),
+    "CaDiCaL (MIT)" to satSolversDir.resolve("licenses/cadical-LICENSE.txt"),
+    "kissat (MIT)" to satSolversDir.resolve("licenses/kissat-LICENSE.txt"),
+    "Example puzzles (not covered by the MIT license; puzzles/NOTICE.md)" to rootProject.file("puzzles/NOTICE.md"),
+)
+val generateLicenses = tasks.register<GenerateLicenses>("generateLicenses") {
+    titles.set(licenseNotices.map { it.first })
+    sources.from(licenseNotices.map { it.second })
+    packageName.set("org.bytefred.satchess")
+    outputDir.set(layout.buildDirectory.dir("generated/licenses"))
+}
+
 tasks.withType<KotlinCompilationTask<*>>().configureEach {
-    dependsOn(generateVersionInfo)
+    dependsOn(generateVersionInfo, generateLicenses)
 }

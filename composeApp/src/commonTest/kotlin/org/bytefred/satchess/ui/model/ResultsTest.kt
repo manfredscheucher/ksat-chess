@@ -17,6 +17,16 @@ class ResultsTest {
     }
 
     @Test
+    fun unverifiedSolutionsAreNeverUnique() {
+        assertEquals("1 solution (NOT verified)", countSummary(1, complete = true, expected = null, unverified = 1))
+        assertEquals("3 solutions (1 NOT verified), expected 3", countSummary(3, complete = true, expected = 3, unverified = 1))
+        assertEquals(
+            "at least 2 solutions (stopped at the limit) (2 NOT verified)",
+            countSummary(2, complete = false, expected = null, unverified = 2),
+        )
+    }
+
+    @Test
     fun answersAreGroupedByProjectedKeyMostFrequentFirst() {
         val groups = groupByProjection(listOf(solution("h4 = Q"), solution("h4 = R"), solution("h4 = R")))
         assertEquals(listOf("h4 = R", "h4 = Q"), groups.map { it.key })

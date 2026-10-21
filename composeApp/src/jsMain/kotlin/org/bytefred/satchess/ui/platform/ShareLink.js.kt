@@ -7,10 +7,16 @@ private external fun decodeURIComponent(text: String): String
 
 actual val shareSupported: Boolean = true
 
-actual fun shareLink(puzzleJson: String) {
+actual fun shareLink(puzzleJson: String, onResult: (copied: Boolean) -> Unit) {
     val hash = "#$SHARE_HASH_KEY${encodeURIComponent(puzzleJson)}"
     window.history.replaceState(null, "", hash)
-    window.navigator.clipboard.writeText(window.location.href)
+    try {
+        // The clipboard API is missing outside secure contexts and rejects without permission.
+        window.navigator.clipboard.writeText(window.location.href)
+            .then({ onResult(true) }, { onResult(false) })
+    } catch (e: Throwable) {
+        onResult(false)
+    }
 }
 
 actual fun sharedPuzzleJson(): String? {

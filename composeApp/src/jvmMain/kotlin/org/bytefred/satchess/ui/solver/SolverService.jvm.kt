@@ -12,7 +12,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Desktop: the synchronous solver runs on Dispatchers.Default. Cancel sets the run's flag, which the
- * solver polls between SAT calls; events of a cancelled run are dropped.
+ * solver polls between SAT calls; events of a cancelled run are dropped. Any throwable ends the run
+ * with a Failed event.
  */
 actual fun createSolverService(): SolverService = CoroutineSolverService()
 
@@ -30,7 +31,8 @@ private class CoroutineSolverService : SolverService {
         scope.launch {
             try {
                 PuzzleSolver.solve(puzzle, options, isCancelled = { runCancelled.get() }, onEvent = ::deliver)
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
+                // Also OutOfMemoryError / StackOverflowError: the UI must leave "solving ..." in any case.
                 deliver(SolveEvent.Failed(e.message ?: e.toString()))
             }
         }

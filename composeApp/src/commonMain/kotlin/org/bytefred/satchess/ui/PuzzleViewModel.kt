@@ -2,8 +2,10 @@ package org.bytefred.satchess.ui
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.input.key.Key
 import androidx.lifecycle.ViewModel
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
@@ -14,13 +16,16 @@ import org.bytefred.satchess.puzzle.Puzzle
 import org.bytefred.satchess.puzzle.PuzzleJson
 import org.bytefred.satchess.puzzle.Question
 import org.bytefred.satchess.puzzle.RuleFlags
+import org.bytefred.satchess.sat.Solution
 import org.bytefred.satchess.sat.SolveEvent
 import org.bytefred.satchess.sat.SolveOptions
-import org.bytefred.satchess.sat.Solution
 import org.bytefred.satchess.ui.model.CLEAR_BOARD
 import org.bytefred.satchess.ui.model.INITIAL_BOARD
 import org.bytefred.satchess.ui.model.OPEN_BOARD
+import org.bytefred.satchess.ui.model.OPTIONS_TOOL
 import org.bytefred.satchess.ui.model.PliesUnit
+import org.bytefred.satchess.ui.model.SimilarGroup
+import org.bytefred.satchess.ui.model.SimilarGrouper
 import org.bytefred.satchess.ui.model.applyFenText
 import org.bytefred.satchess.ui.model.applyPreset
 import org.bytefred.satchess.ui.model.boardAt
@@ -28,6 +33,7 @@ import org.bytefred.satchess.ui.model.enPassantError
 import org.bytefred.satchess.ui.model.fenTextAt
 import org.bytefred.satchess.ui.model.formatPlies
 import org.bytefred.satchess.ui.model.movePiece
+import org.bytefred.satchess.ui.model.optionsAt
 import org.bytefred.satchess.ui.model.paletteClick
 import org.bytefred.satchess.ui.model.parsePliesInput
 import org.bytefred.satchess.ui.model.parseProjection
@@ -35,9 +41,12 @@ import org.bytefred.satchess.ui.model.puzzleProblem
 import org.bytefred.satchess.ui.model.removePiece
 import org.bytefred.satchess.ui.model.setSquare
 import org.bytefred.satchess.ui.model.withBoardAt
+import org.bytefred.satchess.ui.model.withCellsAt
+import org.bytefred.satchess.ui.model.withDefaultOptions
 import org.bytefred.satchess.ui.model.withMovePattern
 import org.bytefred.satchess.ui.model.withPlies
 import org.bytefred.satchess.ui.model.withSquareDomain
+import org.bytefred.satchess.ui.model.withSquareOptions
 import org.bytefred.satchess.ui.solver.SolverService
 import org.bytefred.satchess.ui.solver.createSolverService
 import kotlin.time.TimeMark
@@ -49,12 +58,17 @@ enum class InputMode { HYBRID, DIALOG }
 /** "Max solutions" in Advanced: 1, a number N, or all. */
 enum class SolutionLimit { ONE, N, ALL }
 
-/** State of the current / last solver run. */
+/** Target of the square options dialog: one square of the selected ply, or the ply's '?' default. */
+sealed interface OptionsTarget {
+    data class Square(val sq: Int) : OptionsTarget
+    data object UnknownSquares : OptionsTarget
+}
+
+/** State of the current / last solver run; its solutions are [PuzzleViewModel.solutions]. */
 data class SolveRun(
     val running: Boolean = false,
     val variables: Int? = null,
     val clauses: Int? = null,
-    val solutions: List<Solution> = emptyList(),
     /** Set when the run finished normally. */
     val done: SolveEvent.Done? = null,
     val error: String? = null,
@@ -91,12 +105,23 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
     var inputMode by mutableStateOf(InputMode.HYBRID)
     var showCoordinates by mutableStateOf(true)
 
-    // Advanced solver options (not part of the puzzle file)
+    /** The open square options dialog, or null. */
+    var optionsTarget by mutableStateOf<OptionsTarget?>(null); private set
+
+    // Advanced solver options (not part of the puzzle file). Capped by default: an open B can have
+    // hundreds of thousands of lines; "all" stays selectable.
     var solver by mutableStateOf(Solver.CADICAL)
-    var limit by mutableStateOf(SolutionLimit.ALL)
-    var limitN by mutableIntStateOf(10)
+    var limit by mutableStateOf(SolutionLimit.N)
+    var limitN by mutableIntStateOf(DEFAULT_LIMIT)
 
     var run by mutableStateOf(SolveRun()); private set
+
+    /** Solutions of the current / last run, appended in O(1) per Found event. */
+    private val foundSolutions = mutableStateListOf<Solution>()
+    val solutions: List<Solution> get() = foundSolutions
+
+    /** "Group similar solutions", updated incrementally (only while the toggle is used). */
+    private var similarGrouper = SimilarGrouper()
 
     /** Results: flat solution list (default) or "Group similar solutions" (same events, any move order). */
     var groupSimilar by mutableStateOf(false)
@@ -113,6 +138,9 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
     var message by mutableStateOf<String?>(null); private set
 
     val board: List<Char> get() = puzzle.boardAt(selectedPly)
+
+    /** Allowed contents of the '?' squares of the selected ply (for drawing the options). */
+    val boardOptions: Map<Int, Set<Char>> get() = puzzle.optionsAt(selectedPly)
     val canSolve: Boolean get() = !run.running && !pliesError && fenError == null && enPassantError == null && !projectionError
 
     // ── loading ──────────────────────────────────────────────────────────────
@@ -127,7 +155,9 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
         enPassantError = null
         projectionText = p.project.joinToString(", ")
         projectionError = false
+        optionsTarget = null
         run = SolveRun()
+        clearSolutions()
         resultsView = false
         selectedSolution = 0
         replayPly = 0
@@ -199,6 +229,8 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
         val (basePuzzle, baseSelected) = base
         puzzle = basePuzzle.withPlies(plies)
         selectedPly = if (baseSelected == basePuzzle.plies) plies else baseSelected.coerceAtMost(plies)
+        projectionText = puzzle.project.joinToString(", ")
+        projectionError = false
         syncFen()
     }
 
@@ -243,7 +275,11 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
         syncFen()
     }
 
-    fun clickSquare(sq: Int) = editBoard(paletteClick(board, sq, paletteSelection))
+    /** Hybrid input: place the palette selection, or with the options tool open the square's options. */
+    fun clickSquare(sq: Int) {
+        if (paletteSelection == OPTIONS_TOOL) openOptions(OptionsTarget.Square(sq)) else editBoard(paletteClick(board, sq, paletteSelection))
+    }
+
     fun dragPiece(from: Int, to: Int) = editBoard(movePiece(board, from, to))
     fun dragOff(from: Int) = editBoard(removePiece(board, from))
     fun setSquareTo(sq: Int, value: Char) = editBoard(setSquare(board, sq, value))
@@ -252,7 +288,31 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
     fun openBoard() = editBoard(OPEN_BOARD)
 
     private fun editBoard(cells: List<Char>) {
-        update(puzzle.withBoardAt(selectedPly, cells))
+        update(puzzle.withCellsAt(selectedPly, cells))
+        syncFen()
+    }
+
+    // ── square options ───────────────────────────────────────────────────────
+
+    fun openOptions(target: OptionsTarget) {
+        optionsTarget = target
+    }
+
+    fun closeOptions() {
+        optionsTarget = null
+    }
+
+    /** Applies the options dialog: [allowed] for its square, or as the default of the '?' squares. */
+    fun applyOptions(allowed: Set<Char>) {
+        val target = optionsTarget ?: return
+        optionsTarget = null
+        if (allowed.isEmpty()) return
+        update(
+            when (target) {
+                is OptionsTarget.Square -> puzzle.withSquareOptions(selectedPly, target.sq, allowed)
+                OptionsTarget.UnknownSquares -> puzzle.withDefaultOptions(selectedPly, allowed)
+            },
+        )
         syncFen()
     }
 
@@ -301,6 +361,7 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
             SolutionLimit.ALL -> 0
         }
         run = SolveRun(running = true, puzzle = solving)
+        clearSolutions()
         resultsView = true
         runStart = TimeSource.Monotonic.markNow()
         selectedSolution = 0
@@ -320,14 +381,25 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
     fun elapsedMillis(): Long = runStart?.elapsedNow()?.inWholeMilliseconds ?: 0
 
     private fun onSolveEvent(event: SolveEvent) {
-        run = when (event) {
-            is SolveEvent.Encoded -> run.copy(variables = event.variables, clauses = event.clauses)
-            is SolveEvent.Found -> run.copy(solutions = run.solutions + event.solution)
-            is SolveEvent.Info -> run.copy(infos = run.infos + event.message)
-            is SolveEvent.Done -> run.copy(running = false, done = event)
-            is SolveEvent.Failed -> run.copy(running = false, error = event.message)
+        when (event) {
+            is SolveEvent.Encoded -> run = run.copy(variables = event.variables, clauses = event.clauses)
+            is SolveEvent.Found -> foundSolutions += event.solution
+            is SolveEvent.Info -> run = run.copy(infos = run.infos + event.message)
+            is SolveEvent.Done -> run = run.copy(running = false, done = event)
+            is SolveEvent.Failed -> run = run.copy(running = false, error = event.message)
         }
         if (!run.running) stopClock()
+    }
+
+    private fun clearSolutions() {
+        foundSolutions.clear()
+        similarGrouper = SimilarGrouper()
+    }
+
+    /** The "Group similar solutions" groups of [solutions]; only solutions new since the last call are keyed. */
+    fun similarGroups(): List<SimilarGroup> {
+        for (i in similarGrouper.size until foundSolutions.size) similarGrouper.add(foundSolutions[i])
+        return similarGrouper.groups()
     }
 
     private fun stopClock() {
@@ -337,10 +409,10 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
 
     // ── replay ───────────────────────────────────────────────────────────────
 
-    val currentSolution: Solution? get() = run.solutions.getOrNull(selectedSolution)
+    val currentSolution: Solution? get() = foundSolutions.getOrNull(selectedSolution)
 
     fun selectSolution(index: Int) {
-        selectedSolution = index.coerceIn(0, (run.solutions.size - 1).coerceAtLeast(0))
+        selectedSolution = index.coerceIn(0, (foundSolutions.size - 1).coerceAtLeast(0))
         replayPly = 0
     }
 
@@ -351,12 +423,28 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
 
     fun stepReplay(delta: Int) = setReplay(replayPly + delta)
 
+    /** Arrow keys / Home / End step the replay wherever the focus is (unless a text field takes them). */
+    fun replayKey(key: Key): Boolean {
+        val moves = currentSolution?.moves?.size ?: return false
+        when (key) {
+            Key.DirectionLeft -> stepReplay(-1)
+            Key.DirectionRight -> stepReplay(1)
+            Key.MoveHome -> setReplay(0)
+            Key.MoveEnd -> setReplay(moves)
+            else -> return false
+        }
+        return true
+    }
+
     override fun onCleared() {
         solverService.cancel()
     }
 
     companion object {
         private val compactJson = Json(from = PuzzleJson.json) { prettyPrint = false }
+
+        /** Default "Max solutions" N. */
+        const val DEFAULT_LIMIT = 100
 
         /** "New": a 4-ply proof game from the initial position with B still open. */
         val NEW_PUZZLE = Puzzle(

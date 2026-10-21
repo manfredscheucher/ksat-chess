@@ -37,12 +37,15 @@ fun setSquare(cells: List<Char>, sq: Int, value: Char): List<Char> = cells.with(
 
 fun isPiece(cell: Char): Boolean = Piece.fromFen(cell) != null
 
-/** How strongly a board constrains its ply (timeline icon); derived from the number of '?'. */
+/**
+ * How strongly a board constrains its ply (timeline icon); derived from the number of '?'. An all-'?'
+ * board with square options ([restricted]) is partial, not open.
+ */
 enum class ConstraintLevel { FIXED, PARTIAL, OPEN }
 
-fun constraintLevel(cells: List<Char>): ConstraintLevel = when (cells.count { it == UNKNOWN }) {
+fun constraintLevel(cells: List<Char>, restricted: Boolean = false): ConstraintLevel = when (cells.count { it == UNKNOWN }) {
     0 -> ConstraintLevel.FIXED
-    cells.size -> ConstraintLevel.OPEN
+    cells.size -> if (restricted) ConstraintLevel.PARTIAL else ConstraintLevel.OPEN
     else -> ConstraintLevel.PARTIAL
 }
 

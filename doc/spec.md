@@ -199,6 +199,15 @@ results as their own view.
   edited via checkboxes (dialog or next to the board); it must be VISIBLE whether a piece
   is placed fixed or only possible there. Stored as `squares` domains; key "?" = domain
   for all '?' squares of that ply.
+- **Square options as built (2026-10-21)**: options dialog via palette tool "Options ...",
+  long press / right click, or "Several options ..." in dialog mode; shortcut buttons Any /
+  Kings or empty / White king or empty / Any piece / None; one checked option = fixed square,
+  all 13 = plain '?'; a line under the board sets the "?" default. Option squares are
+  amber, hatched, with faded mini icons; legend below the board.
+- Default solution limit 100 (Claude's proposal, "all" selectable). Worker bundle is
+  production by default, `-PworkerVariant=development` for `runWeb.sh`. About shows full
+  license texts generated from the license files (`generateLicenses`). Arrow keys step the
+  replay without focusing it first.
 - **Group similar solutions** (Manfred, 2026-10-21): the plain list stays the default; a
   toggle groups solutions. Per move an event string "piece X goes to square Y (captures Z)"
   with full piece identity (colour + type), not bare SAN like "Nxf5". White events and

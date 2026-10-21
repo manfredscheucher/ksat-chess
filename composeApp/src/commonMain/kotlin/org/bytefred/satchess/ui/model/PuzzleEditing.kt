@@ -6,6 +6,7 @@ import org.bytefred.satchess.puzzle.Goal
 import org.bytefred.satchess.puzzle.MovePattern
 import org.bytefred.satchess.puzzle.Puzzle
 import org.bytefred.satchess.puzzle.Question
+import org.bytefred.satchess.sat.puzzleProblems
 
 /**
  * Pure functions mapping between a [Puzzle] (the file format, doc/spec.md section 4) and what the
@@ -32,9 +33,10 @@ fun Puzzle.withBoardAt(t: Int, cells: List<Char>): Puzzle = if (t == 0) {
 fun Puzzle.movePatternPlies(): Set<Int> = moves.keys.mapNotNull { it.toIntOrNull() }.toSet()
 
 /**
- * Changes the window length. The target board B (and its square domains) moves along with N, as long as
- * both the old and the new window have a B separate from A; intermediate constraints, square domains
- * and move patterns that no longer fit into the window are dropped.
+ * Changes the window length. The target board B (its square domains and projection items like
+ * `board@N`) moves along with N, as long as both the old and the new window have a B separate from A;
+ * intermediate constraints, square domains, move patterns and projection items that no longer fit into
+ * the window are dropped (an emptied projection falls back to `moves`).
  */
 fun Puzzle.withPlies(newPlies: Int): Puzzle {
     require(newPlies >= 0)
@@ -52,28 +54,33 @@ fun Puzzle.withPlies(newPlies: Int): Puzzle {
         positions = positions.filterKeys(::intermediate) + listOfNotNull(b?.let { new to it }),
         squares = squares.filterKeys { it == "0" || intermediate(it) } + listOfNotNull(bSquares?.let { new to it }),
         moves = moves.filterKeys { inWindow(it, newPlies - 1) },
+        project = project.mapNotNull { item ->
+            val ply = PLY_ITEM.find(item)?.groupValues?.get(1) ?: return@mapNotNull item
+            when {
+                ply == old && bMoves -> item.replaceFirst("@$old", "@$new")
+                ply == "0" || intermediate(ply) -> item
+                else -> null
+            }
+        }.ifEmpty { listOf("moves") },
     )
 }
 
+/** The ply of a projection item like `board@4` or `square@4:h4`. */
+private val PLY_ITEM = Regex("@(\\d+)")
+
 /**
- * Null if [puzzle] can be edited and solved (plies in range, every board a valid FEN placement, all
- * ply keys numbers inside the window), else the problem. Used for imports and share links.
+ * Null if [puzzle] can be edited and solved, else its problems: everything the solver would reject
+ * ([puzzleProblems]), plus what the editor cannot show (more than [MAX_PLIES] plies, a board in
+ * `positions` at ply 0, an e.p. square that does not fit the side to move). Used for imports and
+ * share links.
  */
 fun puzzleProblem(puzzle: Puzzle): String? {
-    val n = puzzle.plies
-    if (n !in 0..MAX_PLIES) return "plies must be between 0 and $MAX_PLIES"
-    fun badKey(key: String, range: IntRange) = key.toIntOrNull()?.let { it !in range } ?: true
-    puzzle.positions.keys.firstOrNull { badKey(it, 1..n) }?.let { return "positions: ply '$it' is outside 1..$n" }
-    puzzle.squares.keys.firstOrNull { badKey(it, 0..n) }?.let { return "squares: ply '$it' is outside 0..$n" }
-    puzzle.moves.keys.firstOrNull { badKey(it, 0 until n) }?.let { return "moves: ply '$it' is outside 0..${n - 1}" }
-    for (board in listOf(puzzle.start.board) + puzzle.positions.values) {
-        try {
-            Fen.parsePattern(board)
-        } catch (e: IllegalArgumentException) {
-            return e.message ?: "invalid board '$board'"
-        }
-    }
-    return null
+    val editor = listOfNotNull(
+        "plies must be at most $MAX_PLIES".takeIf { puzzle.plies > MAX_PLIES },
+        "positions: ply 0 belongs in start.board".takeIf { "0" in puzzle.positions },
+        enPassantError(puzzle.start.enPassant, puzzle.start.sideToMove),
+    )
+    return (puzzleProblems(puzzle) + editor).distinct().takeIf { it.isNotEmpty() }?.joinToString("; ")
 }
 
 // ── plies vs moves ────────────────────────────────────────────────────────────

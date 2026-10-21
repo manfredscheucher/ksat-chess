@@ -2,8 +2,9 @@ package org.bytefred.satchess.ui
 
 import org.bytefred.satchess.sat.Solution
 import org.bytefred.satchess.sat.SolvedMove
+import org.bytefred.satchess.ui.model.SimilarGroup
+import org.bytefred.satchess.ui.model.SimilarGrouper
 import org.bytefred.satchess.ui.model.SimilarityKey
-import org.bytefred.satchess.ui.model.groupSimilar
 import org.bytefred.satchess.ui.model.similarityKey
 import org.bytefred.satchess.ui.model.similaritySummary
 import kotlin.test.Test
@@ -89,4 +90,18 @@ class SimilarityGroupingTest {
         val lines = listOf(sampleSolution("e4", "e5"), sampleSolution("d4", "e5"), sampleSolution("e4", "e5"))
         assertEquals(listOf(listOf(0, 2), listOf(1)), groupSimilar(lines).map { it.indices })
     }
+
+    @Test
+    fun groupsGrowIncrementally() {
+        val lines = listOf(sampleSolution("e4", "e5", "Nf3"), sampleSolution("d4", "d5"), sampleSolution("Nf3", "e5", "e4"))
+        val grouper = SimilarGrouper()
+        grouper.add(lines[0])
+        assertEquals(listOf(listOf(0)), grouper.groups().map { it.indices })
+        lines.drop(1).forEach(grouper::add)
+        assertEquals(3, grouper.size)
+        assertEquals(listOf(listOf(0, 2), listOf(1)), grouper.groups().map { it.indices })
+    }
+
+    private fun groupSimilar(solutions: List<Solution>): List<SimilarGroup> =
+        SimilarGrouper().apply { solutions.forEach(::add) }.groups()
 }

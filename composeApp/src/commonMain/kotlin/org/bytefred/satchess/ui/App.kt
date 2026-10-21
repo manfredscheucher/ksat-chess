@@ -25,6 +25,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -57,7 +61,12 @@ fun App(vm: PuzzleViewModel = viewModel { PuzzleViewModel() }) {
 
         BoxWithConstraints(Modifier.fillMaxSize()) {
             val wide = maxWidth >= WIDE_LAYOUT
+            // Replay keys bubble up here from any focused element that does not use them (text fields do).
+            val replayKeys = Modifier.onKeyEvent { event ->
+                event.type == KeyEventType.KeyDown && (wide || vm.resultsView) && vm.replayKey(event.key)
+            }
             Scaffold(
+                modifier = replayKeys,
                 topBar = { TopBar(vm, compact = !wide, onExamples = { showExamples = true }) },
                 bottomBar = {
                     if (!wide) {
@@ -135,7 +144,7 @@ private fun NarrowLayout(vm: PuzzleViewModel, modifier: Modifier) {
             Tab(
                 selected = resultsTab,
                 onClick = { vm.resultsView = true },
-                text = { Text(if (vm.run.solutions.isEmpty()) "Results" else "Results (${vm.run.solutions.size})") },
+                text = { Text(if (vm.solutions.isEmpty()) "Results" else "Results (${vm.solutions.size})") },
                 modifier = Modifier.testTag("resultsTab"),
             )
         }

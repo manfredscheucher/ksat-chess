@@ -19,10 +19,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -38,6 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
@@ -52,19 +55,27 @@ import org.bytefred.satchess.puzzle.Question
 import org.bytefred.satchess.ui.board.BoardColors
 import org.bytefred.satchess.ui.board.BoardView
 import org.bytefred.satchess.ui.board.drawCell
+import org.bytefred.satchess.ui.board.drawEmptyMark
+import org.bytefred.satchess.ui.board.drawOptions
 import org.bytefred.satchess.ui.board.rememberPiecePainters
+import org.bytefred.satchess.ui.model.ALL_OPTIONS
 import org.bytefred.satchess.ui.model.ConstraintLevel
 import org.bytefred.satchess.ui.model.EMPTY
+import org.bytefred.satchess.ui.model.OPTIONS_TOOL
 import org.bytefred.satchess.ui.model.PALETTE
 import org.bytefred.satchess.ui.model.PliesUnit
+import org.bytefred.satchess.ui.model.SquareState
 import org.bytefred.satchess.ui.model.UNKNOWN
 import org.bytefred.satchess.ui.model.boardAt
 import org.bytefred.satchess.ui.model.constraintLevel
+import org.bytefred.satchess.ui.model.defaultOptionsAt
 import org.bytefred.satchess.ui.model.formatMoves
 import org.bytefred.satchess.ui.model.label
 import org.bytefred.satchess.ui.model.movePatternPlies
+import org.bytefred.satchess.ui.model.optionsLabel
 import org.bytefred.satchess.ui.model.pliesSentence
 import org.bytefred.satchess.ui.model.sideToMoveAt
+import org.bytefred.satchess.ui.model.squareStateAt
 import org.bytefred.satchess.ui.model.toggleCastlingRight
 
 /** Display name of ply [t] in a window of [plies]: A, 1, 2, ..., B. */
@@ -152,7 +163,7 @@ fun TimelineSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
                 if (t > 0) Connector(hasPattern = (t - 1) in patternPlies)
                 PlyChip(
                     label = plyName(t, p.plies),
-                    level = constraintLevel(p.boardAt(t)),
+                    level = constraintLevel(p.boardAt(t), restricted = !p.squares[t.toString()].isNullOrEmpty()),
                     selected = t == vm.selectedPly,
                     onClick = { vm.selectPly(t) },
                 )
@@ -191,7 +202,7 @@ fun TimelineSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
             }
         }
         Text(
-            "Filled: fixed board · half: some '?' · empty: open · thick bar: move pattern",
+            "Filled: fixed board · half: some '?' or options · empty: open · thick bar: move pattern",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -336,7 +347,10 @@ fun TriStateChips(title: String, value: Boolean?, onChange: (Boolean?) -> Unit) 
 
 // ── board editor ────────────────────────────────────────────────────────────
 
-/** The board of the selected ply with palette, Initial / Clear / All ? and the two-way FEN field. */
+/**
+ * The board of the selected ply with palette, square options, Initial / Clear / All ?, the default for
+ * the '?' squares and the two-way FEN field.
+ */
 @Composable
 fun BoardEditorSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
     val p = vm.puzzle
@@ -345,23 +359,29 @@ fun BoardEditorSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
     val side = sideToMoveAt(p.start.sideToMove, t)
     val title = "Board at ${plyName(t, p.plies)}" + (if (t in 1 until p.plies) " (after ply $t)" else "") +
         " · " + (side?.let { if (it == 'w') "White to move" else "Black to move" } ?: "side to move free")
+    val openOptions = { sq: Int -> vm.openOptions(OptionsTarget.Square(sq)) }
 
     Section(title, modifier) {
         val hybrid = vm.inputMode == InputMode.HYBRID
         BoardView(
             cells = vm.board,
             modifier = Modifier.fillMaxWidth().testTag("editorBoard"),
+            options = vm.boardOptions,
             showCoordinates = vm.showCoordinates,
             onTap = if (hybrid) vm::clickSquare else { sq -> dialogSquare = sq },
             onMove = vm::dragPiece,
             onDropOff = vm::dragOff,
+            onOptions = openOptions,
         )
-        if (hybrid) Palette(vm.paletteSelection, onSelect = { vm.paletteSelection = it })
+        BoardLegend()
+        if (hybrid) Palette(vm.paletteSelection, withOptionsTool = true, onSelect = { vm.paletteSelection = it })
         Text(
             if (hybrid) {
-                "Click a square to place the selected piece, click it again to empty it. Drag pieces to move them, off the board to remove them."
+                "Click a square to place the selected piece, click it again to empty it. With \"Options\" (or a long " +
+                    "press / right click) choose several possible contents. Drag pieces to move them, off the board to remove them."
             } else {
-                "Click a square to choose its content. Drag pieces to move them, off the board to remove them."
+                "Click a square to choose its content (or several options). Long press / right click opens the options. " +
+                    "Drag pieces to move them, off the board to remove them."
             },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -370,6 +390,18 @@ fun BoardEditorSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
             OutlinedButton(onClick = vm::setInitialBoard) { Text("Initial") }
             OutlinedButton(onClick = vm::clearBoard) { Text("Clear") }
             OutlinedButton(onClick = vm::openBoard) { Text("All ?") }
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                "Every '?' square: ${optionsLabel(p.defaultOptionsAt(t))}",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.weight(1f, fill = false),
+            )
+            Spacer(Modifier.width(8.dp))
+            TextButton(
+                onClick = { vm.openOptions(OptionsTarget.UnknownSquares) },
+                modifier = Modifier.testTag("unknownSquaresOptions"),
+            ) { Text("Change ...") }
         }
         OutlinedTextField(
             value = vm.fenText,
@@ -387,16 +419,125 @@ fun BoardEditorSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
             onDismissRequest = { dialogSquare = null },
             title = { Text("Square ${Sq.name(sq)}") },
             text = {
-                Palette(vm.board[sq], onSelect = { vm.setSquareTo(sq, it); dialogSquare = null })
+                Palette(vm.board[sq], withOptionsTool = false, onSelect = { vm.setSquareTo(sq, it); dialogSquare = null })
             },
-            confirmButton = { TextButton(onClick = { dialogSquare = null }) { Text("Cancel") } },
+            confirmButton = {
+                TextButton(onClick = { dialogSquare = null; openOptions(sq) }, modifier = Modifier.testTag("dialogOptions")) {
+                    Text("Several options ...")
+                }
+            },
+            dismissButton = { TextButton(onClick = { dialogSquare = null }) { Text("Cancel") } },
         )
+    }
+    vm.optionsTarget?.let { target ->
+        val (heading, initial) = when (target) {
+            is OptionsTarget.Square -> "Square ${Sq.name(target.sq)} at ${plyName(t, p.plies)}" to
+                when (val state = p.squareStateAt(t, target.sq)) {
+                    is SquareState.Fixed -> setOf(state.cell)
+                    is SquareState.Options -> state.allowed
+                }
+            OptionsTarget.UnknownSquares -> "Every '?' square at ${plyName(t, p.plies)}" to p.defaultOptionsAt(t)
+        }
+        OptionsDialog(heading, initial, onApply = vm::applyOptions, onDismiss = vm::closeOptions)
     }
 }
 
-/** 2 x 7 palette: white pieces + empty, black pieces + '?'. */
+/**
+ * Checkboxes for the 12 pieces and "empty", with shortcuts. One checked option = a fixed square; the
+ * default of the '?' squares may also be a single option (e.g. "empty").
+ */
 @Composable
-fun Palette(selected: Char, onSelect: (Char) -> Unit) {
+private fun OptionsDialog(heading: String, initial: Set<Char>, onApply: (Set<Char>) -> Unit, onDismiss: () -> Unit) {
+    var allowed by remember(heading, initial) { mutableStateOf(initial) }
+    val painters = rememberPiecePainters()
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(heading) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.verticalScroll(rememberScrollState())) {
+                Text("What can stand here?", style = MaterialTheme.typography.bodyMedium)
+                for (row in listOf(ALL_OPTIONS.take(6), ALL_OPTIONS.drop(6))) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                        for (option in row) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Canvas(Modifier.width(32.dp).aspectRatio(1f)) {
+                                    if (option == EMPTY) drawEmptyMark(Offset.Zero, size.width)
+                                    else with(painters.getValue(option)) { draw(size) }
+                                }
+                                Checkbox(
+                                    checked = option in allowed,
+                                    onCheckedChange = { on -> allowed = if (on) allowed + option else allowed - option },
+                                    modifier = Modifier.testTag("option-$option"),
+                                )
+                            }
+                        }
+                    }
+                }
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    for ((label, set) in OPTION_SHORTCUTS) {
+                        OutlinedButton(onClick = { allowed = set }) { Text(label) }
+                    }
+                }
+                Text(
+                    if (allowed.isEmpty()) "Check at least one option." else "Here: ${optionsLabel(allowed)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (allowed.isEmpty()) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onApply(allowed) }, enabled = allowed.isNotEmpty(), modifier = Modifier.testTag("applyOptions")) {
+                Text("Apply")
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
+}
+
+private val OPTION_SHORTCUTS: List<Pair<String, Set<Char>>> = listOf(
+    "Any" to ALL_OPTIONS.toSet(),
+    "Kings or empty" to setOf('K', 'k', EMPTY),
+    "White king or empty" to setOf('K', EMPTY),
+    "Any piece (not empty)" to ALL_OPTIONS.toSet() - EMPTY,
+    "None" to emptySet(),
+)
+
+/** How the editor board shows fixed squares and options. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun BoardLegend() {
+    val painters = rememberPiecePainters()
+    val textMeasurer = rememberTextMeasurer()
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        itemVerticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.testTag("boardLegend"),
+    ) {
+        @Composable
+        fun item(label: String, draw: DrawScope.(Float) -> Unit) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Canvas(Modifier.width(24.dp).aspectRatio(1f)) {
+                    drawRect(BoardColors.light)
+                    draw(size.width)
+                }
+                Spacer(Modifier.width(4.dp))
+                Text(label, style = MaterialTheme.typography.bodySmall)
+            }
+        }
+        item("fixed piece") { drawCell('K', Offset.Zero, it, painters, textMeasurer) }
+        item("fixed empty") { }
+        item("one of these") { drawOptions(setOf('K', EMPTY), Offset.Zero, it, painters) }
+        item("anything") { drawCell(UNKNOWN, Offset.Zero, it, painters, textMeasurer) }
+    }
+}
+
+/**
+ * 2 x 7 palette: white pieces + empty, black pieces + '?'. [withOptionsTool] adds the "Options" tool
+ * (a click on a square then opens its options dialog).
+ */
+@Composable
+fun Palette(selected: Char, withOptionsTool: Boolean, onSelect: (Char) -> Unit) {
     val painters = rememberPiecePainters()
     val textMeasurer = rememberTextMeasurer()
     val colors = MaterialTheme.colorScheme
@@ -431,6 +572,17 @@ fun Palette(selected: Char, onSelect: (Char) -> Unit) {
                     }
                 }
             }
+        }
+        if (withOptionsTool) {
+            FilterChip(
+                selected = selected == OPTIONS_TOOL,
+                onClick = { onSelect(OPTIONS_TOOL) },
+                label = { Text("Options ... (several possible contents per square)") },
+                leadingIcon = {
+                    Canvas(Modifier.width(18.dp).aspectRatio(1f)) { drawOptions(setOf('K', EMPTY), Offset.Zero, size.width, painters) }
+                },
+                modifier = Modifier.testTag("palette-options"),
+            )
         }
     }
 }

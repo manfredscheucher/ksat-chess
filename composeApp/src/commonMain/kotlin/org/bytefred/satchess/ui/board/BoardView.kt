@@ -4,8 +4,8 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.awaitTouchSlopOrCancellation
-import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -19,9 +19,13 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.vector.VectorPainter
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -32,6 +36,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import org.bytefred.satchess.chess.Piece
 import org.bytefred.satchess.chess.Sq
+import org.bytefred.satchess.ui.model.ALL_OPTIONS
+import org.bytefred.satchess.ui.model.EMPTY
 import org.bytefred.satchess.ui.model.UNKNOWN
 import org.bytefred.satchess.ui.model.isPiece
 import org.bytefred.satchess.ui.model.placementText
@@ -43,6 +49,9 @@ object BoardColors {
     val lastMove = Color(0x66F2C94C)
     val selected = Color(0xFF2F5D62)
     val unknown = Color(0xFF3A4A52)
+    /** Square options ("one of these stands here"): amber tint + hatching behind faded mini pieces. */
+    val optionsTint = Color(0x4DF2B33D)
+    val optionsHatch = Color(0x80B9771A)
     val coordinateOnLight = Color(0xFF6F8792)
     val coordinateOnDark = Color(0xFFEEF2F4)
 }
@@ -54,18 +63,23 @@ fun rememberPiecePainters(): Map<Char, VectorPainter> =
 
 /**
  * A chess board drawn on a Canvas: 64 [cells] (FEN letter, '.' or '?'), White at the bottom.
+ * [options] gives the allowed contents of '?' squares: a square with only some allowed is drawn
+ * hatched with faded mini pieces, one with everything allowed (or not in the map) as '?'.
  * Interaction is optional: [onTap] for clicks, [onMove] / [onDropOff] for dragging pieces (a drop
- * outside the board removes the piece). [highlights] tints squares (last move from/to).
+ * outside the board removes the piece), [onOptions] for a long press or right click.
+ * [highlights] tints squares (last move from/to).
  */
 @Composable
 fun BoardView(
     cells: List<Char>,
     modifier: Modifier = Modifier,
+    options: Map<Int, Set<Char>> = emptyMap(),
     showCoordinates: Boolean = true,
     highlights: Set<Int> = emptySet(),
     onTap: ((sq: Int) -> Unit)? = null,
     onMove: ((from: Int, to: Int) -> Unit)? = null,
     onDropOff: ((from: Int) -> Unit)? = null,
+    onOptions: ((sq: Int) -> Unit)? = null,
 ) {
     val painters = rememberPiecePainters()
     val textMeasurer = rememberTextMeasurer()
@@ -73,13 +87,31 @@ fun BoardView(
     val tap by rememberUpdatedState(onTap)
     val move by rememberUpdatedState(onMove)
     val dropOff by rememberUpdatedState(onDropOff)
+    val longPress by rememberUpdatedState(onOptions)
     var dragFrom by remember { mutableStateOf<Int?>(null) }
     var dragPos by remember { mutableStateOf(Offset.Zero) }
 
     var input = Modifier.aspectRatio(1f).semantics { contentDescription = "Board ${placementText(cells)}" }
-    if (onTap != null) {
+    if (onOptions != null) {
+        // Right click: consumed in the initial pass, so neither the tap nor the drag handler sees it.
         input = input.pointerInput(Unit) {
-            detectTapGestures { pos -> squareAt(pos, size.width.toFloat())?.let { tap?.invoke(it) } }
+            awaitPointerEventScope {
+                while (true) {
+                    val event = awaitPointerEvent(PointerEventPass.Initial)
+                    if (event.type != PointerEventType.Press || !event.buttons.isSecondaryPressed) continue
+                    val change = event.changes.firstOrNull() ?: continue
+                    squareAt(change.position, size.width.toFloat())?.let { longPress?.invoke(it) }
+                    event.changes.forEach { it.consume() }
+                }
+            }
+        }
+    }
+    if (onTap != null || onOptions != null) {
+        input = input.pointerInput(Unit) {
+            detectTapGestures(
+                onLongPress = { pos -> squareAt(pos, size.width.toFloat())?.let { longPress?.invoke(it) } },
+                onTap = { pos -> squareAt(pos, size.width.toFloat())?.let { tap?.invoke(it) } },
+            )
         }
     }
     if (onMove != null) {
@@ -116,7 +148,12 @@ fun BoardView(
         for (sq in 0 until 64) {
             if (sq == dragFrom) continue
             val topLeft = Offset(Sq.col(sq) * square, Sq.row(sq) * square)
-            drawCell(cells[sq], topLeft, square, painters, textMeasurer)
+            val allowed = options[sq]
+            if (cells[sq] == UNKNOWN && allowed != null && allowed.size < ALL_OPTIONS.size) {
+                drawOptions(allowed, topLeft, square, painters)
+            } else {
+                drawCell(cells[sq], topLeft, square, painters, textMeasurer)
+            }
         }
         dragFrom?.let { from ->
             drawRect(BoardColors.selected, Offset(Sq.col(from) * square, Sq.row(from) * square), Size(square, square), style = Stroke(square * 0.05f))
@@ -171,3 +208,42 @@ fun DrawScope.drawCell(cell: Char, topLeft: Offset, square: Float, painters: Map
     }
 }
 
+/**
+ * Draws the options of a square: amber tint, diagonal hatching and the allowed pieces as faded mini
+ * icons in a grid (empty as a small crossed circle), so it never looks like a fixed piece.
+ */
+fun DrawScope.drawOptions(allowed: Set<Char>, topLeft: Offset, square: Float, painters: Map<Char, VectorPainter>) {
+    clipRect(topLeft.x, topLeft.y, topLeft.x + square, topLeft.y + square) {
+        drawRect(BoardColors.optionsTint, topLeft, Size(square, square))
+        val gap = square / 5
+        var x = -square
+        while (x < square) {
+            drawLine(BoardColors.optionsHatch, topLeft + Offset(x, square), topLeft + Offset(x + square, 0f), square * 0.025f)
+            x += gap
+        }
+    }
+    val items = ALL_OPTIONS.filter { it in allowed }
+    if (items.isEmpty()) return
+    var columns = 1
+    while (columns * columns < items.size) columns++
+    val rows = (items.size + columns - 1) / columns
+    val cell = square * 0.9f / columns
+    val origin = topLeft + Offset((square - cell * columns) / 2, (square - cell * rows) / 2)
+    for ((i, item) in items.withIndex()) {
+        val at = origin + Offset((i % columns) * cell, (i / columns) * cell)
+        val painter = painters[item]
+        if (painter != null) {
+            translate(at.x, at.y) { with(painter) { draw(Size(cell, cell), alpha = 0.7f) } }
+        } else if (item == EMPTY) {
+            drawEmptyMark(at, cell)
+        }
+    }
+}
+
+/** The "empty" option: a crossed circle in the [square] at [topLeft]. */
+fun DrawScope.drawEmptyMark(topLeft: Offset, square: Float) {
+    val center = topLeft + Offset(square / 2, square / 2)
+    val r = square * 0.28f
+    drawCircle(BoardColors.unknown, r, center, style = Stroke(square * 0.07f))
+    drawLine(BoardColors.unknown, center + Offset(-r, r), center + Offset(r, -r), square * 0.07f)
+}

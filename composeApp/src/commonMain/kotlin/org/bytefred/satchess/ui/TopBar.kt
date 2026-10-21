@@ -6,7 +6,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
@@ -25,8 +28,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import org.bytefred.satchess.GeneratedLicenses
 import org.bytefred.satchess.GeneratedVersionInfo
 import org.bytefred.satchess.ui.platform.rememberFileLoader
 import org.bytefred.satchess.ui.platform.rememberFileSaver
@@ -50,8 +55,9 @@ fun TopBar(vm: PuzzleViewModel, compact: Boolean, onExamples: () -> Unit) {
         add("Export" to { exportFile(vm.suggestedFileName(), vm.exportJson()) })
         if (shareSupported) {
             add("Share link" to {
-                shareLink(vm.shareJson())
-                vm.showMessage("Link copied to the clipboard")
+                shareLink(vm.shareJson()) { copied ->
+                    vm.showMessage(if (copied) "Link copied to the clipboard" else "Could not copy: the link is in the address bar")
+                }
             })
         }
         add("Settings" to { showSettings = true })
@@ -115,14 +121,20 @@ private fun SettingsDialog(vm: PuzzleViewModel, onDismiss: () -> Unit) {
     )
 }
 
-/** About: build identity from GeneratedVersionInfo plus credits. */
+/**
+ * About: build identity from GeneratedVersionInfo, then the full license notices of everything the app
+ * bundles (GeneratedLicenses, generated from the license files), scrollable.
+ */
 @Composable
 private fun AboutDialog(onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("About SAT chess") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(
+                Modifier.heightIn(max = 520.dp).verticalScroll(rememberScrollState()).testTag("about"),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
                 Text("sat-chess-kotlin ${GeneratedVersionInfo.VERSION}")
                 val sha = GeneratedVersionInfo.COMMIT_SHA
                 if (sha != "unknown") {
@@ -132,9 +144,16 @@ private fun AboutDialog(onDismiss: () -> Unit) {
                 Text("built ${GeneratedVersionInfo.BUILD_DATE}")
                 HorizontalDivider(Modifier.padding(vertical = 8.dp))
                 Text("Retrograde chess puzzles solved with SAT: every answer is a line of play that fits all constraints, found by a SAT solver and verified by a move generator.")
-                Text("SAT solvers: ksat (Kotlin ports of CaDiCaL, MiniSat, kissat).", style = MaterialTheme.typography.bodySmall)
-                Text("Piece graphics: cburnett set by Colin M.L. Burnett, BSD license.", style = MaterialTheme.typography.bodySmall)
-                Text("Example puzzles: positions by their credited composers, not covered by the MIT license.", style = MaterialTheme.typography.bodySmall)
+                Text(
+                    "The code is MIT licensed. The bundled example puzzles are the credited composers' works and are not " +
+                        "covered by the MIT license (see the puzzle notice below, puzzles/NOTICE.md in the source).",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                for (notice in GeneratedLicenses.NOTICES) {
+                    HorizontalDivider(Modifier.padding(vertical = 8.dp))
+                    Text(notice.title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                    Text(notice.text, style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace)
+                }
             }
         },
         confirmButton = { TextButton(onClick = onDismiss) { Text("OK") } },

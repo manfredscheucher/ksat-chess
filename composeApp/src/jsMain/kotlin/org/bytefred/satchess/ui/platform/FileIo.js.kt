@@ -2,6 +2,7 @@ package org.bytefred.satchess.ui.platform
 
 import androidx.compose.runtime.Composable
 import kotlinx.browser.document
+import kotlinx.browser.window
 import org.w3c.dom.HTMLAnchorElement
 import org.w3c.dom.HTMLInputElement
 import org.w3c.dom.url.URL
@@ -11,6 +12,8 @@ import org.w3c.files.FileReader
 import org.w3c.files.get
 
 // Browser: import via a hidden <input type=file> + FileReader; export via a Blob download.
+
+private const val REVOKE_DELAY_MS = 10_000
 
 @Composable
 actual fun rememberFileLoader(onLoaded: (text: String) -> Unit): () -> Unit = {
@@ -38,6 +41,7 @@ actual fun rememberFileSaver(onSaved: (fileName: String?) -> Unit): (suggestedNa
         anchor.href = url
         anchor.download = "$suggestedName.json"
         anchor.click()
-        URL.revokeObjectURL(url)
+        // Revoking right away can cancel the download in some browsers; give it time to start.
+        window.setTimeout({ URL.revokeObjectURL(url) }, REVOKE_DELAY_MS)
         onSaved("$suggestedName.json")
     }

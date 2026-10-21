@@ -24,16 +24,23 @@ fun answerSummary(groups: List<AnswerGroup>): String = groups.joinToString(", ")
 
 /**
  * The count line of the results: "unique", "3 solutions, expected 3", "at least 5 solutions (stopped at
- * the limit)", "no solution". [complete] = the search space was exhausted, so [found] is exact.
+ * the limit)", "no solution", "3 solutions (1 NOT verified)". [complete] = the search space was
+ * exhausted, so [found] is exact. A line the move generator did not confirm is never called "unique".
  */
-fun countSummary(found: Int, complete: Boolean, expected: Int?): String {
+fun countSummary(found: Int, complete: Boolean, expected: Int?, unverified: Int = 0): String {
+    val noun = if (found == 1) "solution" else "solutions"
     val main = when {
         found == 0 && complete -> "no solution"
-        found == 1 && complete -> "unique"
-        complete -> "$found solutions"
-        else -> "at least $found ${if (found == 1) "solution" else "solutions"} (stopped at the limit)"
+        found == 1 && complete && unverified == 0 -> "unique"
+        complete -> "$found $noun"
+        else -> "at least $found $noun (stopped at the limit)"
     }
-    return if (expected == null) main else "$main, expected $expected"
+    val check = when {
+        unverified == 0 -> ""
+        found == 1 -> " (NOT verified)"
+        else -> " ($unverified NOT verified)"
+    }
+    return if (expected == null) main + check else "$main$check, expected $expected"
 }
 
 /** Numbered SAN move list of a line, e.g. "1. e4 e5 2. Nf3" or "1... e5 2. Nf3" when Black starts. */
@@ -99,12 +106,24 @@ private fun enPassantVictim(piece: Piece, from: Int, to: Int, cells: List<Char>)
 private fun pieceName(piece: Piece): String =
     "${piece.color.name.lowercase()} ${piece.type.name.lowercase()}"
 
-/** Groups solutions with identical [similarityKey]; groups in order of their first solution. */
-fun groupSimilar(solutions: List<Solution>): List<SimilarGroup> {
-    val groups = LinkedHashMap<Any, MutableList<Int>>()
-    val keys = solutions.map(::similarityKey)
-    for ((i, key) in keys.withIndex()) groups.getOrPut(key ?: i) { mutableListOf() } += i
-    return groups.values.map { indices -> SimilarGroup(keys[indices.first()], indices) }
+/**
+ * Groups solutions with identical [similarityKey], incrementally: [add] keys one solution (indices in
+ * the order added), [groups] lists the groups in order of their first solution.
+ */
+class SimilarGrouper {
+    private val groups = LinkedHashMap<Any, Pair<SimilarityKey?, MutableList<Int>>>()
+
+    /** Number of solutions added so far. */
+    var size = 0
+        private set
+
+    fun add(solution: Solution) {
+        val key = similarityKey(solution)
+        groups.getOrPut(key ?: size) { key to mutableListOf() }.second += size
+        size++
+    }
+
+    fun groups(): List<SimilarGroup> = groups.values.map { (key, indices) -> SimilarGroup(key, indices.toList()) }
 }
 
 /** "White: white knight to f3, white pawn to e4 · Black: black pawn to e5". */

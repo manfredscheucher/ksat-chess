@@ -23,17 +23,24 @@ private class WorkerSolverService : SolverService {
 
     override fun solve(puzzle: Puzzle, options: SolveOptions, onEvent: (SolveEvent) -> Unit) {
         if (busy) cancel()
-        val w = worker ?: Worker(WORKER_SCRIPT).also { worker = it }
+        val w = worker ?: try {
+            Worker(WORKER_SCRIPT).also { worker = it }
+        } catch (e: Throwable) {
+            onEvent(SolveEvent.Failed("Cannot start the solver worker: ${e.message ?: e.toString()}"))
+            return
+        }
         busy = true
         w.onmessage = { message ->
             val event = try {
                 PuzzleJson.json.decodeFromString(SolveEvent.serializer(), message.data as String)
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 SolveEvent.Failed("Unreadable message from the solver worker: ${e.message}")
             }
             if (event is SolveEvent.Done || event is SolveEvent.Failed) busy = false
             onEvent(event)
         }
+        // An uncaught error in the worker (also a JS RangeError from a stack overflow, or the script
+        // failing to load) ends the run, so the UI never waits forever.
         w.onerror = { error ->
             val detail = error.asDynamic().message as? String
             cancel()

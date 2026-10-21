@@ -62,4 +62,22 @@ class ScreenshotTest {
 
     @Test
     fun phoneResults() = shoot("phone-results-400x850", 400, 850, 2f, ::solved)
+
+    /** chess.com #2: fixed pieces, every other square "white king or empty" (squares "?" = "K."). */
+    private fun whereIsTheKing(vm: PuzzleViewModel) {
+        vm.load(loadExamples().first { it.puzzle.id == "chess-com-5/2" }.puzzle)
+    }
+
+    @Test
+    fun desktopSquareOptions() = shoot("desktop-options-1280x800", 1280, 800, 1f) { vm, _ -> whereIsTheKing(vm) }
+
+    @Test
+    fun desktopSquareOptionsDialog() = shoot("desktop-options-dialog-1280x800", 1280, 800, 1f) { vm, _ ->
+        whereIsTheKing(vm)
+        vm.openOptions(OptionsTarget.Square(0))
+    }
+
+    @Test
+    fun phoneSquareOptions() = shoot("phone-options-400x850", 400, 850, 2f) { vm, _ -> whereIsTheKing(vm) }
 }
+

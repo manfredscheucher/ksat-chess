@@ -27,19 +27,24 @@ echo "Starting Gradle dev-server ($TASK) …  logs: $LOG   (Ctrl-C to stop)"
 # Linking the Kotlin/JS bundles (Compose + SAT solvers) needs more than the 1.5 GB kotlin daemon set in
 # gradle.properties (OutOfMemoryError); 3 GB like luckySweep — only for this build.
 WEB_HEAP=(-Pkotlin.daemon.jvmargs=-Xmx3072M)
-./gradlew "${WEB_HEAP[@]}" "$TASK" >"$LOG" 2>&1 &
+# The dev-server serves the faster development bundle of the solver worker (builds default to production).
+./gradlew "${WEB_HEAP[@]}" -PworkerVariant=development "$TASK" >"$LOG" 2>&1 &
 GRADLE_PID=$!
 trap 'kill "$GRADLE_PID" 2>/dev/null || true' EXIT
 
 # Wait for the dev-server (a cold Gradle build can take a few minutes).
 echo -n "waiting for $URL "
+UP=""
 for _ in $(seq 1 1200); do
-    if curl -sf -o /dev/null "$URL"; then echo " up"; break; fi
+    if curl -sf -o /dev/null "$URL"; then echo " up"; UP=1; break; fi
     if ! kill -0 "$GRADLE_PID" 2>/dev/null; then
         echo; echo "Gradle exited early — see $LOG" >&2; tail -20 "$LOG" >&2; exit 1
     fi
     echo -n .; sleep 0.5
 done
+if [ -z "$UP" ]; then
+    echo; echo "The dev-server did not come up within 10 minutes — see $LOG" >&2; tail -20 "$LOG" >&2; exit 1
+fi
 
 if [ -z "${NO_CHROME:-}" ]; then
     if [ -x "$CHROME" ]; then

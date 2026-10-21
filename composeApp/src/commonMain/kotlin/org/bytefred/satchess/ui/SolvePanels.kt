@@ -10,9 +10,12 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
@@ -28,8 +31,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -37,11 +40,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -51,12 +49,13 @@ import org.bytefred.ksat.facade.Solver
 import org.bytefred.satchess.chess.Fen
 import org.bytefred.satchess.chess.Sq
 import org.bytefred.satchess.puzzle.RuleFlags
+import org.bytefred.satchess.puzzle.UNKNOWN_SQUARES
+import org.bytefred.satchess.sat.ShortestCheck
 import org.bytefred.satchess.sat.Solution
 import org.bytefred.satchess.ui.board.BoardView
 import org.bytefred.satchess.ui.model.answerSummary
 import org.bytefred.satchess.ui.model.countSummary
 import org.bytefred.satchess.ui.model.groupByProjection
-import org.bytefred.satchess.ui.model.groupSimilar
 import org.bytefred.satchess.ui.model.isPathProjection
 import org.bytefred.satchess.ui.model.sanLine
 import org.bytefred.satchess.ui.model.similaritySummary
@@ -137,7 +136,8 @@ private fun SquareDomains(vm: PuzzleViewModel) {
     for ((ply, domains) in p.squares.entries.sortedBy { it.key.toIntOrNull() ?: 0 }) {
         for ((square, allowed) in domains) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("ply ${plyName(ply.toIntOrNull() ?: 0, p.plies)}: $square in $allowed", fontFamily = FontFamily.Monospace)
+                val where = if (square == UNKNOWN_SQUARES) "every '?' square" else square
+                Text("ply ${plyName(ply.toIntOrNull() ?: 0, p.plies)}: $where in $allowed", fontFamily = FontFamily.Monospace)
                 Spacer(Modifier.width(8.dp))
                 TextButton(onClick = { vm.setSquareDomain(ply.toIntOrNull() ?: 0, square, "") }) { Text("Remove") }
             }
@@ -194,7 +194,7 @@ fun SolveBar(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
                 Button(onClick = vm::solve, enabled = vm.canSolve, modifier = Modifier.testTag("solve")) { Text("Solve") }
             }
             Text(
-                solveStatus(run, elapsed),
+                solveStatus(run, vm.solutions.size, elapsed),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                 modifier = Modifier.weight(1f),
@@ -203,13 +203,13 @@ fun SolveBar(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
     }
 }
 
-private fun solveStatus(run: SolveRun, elapsedMillis: Long): String {
+private fun solveStatus(run: SolveRun, found: Int, elapsedMillis: Long): String {
     if (run.puzzle == null) return "Set up the question, then solve."
     val parts = mutableListOf<String>()
     if (run.variables != null) parts += "${run.variables} vars / ${run.clauses} clauses"
     else if (run.running) parts += "encoding ..."
     parts += formatSeconds(elapsedMillis)
-    parts += "found ${run.solutions.size}"
+    parts += "found $found"
     when {
         run.error != null -> parts += "failed"
         run.cancelled -> parts += "cancelled"
@@ -230,24 +230,28 @@ private fun formatSeconds(millis: Long): String {
 fun ResultsSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
     val run = vm.run
     val solved = run.puzzle ?: return
+    val solutions = vm.solutions
     Section("Results", modifier) {
         run.error?.let { Text("Solver error: $it", color = MaterialTheme.colorScheme.error) }
         run.infos.forEach { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         run.done?.let { done ->
+            val unverified = remember(solutions.size) { solutions.count { !it.verified } }
             Text(
-                countSummary(run.solutions.size, done.complete, solved.expected),
+                countSummary(solutions.size, done.complete, solved.expected, unverified),
                 style = MaterialTheme.typography.titleMedium,
+                color = if (unverified > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.testTag("countSummary"),
             )
+            done.shortestCheck?.let { Text(shortestLabel(it, solved.plies), style = MaterialTheme.typography.bodyMedium) }
         }
-        if (run.solutions.isEmpty()) {
+        if (solutions.isEmpty()) {
             if (run.running) Text("No solution yet ...", style = MaterialTheme.typography.bodyMedium)
             return@Section
         }
         if (!isPathProjection(solved.project)) {
-            val groups = groupByProjection(run.solutions)
+            val summary = remember(solutions.size) { answerSummary(groupByProjection(solutions)) }
             FieldLabel("Answer")
-            Text(answerSummary(groups), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+            Text(summary, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
         }
         FieldLabel("Solutions")
         SolutionList(vm, showKey = !isPathProjection(solved.project))
@@ -256,7 +260,19 @@ fun ResultsSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
     }
 }
 
-/** The flat solution list (default), or with "Group similar solutions" the groups of [groupSimilar]. */
+private fun shortestLabel(check: ShortestCheck, plies: Int): String = when (check) {
+    ShortestCheck.PROVEN -> "Shortest: proven, ${plies - 2} plies are impossible."
+    ShortestCheck.NOT_SHORTEST -> "Shortest: NO, ${plies - 2} plies are enough."
+    ShortestCheck.NOT_PROVEN_RELAXED ->
+        "Shortest: not proven. ${plies - 2} plies are enough once move patterns and intermediate boards are dropped."
+    ShortestCheck.CANCELLED -> "Shortest: not checked (cancelled)."
+}
+
+/**
+ * The flat solution list (default), or with "Group similar solutions" the groups of
+ * [PuzzleViewModel.similarGroups]. Lazy and height-capped, so even hundreds of thousands of lines
+ * cost only the visible rows.
+ */
 @Composable
 private fun SolutionList(vm: PuzzleViewModel, showKey: Boolean) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable { vm.groupSimilar = !vm.groupSimilar }) {
@@ -264,41 +280,51 @@ private fun SolutionList(vm: PuzzleViewModel, showKey: Boolean) {
         Spacer(Modifier.width(8.dp))
         Text("Group similar solutions", style = MaterialTheme.typography.bodyMedium)
     }
-    val solutions = vm.run.solutions
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        if (!vm.groupSimilar) {
-            for (i in solutions.indices) SolutionRow(vm, i, showKey)
-            return@Column
+    val count = vm.solutions.size
+    val listModifier = Modifier.fillMaxWidth().heightIn(max = SOLUTION_LIST_HEIGHT).testTag("solutionList")
+    if (!vm.groupSimilar) {
+        LazyColumn(listModifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            items(count) { i -> SolutionRow(vm, i, showKey) }
         }
-        val groups = remember(solutions) { groupSimilar(solutions) }
-        for (group in groups) key(group.indices.first()) {
-            var open by remember { mutableStateOf(false) }
-            Surface(
-                onClick = { open = !open },
-                color = MaterialTheme.colorScheme.surfaceContainerLow,
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.fillMaxWidth().testTag("similarGroup"),
-            ) {
-                Row(Modifier.padding(horizontal = 10.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    ChevronGlyph(open, MaterialTheme.colorScheme.primary)
-                    Spacer(Modifier.width(8.dp))
-                    Text(similaritySummary(group.key), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
-                    val n = group.indices.size
-                    Text("$n ${if (n == 1) "line" else "lines"}", style = MaterialTheme.typography.labelLarge)
+        return
+    }
+    val groups = remember(count) { vm.similarGroups() }
+    val open = remember { mutableStateMapOf<Int, Boolean>() }
+    LazyColumn(listModifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        for (group in groups) {
+            val first = group.indices.first()
+            val isOpen = open[first] == true
+            item(key = "group-$first") {
+                Surface(
+                    onClick = { open[first] = !isOpen },
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.fillMaxWidth().testTag("similarGroup"),
+                ) {
+                    Row(Modifier.padding(horizontal = 10.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        ChevronGlyph(isOpen, MaterialTheme.colorScheme.primary)
+                        Spacer(Modifier.width(8.dp))
+                        Text(similaritySummary(group.key), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                        val n = group.indices.size
+                        Text("$n ${if (n == 1) "line" else "lines"}", style = MaterialTheme.typography.labelLarge)
+                    }
                 }
             }
-            if (open) {
-                Column(Modifier.padding(start = 16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    for (i in group.indices) SolutionRow(vm, i, showKey)
+            if (isOpen) {
+                items(group.indices, key = { "line-$it" }) { i ->
+                    Box(Modifier.padding(start = 16.dp)) { SolutionRow(vm, i, showKey) }
                 }
             }
         }
     }
 }
 
+/** Height of the solution list (it scrolls on its own inside the scrolling results column). */
+private val SOLUTION_LIST_HEIGHT = 360.dp
+
 @Composable
 private fun SolutionRow(vm: PuzzleViewModel, i: Int, showKey: Boolean) {
-    val solution = vm.run.solutions[i]
+    val solution = vm.solutions[i]
     Surface(
         onClick = { vm.selectSolution(i) },
         color = if (i == vm.selectedSolution) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
@@ -306,7 +332,7 @@ private fun SolutionRow(vm: PuzzleViewModel, i: Int, showKey: Boolean) {
         modifier = Modifier.fillMaxWidth(),
     ) {
         Row(Modifier.padding(horizontal = 10.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("#${i + 1}", style = MaterialTheme.typography.labelLarge, modifier = Modifier.width(36.dp))
+            Text("#${i + 1}", style = MaterialTheme.typography.labelLarge, modifier = Modifier.width(48.dp))
             Column(Modifier.weight(1f)) {
                 if (showKey) Text(solution.projectedKey, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                 Text(
@@ -352,19 +378,12 @@ private fun ReplayPanel(vm: PuzzleViewModel) {
     val cells = remember(solution, ply) { replayCells(solution, ply) }
     val lastMove = solution.moves.getOrNull(ply - 1)
     val focus = remember { FocusRequester() }
+    // Arrow keys work right away: the replay takes the focus when a solution is shown; App's root key
+    // handler covers the case where the focus is elsewhere (but not in a text field).
+    LaunchedEffect(vm.run.puzzle, vm.selectedSolution) { focus.requestFocus() }
     Column(
         Modifier
             .focusRequester(focus)
-            .onKeyEvent { event ->
-                if (event.type != KeyEventType.KeyDown) return@onKeyEvent false
-                when (event.key) {
-                    Key.DirectionLeft -> { vm.stepReplay(-1); true }
-                    Key.DirectionRight -> { vm.stepReplay(1); true }
-                    Key.MoveHome -> { vm.setReplay(0); true }
-                    Key.MoveEnd -> { vm.setReplay(solution.moves.size); true }
-                    else -> false
-                }
-            }
             .focusable(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
