@@ -163,7 +163,7 @@ Reviewed by a fresh UX reviewer; decisions:
   piece / Custom). The preset fills A, B, N, goal and projection. Solver choice,
   projection, rules and square domains live under "Advanced".
 - **Plies vs moves**: one number with a unit toggle plus a live sentence, e.g.
-  "13 plies = PG 6.5 · White starts · Black moves last · White to move at B".
+  "13 plies = PG 6.5 · White starts · White moves last · Black to move at B".
 - **Timeline**: `(A)─1─2─…─(B)` chips; the icon shows fixed / partial / open (derived from
   the number of `?`, not a mode switch). Clicking a ply opens its board; "+" adds an
   intermediate board constraint or a move pattern.
@@ -189,6 +189,20 @@ results as their own view.
   Queen (1)"), expandable to lines. Replay with slider, clickable SAN list, arrow keys,
   from/to highlight. Each solution carries a "verified by move generator" badge;
   "unique" / "N solutions, expected M".
+- **Group similar solutions** (Manfred, 2026-10-21): the plain list stays the default; a
+  toggle groups solutions. Per move an event string "piece X goes to square Y (captures Z)"
+  with full piece identity (colour + type), not bare SAN like "Nxf5". White events and
+  black events are collected separately and each sorted; key = (sorted white, sorted
+  black). Identical keys = same events in another move order = one group. White and black
+  are never mixed. Implemented literally; open question to Manfred: should a promotion
+  piece be part of the event? (not included unless he says so)
+- **As built (UI agent, 2026-10-21)**: >=1200 dp three columns (timeline + board + palette
+  below the board | question, start, advanced, solve | results); 900-1200 dp two columns;
+  phone: Puzzle/Results tabs, sticky Solve bar, collapsed question summary. Palette 2x7.
+  Presets never drop a board the user entered. N accepts plies or moves ("6.5").
+  Share = `#puzzle=<url-encoded JSON>`; imports and share links are validated. Max
+  solutions defaults to "all". Worker bundle `solver-worker.js` is copied into the web
+  resources by `syncSolverWorker`.
 - **Worker**: the solver call is synchronous, so progress is per solution, not mid-solve;
   Cancel = `worker.terminate()` and respawn.
 - **Share**: the puzzle JSON goes into the URL hash; Import/Export as a JSON file.

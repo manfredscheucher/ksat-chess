@@ -1,5 +1,6 @@
 package org.bytefred.satchess.puzzle
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
@@ -66,19 +67,19 @@ data class MovePattern(
 
 @Serializable
 enum class Goal {
-    @kotlinx.serialization.SerialName("none") NONE,
-    @kotlinx.serialization.SerialName("check") CHECK,
-    @kotlinx.serialization.SerialName("checkmate") CHECKMATE,
-    @kotlinx.serialization.SerialName("stalemate") STALEMATE,
+    @SerialName("none") NONE,
+    @SerialName("check") CHECK,
+    @SerialName("checkmate") CHECKMATE,
+    @SerialName("stalemate") STALEMATE,
 }
 
 @Serializable
 enum class Question {
-    @kotlinx.serialization.SerialName("proofGame") PROOF_GAME,
-    @kotlinx.serialization.SerialName("lastMoves") LAST_MOVES,
-    @kotlinx.serialization.SerialName("helpmate") HELPMATE,
-    @kotlinx.serialization.SerialName("unknownPiece") UNKNOWN_PIECE,
-    @kotlinx.serialization.SerialName("custom") CUSTOM,
+    @SerialName("proofGame") PROOF_GAME,
+    @SerialName("lastMoves") LAST_MOVES,
+    @SerialName("helpmate") HELPMATE,
+    @SerialName("unknownPiece") UNKNOWN_PIECE,
+    @SerialName("custom") CUSTOM,
 }
 
 @Serializable

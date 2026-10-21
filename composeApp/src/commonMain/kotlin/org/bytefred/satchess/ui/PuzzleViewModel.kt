@@ -1,0 +1,369 @@
+package org.bytefred.satchess.ui
+
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.ViewModel
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.json.Json
+import org.bytefred.ksat.facade.Solver
+import org.bytefred.satchess.puzzle.Goal
+import org.bytefred.satchess.puzzle.MovePattern
+import org.bytefred.satchess.puzzle.Puzzle
+import org.bytefred.satchess.puzzle.PuzzleJson
+import org.bytefred.satchess.puzzle.Question
+import org.bytefred.satchess.puzzle.RuleFlags
+import org.bytefred.satchess.sat.SolveEvent
+import org.bytefred.satchess.sat.SolveOptions
+import org.bytefred.satchess.sat.Solution
+import org.bytefred.satchess.ui.model.CLEAR_BOARD
+import org.bytefred.satchess.ui.model.INITIAL_BOARD
+import org.bytefred.satchess.ui.model.OPEN_BOARD
+import org.bytefred.satchess.ui.model.PliesUnit
+import org.bytefred.satchess.ui.model.applyFenText
+import org.bytefred.satchess.ui.model.applyPreset
+import org.bytefred.satchess.ui.model.boardAt
+import org.bytefred.satchess.ui.model.enPassantError
+import org.bytefred.satchess.ui.model.fenTextAt
+import org.bytefred.satchess.ui.model.formatPlies
+import org.bytefred.satchess.ui.model.movePiece
+import org.bytefred.satchess.ui.model.paletteClick
+import org.bytefred.satchess.ui.model.parsePliesInput
+import org.bytefred.satchess.ui.model.parseProjection
+import org.bytefred.satchess.ui.model.puzzleProblem
+import org.bytefred.satchess.ui.model.removePiece
+import org.bytefred.satchess.ui.model.setSquare
+import org.bytefred.satchess.ui.model.withBoardAt
+import org.bytefred.satchess.ui.model.withMovePattern
+import org.bytefred.satchess.ui.model.withPlies
+import org.bytefred.satchess.ui.model.withSquareDomain
+import org.bytefred.satchess.ui.solver.SolverService
+import org.bytefred.satchess.ui.solver.createSolverService
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
+
+/** Board input (Settings): the hybrid palette/drag mode, or a dialog per clicked square. */
+enum class InputMode { HYBRID, DIALOG }
+
+/** "Max solutions" in Advanced: 1, a number N, or all. */
+enum class SolutionLimit { ONE, N, ALL }
+
+/** State of the current / last solver run. */
+data class SolveRun(
+    val running: Boolean = false,
+    val variables: Int? = null,
+    val clauses: Int? = null,
+    val solutions: List<Solution> = emptyList(),
+    /** Set when the run finished normally. */
+    val done: SolveEvent.Done? = null,
+    val error: String? = null,
+    val cancelled: Boolean = false,
+    val infos: List<String> = emptyList(),
+    /** The puzzle as it was solved (results stay meaningful while the user edits on). */
+    val puzzle: Puzzle? = null,
+)
+
+/**
+ * UI state of the puzzle screen. The edited [Puzzle] itself is the state (doc/spec.md section 4),
+ * so import/export/share are lossless; the editing rules are the pure functions in ui/model.
+ */
+class PuzzleViewModel(private val solverService: SolverService = createSolverService()) : ViewModel() {
+
+    var puzzle: Puzzle by mutableStateOf(NEW_PUZZLE); private set
+
+    /** The ply whose board the editor shows (0 = A, plies = B). */
+    var selectedPly by mutableIntStateOf(0); private set
+    var paletteSelection by mutableStateOf('P')
+
+    var pliesUnit by mutableStateOf(PliesUnit.PLIES); private set
+    var pliesText by mutableStateOf(formatPlies(NEW_PUZZLE.plies, PliesUnit.PLIES)); private set
+    var pliesError by mutableStateOf(false); private set
+
+    var fenText by mutableStateOf(NEW_PUZZLE.fenTextAt(0)); private set
+    var fenError by mutableStateOf<String?>(null); private set
+    var enPassantText by mutableStateOf("-"); private set
+    var enPassantError by mutableStateOf<String?>(null); private set
+    var projectionText by mutableStateOf(NEW_PUZZLE.project.joinToString(", ")); private set
+    var projectionError by mutableStateOf(false); private set
+
+    // Settings
+    var inputMode by mutableStateOf(InputMode.HYBRID)
+    var showCoordinates by mutableStateOf(true)
+
+    // Advanced solver options (not part of the puzzle file)
+    var solver by mutableStateOf(Solver.CADICAL)
+    var limit by mutableStateOf(SolutionLimit.ALL)
+    var limitN by mutableIntStateOf(10)
+
+    var run by mutableStateOf(SolveRun()); private set
+
+    /** Results: flat solution list (default) or "Group similar solutions" (same events, any move order). */
+    var groupSimilar by mutableStateOf(false)
+
+    /** Phone layout: results are their own view (tab); Solve switches to it. */
+    var resultsView by mutableStateOf(false)
+    private var runStart: TimeMark? = null
+    /** Elapsed time of the finished run. */
+    var finishedMillis by mutableStateOf(0L); private set
+    var selectedSolution by mutableIntStateOf(0); private set
+    var replayPly by mutableIntStateOf(0); private set
+
+    /** A transient message for the snackbar ("Link copied", import errors, ...). */
+    var message by mutableStateOf<String?>(null); private set
+
+    val board: List<Char> get() = puzzle.boardAt(selectedPly)
+    val canSolve: Boolean get() = !run.running && !pliesError && fenError == null && enPassantError == null && !projectionError
+
+    // ── loading ──────────────────────────────────────────────────────────────
+
+    fun load(p: Puzzle) {
+        solverService.cancel()
+        update(p)
+        selectedPly = if (p.positions.containsKey(p.plies.toString())) p.plies else 0
+        pliesText = formatPlies(p.plies, pliesUnit)
+        pliesError = false
+        enPassantText = p.start.enPassant
+        enPassantError = null
+        projectionText = p.project.joinToString(", ")
+        projectionError = false
+        run = SolveRun()
+        resultsView = false
+        selectedSolution = 0
+        replayPly = 0
+        syncFen()
+    }
+
+    fun newPuzzle() = load(NEW_PUZZLE)
+
+    private var started = false
+
+    /** First screen: a puzzle shared via link wins, else the first bundled example, else "New". */
+    fun start(sharedJson: String?, examples: List<Example>) {
+        if (started) return
+        started = true
+        if (sharedJson != null && importJson(sharedJson)) return
+        examples.firstOrNull()?.let { load(it.puzzle) }
+    }
+
+    /** Imports puzzle JSON; returns false (and shows a message) on invalid input. */
+    fun importJson(text: String): Boolean = try {
+        val p = PuzzleJson.decode(text)
+        val problem = puzzleProblem(p)
+        if (problem == null) load(p) else showMessage("Not a valid puzzle file: $problem")
+        problem == null
+    } catch (e: SerializationException) {
+        showMessage("Not a valid puzzle file: ${e.message}")
+        false
+    } catch (e: IllegalArgumentException) {
+        showMessage("Not a valid puzzle file: ${e.message}")
+        false
+    }
+
+    fun exportJson(): String = PuzzleJson.encode(puzzle)
+
+    /** Compact JSON for the share link (no pretty-printing whitespace in the URL). */
+    fun shareJson(): String = compactJson.encodeToString(Puzzle.serializer(), puzzle)
+
+    /** A file name for Export, from the puzzle id or title. */
+    fun suggestedFileName(): String =
+        (puzzle.id.substringAfterLast('/').ifEmpty { puzzle.title }).ifEmpty { "puzzle" }
+            .replace(Regex("[^A-Za-z0-9._-]+"), "-")
+
+    fun showMessage(text: String?) {
+        message = text
+    }
+
+    // ── question, plies, goal ───────────────────────────────────────────────
+
+    fun setQuestion(question: Question) {
+        update(applyPreset(puzzle, question))
+        enPassantText = puzzle.start.enPassant
+        enPassantError = null
+        projectionText = puzzle.project.joinToString(", ")
+        projectionError = false
+        selectedPly = selectedPly.coerceAtMost(puzzle.plies)
+        syncFen()
+    }
+
+    /**
+     * While N is being typed, every keystroke re-derives the window from the puzzle as it was before the
+     * first keystroke, so intermediate values ("1" on the way to "14") never drop constraints for good.
+     */
+    fun setPliesInput(text: String) {
+        pliesText = text
+        val plies = parsePliesInput(text, pliesUnit)
+        pliesError = plies == null
+        if (plies == null) return
+        val base = pliesEditBase ?: (puzzle to selectedPly).also { pliesEditBase = it }
+        val (basePuzzle, baseSelected) = base
+        puzzle = basePuzzle.withPlies(plies)
+        selectedPly = if (baseSelected == basePuzzle.plies) plies else baseSelected.coerceAtMost(plies)
+        syncFen()
+    }
+
+    /** The puzzle and selected ply before the current run of N keystrokes; any other edit ends it. */
+    private var pliesEditBase: Pair<Puzzle, Int>? = null
+
+    fun changePliesUnit(unit: PliesUnit) {
+        pliesUnit = unit
+        pliesText = formatPlies(puzzle.plies, unit)
+        pliesError = false
+    }
+
+    fun setGoal(goal: Goal) = update(puzzle.copy(goal = goal))
+    fun setShortest(on: Boolean) = update(puzzle.copy(shortest = on))
+    fun setRules(rules: RuleFlags) = update(puzzle.copy(rules = rules))
+
+    // ── start parameters ─────────────────────────────────────────────────────
+
+    fun setSideToMove(side: String) {
+        update(puzzle.copy(start = puzzle.start.copy(sideToMove = side)))
+        checkEnPassant()
+    }
+
+    fun setCastling(castling: String) = update(puzzle.copy(start = puzzle.start.copy(castling = castling)))
+
+    fun setEnPassantInput(text: String) {
+        enPassantText = text
+        checkEnPassant()
+    }
+
+    private fun checkEnPassant() {
+        val ep = enPassantText.trim().ifEmpty { "-" }
+        enPassantError = enPassantError(ep, puzzle.start.sideToMove)
+        if (enPassantError == null) update(puzzle.copy(start = puzzle.start.copy(enPassant = ep)))
+    }
+
+    // ── board editing ────────────────────────────────────────────────────────
+
+    fun selectPly(t: Int) {
+        pliesEditBase = null
+        selectedPly = t.coerceIn(0, puzzle.plies)
+        syncFen()
+    }
+
+    fun clickSquare(sq: Int) = editBoard(paletteClick(board, sq, paletteSelection))
+    fun dragPiece(from: Int, to: Int) = editBoard(movePiece(board, from, to))
+    fun dragOff(from: Int) = editBoard(removePiece(board, from))
+    fun setSquareTo(sq: Int, value: Char) = editBoard(setSquare(board, sq, value))
+    fun setInitialBoard() = editBoard(INITIAL_BOARD)
+    fun clearBoard() = editBoard(CLEAR_BOARD)
+    fun openBoard() = editBoard(OPEN_BOARD)
+
+    private fun editBoard(cells: List<Char>) {
+        update(puzzle.withBoardAt(selectedPly, cells))
+        syncFen()
+    }
+
+    /** Two-way FEN field: valid text updates the board, invalid text shows an inline error. */
+    fun setFenInput(text: String) {
+        fenText = text
+        val edit = applyFenText(puzzle, selectedPly, text)
+        fenError = edit.error
+        edit.puzzle?.let { p ->
+            update(p)
+            enPassantText = p.start.enPassant
+            enPassantError = null
+        }
+    }
+
+    private fun syncFen() {
+        fenText = puzzle.fenTextAt(selectedPly)
+        fenError = null
+    }
+
+    // ── advanced: move patterns, square domains, projection ───────────────────
+
+    fun setMovePattern(t: Int, pattern: MovePattern?) = update(puzzle.withMovePattern(t, pattern))
+    fun setSquareDomain(t: Int, square: String, allowed: String) = update(puzzle.withSquareDomain(t, square, allowed))
+
+    fun setProjectionInput(text: String) {
+        projectionText = text
+        val items = parseProjection(text)
+        projectionError = items == null
+        if (items != null) update(puzzle.copy(project = items))
+    }
+
+    private fun update(p: Puzzle) {
+        puzzle = p
+        pliesEditBase = null
+    }
+
+    // ── solving ──────────────────────────────────────────────────────────────
+
+    fun solve() {
+        if (!canSolve) return
+        val solving = puzzle
+        val maxSolutions = when (limit) {
+            SolutionLimit.ONE -> 1
+            SolutionLimit.N -> limitN.coerceAtLeast(1)
+            SolutionLimit.ALL -> 0
+        }
+        run = SolveRun(running = true, puzzle = solving)
+        resultsView = true
+        runStart = TimeSource.Monotonic.markNow()
+        selectedSolution = 0
+        replayPly = 0
+        solverService.solve(solving, SolveOptions(solver, maxSolutions), ::onSolveEvent)
+    }
+
+    fun cancel() {
+        solverService.cancel()
+        if (run.running) {
+            run = run.copy(running = false, cancelled = true)
+            stopClock()
+        }
+    }
+
+    /** Milliseconds since the current/last run started (for the live status line). */
+    fun elapsedMillis(): Long = runStart?.elapsedNow()?.inWholeMilliseconds ?: 0
+
+    private fun onSolveEvent(event: SolveEvent) {
+        run = when (event) {
+            is SolveEvent.Encoded -> run.copy(variables = event.variables, clauses = event.clauses)
+            is SolveEvent.Found -> run.copy(solutions = run.solutions + event.solution)
+            is SolveEvent.Info -> run.copy(infos = run.infos + event.message)
+            is SolveEvent.Done -> run.copy(running = false, done = event)
+            is SolveEvent.Failed -> run.copy(running = false, error = event.message)
+        }
+        if (!run.running) stopClock()
+    }
+
+    private fun stopClock() {
+        finishedMillis = elapsedMillis()
+        runStart = null
+    }
+
+    // ── replay ───────────────────────────────────────────────────────────────
+
+    val currentSolution: Solution? get() = run.solutions.getOrNull(selectedSolution)
+
+    fun selectSolution(index: Int) {
+        selectedSolution = index.coerceIn(0, (run.solutions.size - 1).coerceAtLeast(0))
+        replayPly = 0
+    }
+
+    fun setReplay(ply: Int) {
+        val last = (currentSolution?.moves?.size ?: 0)
+        replayPly = ply.coerceIn(0, last)
+    }
+
+    fun stepReplay(delta: Int) = setReplay(replayPly + delta)
+
+    override fun onCleared() {
+        solverService.cancel()
+    }
+
+    companion object {
+        private val compactJson = Json(from = PuzzleJson.json) { prettyPrint = false }
+
+        /** "New": a 4-ply proof game from the initial position with B still open. */
+        val NEW_PUZZLE = Puzzle(
+            title = "New puzzle",
+            question = Question.PROOF_GAME,
+            plies = 4,
+            project = listOf("moves"),
+        )
+    }
+}
