@@ -28,4 +28,4 @@ license like the code.
 
 If you are a composer or rights holder and want a puzzle credited differently or
 removed, open an issue in this repository's GitHub issue tracker, or email the
-maintainer at `<maintainer email>`. We will act on it promptly.
+maintainer at manfred.scheucher@proton.me. We will act on it promptly.

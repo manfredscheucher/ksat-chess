@@ -13,15 +13,20 @@ class PuzzleFilesTest {
     private fun check(dir: String) {
         val files = File(root, dir).walkTopDown().filter { it.extension == "json" }.sortedBy { it.name }.toList()
         assertTrue(files.isNotEmpty(), "no puzzles in $dir")
-        for (file in files) {
-            val puzzle = PuzzleJson.decode(file.readText())
-            val expected = puzzle.expected ?: continue
-            val result = solveAll(puzzle, max = expected + 1)
-            assertEquals(expected, result.count, "${file.path}: ${result.keys}")
-        }
+        files.forEach(::checkFile)
+    }
+
+    private fun checkFile(file: File) {
+        val puzzle = PuzzleJson.decode(file.readText())
+        val expected = puzzle.expected ?: return
+        val result = solveAll(puzzle, max = expected + 1)
+        assertEquals(expected, result.count, "${file.path}: ${result.keys}")
     }
 
     @Test fun demos() = check("demos")
+
+    /** Where is the white king? Unique (c3) only with a 3-ply history incl. an e.p. capture. */
+    @Test fun whiteKingNeedsEnPassantHistory() = checkFile(File(root, "chess-com-5/2.json"))
 
     @Test
     fun chessCom() {
