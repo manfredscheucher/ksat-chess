@@ -222,6 +222,12 @@ results as their own view.
   Share = `#puzzle=<url-encoded JSON>`; imports and share links are validated. Max
   solutions defaults to "all". Worker bundle `solver-worker.js` is copied into the web
   resources by `syncSolverWorker`.
+- Square options design confirmed by Manfred (2026-10-22, "4 passt").
+- **chess.com #2 history** (Manfred, 2026-10-22, suspected a port bug since Python found a
+  unique e.p. history): not a port bug. On the same 2-ply probe Python and Kotlin both give
+  405. 2 plies are too short (e.p. at A is "-"); with a 3-ply window and "K or empty"
+  domains the answer is unique: white king c3 via 1. c4 bxc3 e.p.+ 2. Kxc3+.
+  Puzzle file uses 3 plies, expected 1, regression test `whiteKingNeedsEnPassantHistory`.
 - **Worker**: the solver call is synchronous, so progress is per solution, not mid-solve;
   Cancel = `worker.terminate()` and respawn.
 - **Share**: the puzzle JSON goes into the URL hash; Import/Export as a JSON file.
