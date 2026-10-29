@@ -135,7 +135,6 @@ private fun AboutDialog(onDismiss: () -> Unit) {
                 Modifier.heightIn(max = 520.dp).verticalScroll(rememberScrollState()).testTag("about"),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                Text("sat-chess-kotlin ${GeneratedVersionInfo.VERSION}")
                 val sha = GeneratedVersionInfo.COMMIT_SHA
                 if (sha != "unknown") {
                     Text("commit " + if (GeneratedVersionInfo.IS_DIRTY == "dirty") "$sha (modified)" else sha)
