@@ -65,7 +65,6 @@ private val Solver.label: String
     get() = when (this) {
         Solver.CADICAL -> "CaDiCaL"
         Solver.MINISAT -> "MiniSat"
-        Solver.MINISAT_SIMP -> "MiniSat (simp)"
         Solver.KISSAT -> "kissat"
         Solver.MICROSAT -> "microsat"
     }

@@ -167,8 +167,9 @@ on a quiet machine.
 
 ## 6. Enumeration, projection, passes
 
-- One incremental `Ksat` per pass (MINISAT, CADICAL, KISSAT support clauses added after a
-  solve; MICROSAT does not, so it is rebuilt from the stored clauses for every call).
+- One incremental `Ksat` per pass (CADICAL, KISSAT support clauses added after a solve; MICROSAT
+  does not, and MINISAT runs with its default option pre=1, whose first solve eliminates variables,
+  so these two are rebuilt from the stored clauses for every call).
 - After a solution, a **blocking clause over the projected variables only** is added. Projected
   variables come in one-hot groups (the move of a ply, the content of a square) blocked by
   negating the true member, and free variables (promotion choices, `piece@t:K` squares) blocked

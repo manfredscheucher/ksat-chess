@@ -286,8 +286,9 @@ internal class Search(
     private val refinement: Refinement,
 ) {
     val decoder = Decoder(e, projection)
-    // MINISAT_SIMP: blocking clauses would use variables the first solve eliminated (see ksat enumerateModels)
-    private val incremental = solver != Solver.MICROSAT && solver != Solver.MINISAT_SIMP
+    // MINISAT runs with its default option pre=1 (SimpSolver): blocking clauses would use variables
+    // the first solve eliminated (see ksat enumerateModels)
+    private val incremental = solver != Solver.MICROSAT && solver != Solver.MINISAT
     private val extra = ArrayList<IntArray>()
     private val solverChoice = solver
     private var sat = newSolver()
