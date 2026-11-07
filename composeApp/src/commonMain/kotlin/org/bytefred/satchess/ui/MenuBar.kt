@@ -1,0 +1,419 @@
+package org.bytefred.satchess.ui
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.UriHandler
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.PopupProperties
+import org.bytefred.satchess.GeneratedLicenses
+import org.bytefred.satchess.GeneratedVersionInfo
+import org.bytefred.satchess.ui.platform.loadPref
+import org.bytefred.satchess.ui.platform.rememberFileLoader
+import org.bytefred.satchess.ui.platform.rememberFileSaver
+import org.bytefred.satchess.ui.platform.savePref
+import org.bytefred.satchess.ui.platform.shareLink
+import org.bytefred.satchess.ui.platform.shareSupported
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
+
+/** The ktoy menu bar: File (examples, load, save, share), View (board input, layout), Help. */
+@Composable
+fun MenuBar(vm: PuzzleViewModel, onExamples: () -> Unit) {
+    var openMenu by remember { mutableStateOf<String?>(null) }
+    var help by remember { mutableStateOf<Pair<String, String>?>(null) }   // title to text
+    var showAbout by remember { mutableStateOf(false) }
+    var showWelcome by rememberSaveable { mutableStateOf(loadPref(WELCOME_PREF) != "off") }
+    val barFocus = remember { FocusRequester() }
+    // the popup does not take the focus, so the bar must have it for Escape to reach it
+    LaunchedEffect(openMenu) { if (openMenu != null) barFocus.requestFocus() }
+    val loadFromDisk = rememberFileLoader { text -> if (vm.importJson(text)) vm.showMessage("Puzzle loaded") }
+    val saveToDisk = rememberFileSaver(vm::fileSaved)
+    fun save() = saveToDisk(vm.suggestedFileName(), vm.exportJson())
+
+    // a menu entry: closes the menu, then runs [onClick]
+    @Composable
+    fun Item(label: String, onClick: () -> Unit) = DropdownMenuItem(
+        text = { Text(label) },
+        onClick = { openMenu = null; onClick() },
+    )
+
+    Surface(color = MENU_BAR_COLOR) {
+        // scrolls sideways when the menus don't fit (phones)
+        Row(
+            Modifier.fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = 4.dp)
+                .testTag("menu-bar")
+                .focusRequester(barFocus)
+                .onKeyEvent {
+                    if (it.key == Key.Escape && openMenu != null) { openMenu = null; true } else false
+                }
+                .focusable(),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            MenuButton("File", openMenu, { openMenu = it }) {
+                Item("Examples…", onExamples)
+                Item("New") { vm.leave(vm::newPuzzle) }
+                Item("Load…") { vm.leave(loadFromDisk) }
+                Item("Save…") { save() }
+                if (shareSupported) {
+                    Item("Share link") {
+                        shareLink(vm.shareJson()) { copied ->
+                            vm.showMessage(if (copied) "Link copied to the clipboard" else "Could not copy: the link is in the address bar")
+                        }
+                    }
+                }
+            }
+            MenuButton("View", openMenu, { openMenu = it }) {
+                CheckItem("Coordinates", vm.showCoordinates) {
+                    vm.showCoordinates = !vm.showCoordinates
+                    savePref(COORDINATES_PREF, vm.showCoordinates.toString())
+                }
+                HorizontalDivider()
+                MenuHeading("Board input")
+                for (mode in InputMode.entries) {
+                    CheckItem(mode.label, vm.inputMode == mode) {
+                        openMenu = null
+                        vm.inputMode = mode
+                        savePref(INPUT_MODE_PREF, mode.name)
+                    }
+                }
+                HorizontalDivider()
+                MenuHeading("Layout")
+                for (mode in LayoutMode.entries) {
+                    CheckItem(mode.name.lowercase(), vm.layoutMode == mode) {
+                        openMenu = null
+                        vm.layoutMode = mode
+                        savePref(LAYOUT_PREF, mode.name)
+                    }
+                }
+            }
+            MenuButton("Help", openMenu, { openMenu = it }) {
+                Item("Puzzles") { help = "Puzzles" to PUZZLE_HELP }
+                Item("Board input") { help = "Board input" to INPUT_HELP }
+                Item("Results") { help = "Results" to RESULTS_HELP }
+                Item("About SAT chess") { showAbout = true }
+            }
+        }
+    }
+
+    if (vm.pendingLeave != null) {
+        UnsavedEditsDialog(onSave = ::save, onDiscard = vm::discardAndLeave, onCancel = vm::cancelLeave)
+    }
+    help?.let { (title, text) -> TextDialog(title, text) { help = null } }
+    if (showAbout) AboutDialog { showAbout = false }
+    if (showWelcome) WelcomeDialog { showWelcome = false }
+}
+
+/**
+ * A menu title with its dropdown. The popup does not take the focus, so a click outside it still
+ * reaches what is underneath: clicking another menu title closes this menu and opens that one in one
+ * click. A click on the open menu's own title closes it: the popup's outside-click dismissal fires
+ * first (on press), so the title click right after it must not reopen the menu.
+ */
+@Composable
+private fun MenuButton(
+    label: String,
+    openMenu: String?,
+    setOpenMenu: (String?) -> Unit,
+    items: @Composable () -> Unit,
+) {
+    var dismissedAt by remember { mutableStateOf<TimeMark?>(null) }
+    Box {
+        Text(
+            label,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .testTag("menu-$label")
+                .clip(RoundedCornerShape(4.dp))
+                .clickable {
+                    val justClosed = dismissedAt?.let { it.elapsedNow() < REOPEN_GUARD } == true
+                    setOpenMenu(if (openMenu == label || justClosed) null else label)
+                }
+                .padding(horizontal = 8.dp, vertical = 10.dp),
+        )
+        DropdownMenu(
+            expanded = openMenu == label,
+            // only close if this menu is still the open one: the outside click may have just opened another
+            onDismissRequest = {
+                if (openMenu == label) {
+                    dismissedAt = TimeSource.Monotonic.markNow()
+                    setOpenMenu(null)
+                }
+            },
+            properties = PopupProperties(focusable = false),
+        ) {
+            items()
+        }
+    }
+}
+
+// a title click this soon after its menu's outside-click dismissal belongs to the same click
+// (press dismissed, release clicked)
+private val REOPEN_GUARD = 500.milliseconds
+
+private val MENU_BAR_COLOR = Color(0xFFE6E8EB)
+
+@Composable
+private fun CheckItem(label: String, checked: Boolean, onToggle: () -> Unit) {
+    DropdownMenuItem(
+        text = { Text((if (checked) "✓ " else "   ") + label, style = monoStyle()) },
+        onClick = onToggle,
+    )
+}
+
+@Composable
+private fun MenuHeading(label: String) {
+    Text(label, style = monoStyle(), modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp))
+}
+
+@Composable
+private fun UnsavedEditsDialog(onSave: () -> Unit, onDiscard: () -> Unit, onCancel: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onCancel,
+        title = { Text("Save changes?") },
+        text = { Text("This puzzle has changes that are not saved to a file yet.") },
+        confirmButton = { TextButton(onClick = onSave) { Text("Save…") } },
+        dismissButton = {
+            Row {
+                TextButton(onClick = onDiscard) { Text("Discard") }
+                TextButton(onClick = onCancel) { Text("Cancel") }
+            }
+        },
+    )
+}
+
+/** A read-only, monospaced, scrollable text dialog (Help). */
+@Composable
+private fun TextDialog(title: String, body: String, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            val vScroll = rememberScrollState()
+            val hScroll = rememberScrollState()
+            ScrollbarBox(vScroll, Modifier.heightIn(max = 480.dp), hScroll) {
+                Text(
+                    body,
+                    style = monoStyle(),
+                    softWrap = false,
+                    modifier = Modifier.verticalScroll(vScroll).horizontalScroll(hScroll),
+                )
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("OK") } },
+    )
+}
+
+/** About: description, feedback box, the projects with their licenses, build identity, license texts. */
+@Composable
+private fun AboutDialog(onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("SAT chess") },
+        text = {
+            val vScroll = rememberScrollState()
+            ScrollbarBox(vScroll, Modifier.heightIn(max = 520.dp)) {
+                Column(Modifier.verticalScroll(vScroll).testTag("about")) {
+                    Text("Retrograde chess puzzles solved with SAT.")
+                    Spacer(Modifier.height(8.dp))
+                    FeedbackBox()
+                    Spacer(Modifier.height(8.dp))
+                    ProjectLine("sat-chess-kotlin", "https://github.com/manfredscheucher/sat-chess-kotlin", "this app")
+                    ProjectLine("ksat", "https://github.com/manfredscheucher/ksat", "the SAT solvers")
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        buildLine(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    for (notice in GeneratedLicenses.NOTICES) {
+                        HorizontalDivider(Modifier.padding(vertical = 8.dp))
+                        Text(notice.title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                        Text(notice.text, style = monoStyle().copy(fontSize = MaterialTheme.typography.labelSmall.fontSize))
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("OK") } },
+    )
+}
+
+/** One About line "[name] (MIT): note"; only the name is a link. */
+@Composable
+private fun ProjectLine(name: String, url: String, note: String) {
+    Row {
+        LinkText(name, url)
+        Text(" (MIT): $note", Modifier.padding(vertical = 2.dp))
+    }
+}
+
+/** "sha · committed <date> · built <date>"; unknown parts are left out. */
+private fun buildLine(): String = buildList {
+    val sha = GeneratedVersionInfo.COMMIT_SHA
+    if (sha != "unknown") add(if (GeneratedVersionInfo.IS_DIRTY == "dirty") "$sha (modified)" else sha)
+    if (GeneratedVersionInfo.COMMIT_DATE != "unknown") add("committed ${GeneratedVersionInfo.COMMIT_DATE}")
+    add("built ${GeneratedVersionInfo.BUILD_DATE}")
+}.joinToString(" · ")
+
+/** Shown at start until "Don't show again" is ticked. */
+@Composable
+private fun WelcomeDialog(close: () -> Unit) {
+    var dontShow by remember { mutableStateOf(false) }
+    fun done() { if (dontShow) savePref(WELCOME_PREF, "off"); close() }
+    AlertDialog(
+        onDismissRequest = ::done,
+        confirmButton = { TextButton(onClick = ::done, modifier = Modifier.testTag("welcomeStart")) { Text("Start") } },
+        title = { Text("Welcome to SAT chess") },
+        text = {
+            Column {
+                Text("Set up a chess position, ask how it came about, and a SAT solver finds every line that fits.")
+                Spacer(Modifier.height(10.dp))
+                FeedbackBox()
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(dontShow, { dontShow = it }, Modifier.testTag("dontShowAgain"))
+                    Text("Don't show again")
+                }
+            }
+        },
+    )
+}
+
+/** Yellow box with a clickable e-mail address that opens a prepared mail (About, welcome). */
+@Composable
+private fun FeedbackBox() {
+    Column(
+        Modifier.fillMaxWidth().background(Color(0xFFFFF3B0), RoundedCornerShape(8.dp))
+            .border(1.dp, Color(0xFFE0C200), RoundedCornerShape(8.dp)).padding(10.dp),
+    ) {
+        Text("SAT chess is in early development. Feedback is very welcome:", color = Color(0xFF3A3000))
+        LinkText(EMAIL, FEEDBACK_MAILTO)
+    }
+}
+
+/** A clickable, underlined link that opens [url] in the browser. */
+@Composable
+private fun LinkText(label: String, url: String) {
+    val uri = LocalUriHandler.current
+    Text(
+        label,
+        style = LocalTextStyle.current.copy(textDecoration = TextDecoration.Underline),
+        color = Color(0xFF1A4FB0),
+        modifier = Modifier.clickable { openUriSafely(uri, url) }.padding(vertical = 2.dp),
+    )
+}
+
+/** Open a link without ever crashing the app: if nothing can open it, nothing happens. */
+internal fun openUriSafely(uri: UriHandler, url: String) {
+    try { uri.openUri(url) } catch (e: Exception) { }
+}
+
+private val InputMode.label: String
+    get() = when (this) {
+        InputMode.HYBRID -> "Palette + drag"
+        InputMode.DIALOG -> "Click opens a dialog"
+    }
+
+internal const val WELCOME_PREF = "welcome"
+internal const val COORDINATES_PREF = "coordinates"
+internal const val INPUT_MODE_PREF = "inputMode"
+internal const val LAYOUT_PREF = "layout"
+private const val EMAIL = "manfred.scheucher@proton.me"
+// subject "sat-chess feedback", body "hi manfred," + blank line
+private const val FEEDBACK_MAILTO =
+    "mailto:$EMAIL?subject=sat-chess%20feedback&body=hi%20manfred%2C%0A%0A"
+
+private const val PUZZLE_HELP = """A puzzle is a window of N plies:
+board A at ply 0, board B at ply N.
+
+Each board can be
+  fixed      every square given
+  partial    '?' squares are unknown
+  open       all squares '?'
+
+Options on a square limit what can
+stand there, e.g. "a king or nothing".
+
+Goal at B: checkmate or stalemate.
+Both sides cooperate: a forced mate
+against every defence is out of scope.
+
+N counts plies, or moves ("6.5").
+
+File -> Save stores a puzzle as JSON,
+Load opens it again, Share link puts
+it into the address."""
+
+private const val INPUT_HELP = """Palette + drag
+  Pick a piece, click squares. Clicking
+  the same piece again empties the
+  square. Drag a piece to move it, off
+  the board to remove it.
+
+Click opens a dialog
+  A click on a square asks what stands
+  there.
+
+Both
+  Long press or right click opens the
+  square's options. Amber hatched squares
+  are only possible, not fixed.
+
+View -> Board input switches the mode."""
+
+private const val RESULTS_HELP = """Solve lists every line that fits. The
+move generator verifies each one.
+
+Replay: Reset, Back, Step, Run, the
+slider, a click on a move, or the arrow
+keys and Home / End.
+
+Group similar solutions joins lines with
+the same moves in another order."""

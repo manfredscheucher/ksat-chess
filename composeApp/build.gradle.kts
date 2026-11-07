@@ -73,6 +73,8 @@ kotlin {
             implementation(compose.foundation)
             implementation(compose.material3)
             implementation(compose.ui)
+            // bundled DejaVu Sans Mono (composeResources/font)
+            implementation(compose.components.resources)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.kotlinx.coroutines.core)
@@ -98,6 +100,10 @@ kotlin {
     }
 }
 
+compose.resources {
+    packageOfResClass = "org.bytefred.satchess.resources"
+}
+
 compose.desktop {
     application {
         mainClass = "org.bytefred.satchess.MainKt"
@@ -114,6 +120,8 @@ compose.desktop {
 // ScreenshotTest to build/screenshots/.
 tasks.withType<Test>().configureEach {
     systemProperty("screenshotDir", layout.buildDirectory.dir("screenshots").get().asFile.absolutePath)
+    // the tests have their own preferences, not those of the real app
+    systemProperty("prefsNode", "org/bytefred/satchess-test")
 }
 
 // ── build-time version info (GeneratedVersionInfo.kt) ───────────────────────
@@ -257,6 +265,7 @@ val licenseNotices = listOf(
     "MiniSat (MIT)" to satSolversDir.resolve("licenses/minisat-LICENSE.txt"),
     "CaDiCaL (MIT)" to satSolversDir.resolve("licenses/cadical-LICENSE.txt"),
     "kissat (MIT)" to satSolversDir.resolve("licenses/kissat-LICENSE.txt"),
+    "Font: DejaVu Sans Mono (Bitstream Vera license)" to rootProject.file("doc/licenses/LICENSE_DEJAVU.txt"),
     "Example puzzles (not covered by the MIT license; puzzles/NOTICE.md)" to rootProject.file("puzzles/NOTICE.md"),
 )
 val generateLicenses = tasks.register<GenerateLicenses>("generateLicenses") {

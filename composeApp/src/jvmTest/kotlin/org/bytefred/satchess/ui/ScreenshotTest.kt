@@ -6,6 +6,8 @@ import androidx.compose.ui.use
 import org.bytefred.satchess.sat.SolveEvent
 import org.jetbrains.skia.EncodedImageFormat
 import java.io.File
+import org.bytefred.satchess.ui.platform.savePref
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
@@ -14,6 +16,9 @@ import kotlin.test.assertTrue
  * build/screenshots/ for visual review. Not a pixel comparison: it fails only if rendering crashes.
  */
 class ScreenshotTest {
+    @BeforeTest
+    fun noWelcome() = savePref(WELCOME_PREF, "off")
+
     private val outDir = File(System.getProperty("screenshotDir") ?: "build/screenshots")
 
     private fun shoot(name: String, widthDp: Int, heightDp: Int, scale: Float, prepare: (PuzzleViewModel, FakeSolverService) -> Unit) {

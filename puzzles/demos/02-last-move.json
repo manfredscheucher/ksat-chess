@@ -7,7 +7,7 @@
     "url": null,
     "year": 2026
   },
-  "description": "Black to move and in check from the knight on f7. The previous position is left completely open. Where did the knight come from? The white king cannot have moved, because every square next to a1 is occupied. Five knight origins remain.",
+  "description": "Black to move and in check from the knight on f7. The previous position is open. Where did the knight come from? Five origins remain.",
   "question": "lastMoves",
   "plies": 1,
   "start": {

@@ -5,7 +5,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-/** A calm slate/teal Material3 scheme that matches the board colours. */
+/** Teal accents that match the board colours, on neutral white and plain grey backgrounds. */
 private val SatChessColors = lightColorScheme(
     primary = Color(0xFF2F5D62),
     onPrimary = Color.White,
@@ -18,14 +18,19 @@ private val SatChessColors = lightColorScheme(
     tertiary = Color(0xFF8A6A2F),
     tertiaryContainer = Color(0xFFF6E7C8),
     onTertiaryContainer = Color(0xFF2E2208),
-    background = Color(0xFFF6F7F8),
+    background = Color.White,
     onBackground = Color(0xFF1B1F22),
-    surface = Color(0xFFFCFCFD),
+    surface = Color.White,
     onSurface = Color(0xFF1B1F22),
-    surfaceVariant = Color(0xFFE6EBEE),
+    surfaceVariant = Color(0xFFE6E6E6),
     onSurfaceVariant = Color(0xFF46535A),
-    surfaceContainerLow = Color(0xFFF1F4F5),
-    surfaceContainer = Color(0xFFEBEFF1),
+    surfaceContainerLowest = Color.White,
+    surfaceContainerLow = Color(0xFFF7F7F7),
+    surfaceContainer = Color(0xFFF2F2F2),
+    surfaceContainerHigh = Color(0xFFEDEDED),
+    surfaceContainerHighest = Color(0xFFE6E6E6),
+    surfaceBright = Color.White,
+    surfaceDim = Color(0xFFDDDDDD),
     outline = Color(0xFF8A979E),
     outlineVariant = Color(0xFFCCD5DA),
     error = Color(0xFFB3261E),

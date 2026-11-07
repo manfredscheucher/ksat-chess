@@ -3,7 +3,7 @@ package org.bytefred.satchess.ui.platform
 import androidx.compose.runtime.Composable
 
 /*
- * Import / Export of puzzle JSON files, as a platform shim (same pattern as ktoy's FileIo):
+ * Load / Save of puzzle JSON files, as a platform shim (same pattern as ktoy's FileIo):
  * a Swing file chooser on desktop, a hidden <input type=file> / blob download in the browser.
  */
 

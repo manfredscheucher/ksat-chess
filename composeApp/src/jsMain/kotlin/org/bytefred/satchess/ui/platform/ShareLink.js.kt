@@ -29,3 +29,14 @@ actual fun sharedPuzzleJson(): String? {
         null
     }
 }
+
+actual fun clearShareLink() {
+    if (window.location.hash.isNotEmpty()) {
+        window.history.replaceState(null, "", window.location.pathname + window.location.search)
+    }
+}
+
+// replaceState (shareLink, clearShareLink) fires no hashchange, so this only sees a pasted or clicked link.
+actual fun listenForShareLinks(onOpened: (String) -> Unit) {
+    window.addEventListener("hashchange", { sharedPuzzleJson()?.let(onOpened) })
+}

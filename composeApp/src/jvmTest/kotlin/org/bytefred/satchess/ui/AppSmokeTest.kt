@@ -16,6 +16,8 @@ import androidx.compose.ui.test.v2.runComposeUiTest
 import org.bytefred.satchess.puzzle.Puzzle
 import org.bytefred.satchess.puzzle.Start
 import org.bytefred.satchess.sat.SolveEvent
+import org.bytefred.satchess.ui.platform.savePref
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -23,6 +25,8 @@ import kotlin.test.assertTrue
 /** Drives the real App: load an example, edit a board, break the FEN, solve with a fake solver. */
 @OptIn(ExperimentalTestApi::class)
 class AppSmokeTest {
+    @BeforeTest
+    fun noWelcome() = savePref(WELCOME_PREF, "off")
 
     @Test
     fun loadExampleEditBoardAndShowResults() = runComposeUiTest {
@@ -30,9 +34,11 @@ class AppSmokeTest {
         val vm = PuzzleViewModel(solver)
         setContent { App(vm) }
 
-        onNodeWithTag("examples").performClick()
-        onNodeWithTag("exampleBrowser").assertIsDisplayed()
+        onNodeWithTag("menu-File").performClick()
+        onNodeWithText("Examples…").performClick()
+        onNodeWithText("Demos").performClick()
         onNodeWithText("Black moves first").performClick()
+        onNodeWithTag("loadExample").performClick()
         onNodeWithTag("puzzleTitle").assertTextContains("Black moves first")
 
         // Select ply 2 (open), place a white king on e1 via the palette.
@@ -93,7 +99,8 @@ class AppSmokeTest {
         runOnIdle { assertEquals(OptionsTarget.Square(7), vm.optionsTarget) }
         onNodeWithText("Cancel").performClick()
 
-        onNodeWithText("About").performClick()
+        onNodeWithTag("menu-Help").performClick()
+        onNodeWithText("About SAT chess").performClick()
         onNodeWithTag("about").assertIsDisplayed()
         onNodeWithText("CaDiCaL (MIT)").performScrollTo().assertIsDisplayed()
     }

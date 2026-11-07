@@ -7,7 +7,7 @@
     "url": "https://www.chess.com/article/view/can-you-solve-these-5-easy-retrograde-puzzles",
     "year": 2017
   },
-  "description": "Given: black king d1, black rook b5, black bishop d5 and a white bishop on a4; there are no other men, only the white king is missing. Every other square is either the white king or empty. Where is the white king? The window looks 3 plies back from an open earlier position: the static checks alone allow 36 squares, a 3-ply history leaves exactly one (it needs an en passant capture).",
+  "description": "Black king d1, black rook b5, black bishop d5, white bishop a4. Every other square is the white king or empty. Where is the white king? The answer needs 3 plies of history, with an en passant capture.",
   "question": "unknownPiece",
   "plies": 3,
   "start": {

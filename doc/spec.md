@@ -232,8 +232,37 @@ results as their own view.
   Cancel = `worker.terminate()` and respawn.
 - **Share**: the puzzle JSON goes into the URL hash; Import/Export as a JSON file.
 
+- **GitHub page and ktoy usability** (Manfred, 2026-11-07: "similar usability to ../ktoy, mainly a
+  GitHub page, other targets don't matter for now; prepare it with examples, docs, tests, branch";
+  on the feature list "all of it, you see my prompts there, similar UI please"). Repo name
+  `sat-chess-kotlin`, solvers as a submodule. Taken over from ktoy, and this replaces the top bar,
+  Settings dialog, phone tabs and full-screen example browser above:
+  - `scripts/buildWeb.sh`, `scripts/deployPages.sh`, branch `gh-pages` via worktree `.gh-pages/`,
+    no push (doc/platforms.md).
+  - Menu bar File / View / Help without action buttons; one click switches menus, a click on the
+    open title or Escape closes; scrolls sideways on phones. Settings moved to View.
+  - "Save changes?" before New / Load / Examples only after real edits; a solver run is no edit.
+  - Visible draggable scrollbars in all panels and long dialogs.
+  - Narrow screens: no tabs, sections stacked, Solve scrolls to the results. The sticky Solve bar
+    stays (Claude's decision, ktoy also keeps its controls visible).
+  - Wide screens: draggable dividers. View -> Layout auto / portrait / landscape.
+  - Examples dialog: collapsed tree, a click selects, Load loads, reopens as it was left.
+    Deviation from ktoy (Claude's decision): the selected example also shows its board, credits and
+    source link, because a puzzle title alone says little and the credits should stay visible.
+  - Replay controls in ktoy's order: Reset, Back, Step, Run. Run steps once per second.
+  - Inputs as low as buttons (`CompactField`), bundled DejaVu Sans Mono, neutral backgrounds.
+  - View choices and the welcome dialog are remembered (`Prefs`, localStorage on the web).
+  - Welcome dialog with feedback box, About with links, Help texts.
+  - Not taken over because ktoy's web version has none: tab-close guard, browser back handling.
+  - Beyond ktoy (found by the reviewer): opening another puzzle removes `#puzzle=` from the URL, and a
+    share link pasted into the running page opens it.
+  - Known limit, same as ktoy: the web Save cannot see a cancel in a browser "save as" dialog, so
+    the app then counts the puzzle as saved.
+  - Trimmed the longest example descriptions (Fool's mate, chess.com #2, #5).
+
 ## 8. Open points / follow-ups
 
-- Public release: the sibling projectDir remap does not work for strangers cloning the
-  repo; needs `sat-solvers-kotlin` as a submodule (remote op, Manfred's job).
+- Public release: the sibling projectDir remap does not work for strangers cloning the repo. Decided
+  (2026-11-07): `sat-solvers-kotlin` becomes a submodule; `git submodule add` is Manfred's job, then
+  `settings.gradle.kts` and the README switch to it.
 - Piece graphics: cburnett set (BSD/GPL/GFDL tri-licensed, used by lichess), credited in NOTICE.

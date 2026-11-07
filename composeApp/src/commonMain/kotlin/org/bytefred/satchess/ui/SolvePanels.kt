@@ -22,7 +22,6 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -41,7 +40,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
@@ -85,29 +83,23 @@ fun AdvancedSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
             }) { vm.limit = it }
             if (vm.limit == SolutionLimit.N) {
                 Spacer(Modifier.width(8.dp))
-                OutlinedTextField(
+                CompactField(
                     value = vm.limitN.toString(),
                     onValueChange = { text -> text.toIntOrNull()?.takeIf { it > 0 }?.let { vm.limitN = it } },
-                    label = { Text("N") },
-                    singleLine = true,
                     modifier = Modifier.width(90.dp),
+                    label = "N",
                 )
             }
         }
         CheckRow("Shortest: also prove that N - 2 plies are not enough", p.shortest, vm::setShortest)
-        OutlinedTextField(
+        CompactField(
             value = vm.projectionText,
             onValueChange = vm::setProjectionInput,
-            label = { Text("Projection (what makes two solutions distinct)") },
-            isError = vm.projectionError,
-            supportingText = {
-                Text(
-                    if (vm.projectionError) "Items: moves, board@t, square@t:h4, piece@t:K, sideToMove@0 (comma separated)"
-                    else "e.g. moves, board@0 / square@0:h4 / piece@0:K",
-                )
-            },
-            singleLine = true,
             modifier = Modifier.fillMaxWidth(),
+            label = "Projection (what makes two solutions distinct)",
+            isError = vm.projectionError,
+            supporting = if (vm.projectionError) "Items: moves, board@t, square@t:h4, piece@t:K, sideToMove@0 (comma separated)"
+            else "e.g. moves, board@0 / square@0:h4 / piece@0:K",
         )
         FieldLabel("Rules")
         CheckRow("Exactly one king per side", p.rules.oneKingEach) { vm.setRules(p.rules.copy(oneKingEach = it)) }
@@ -137,7 +129,7 @@ private fun SquareDomains(vm: PuzzleViewModel) {
         for ((square, allowed) in domains) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 val where = if (square == UNKNOWN_SQUARES) "every '?' square" else square
-                Text("ply ${plyName(ply.toIntOrNull() ?: 0, p.plies)}: $where in $allowed", fontFamily = FontFamily.Monospace)
+                Text("ply ${plyName(ply.toIntOrNull() ?: 0, p.plies)}: $where in $allowed", style = monoStyle())
                 Spacer(Modifier.width(8.dp))
                 TextButton(onClick = { vm.setSquareDomain(ply.toIntOrNull() ?: 0, square, "") }) { Text("Remove") }
             }
@@ -150,9 +142,9 @@ private fun SquareDomains(vm: PuzzleViewModel) {
     val sqOk = Sq.parse(square.trim()) != null
     val allowedError = squareDomainError(allowed.trim())
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), itemVerticalAlignment = Alignment.CenterVertically) {
-        OutlinedTextField(ply, { ply = it }, label = { Text("Ply") }, singleLine = true, isError = t == null, modifier = Modifier.width(72.dp))
-        OutlinedTextField(square, { square = it }, label = { Text("Square") }, singleLine = true, modifier = Modifier.width(90.dp))
-        OutlinedTextField(allowed, { allowed = it }, label = { Text("Allowed") }, singleLine = true, modifier = Modifier.width(140.dp))
+        CompactField(ply, { ply = it }, Modifier.width(72.dp), label = "Ply", isError = t == null)
+        CompactField(square, { square = it }, Modifier.width(90.dp), label = "Square")
+        CompactField(allowed, { allowed = it }, Modifier.width(140.dp), label = "Allowed")
         OutlinedButton(
             onClick = {
                 vm.setSquareDomain(t ?: 0, square.trim(), allowed.trim())
@@ -378,6 +370,14 @@ private fun ReplayPanel(vm: PuzzleViewModel) {
     val cells = remember(solution, ply) { replayCells(solution, ply) }
     val lastMove = solution.moves.getOrNull(ply - 1)
     val focus = remember { FocusRequester() }
+    var running by remember(solution) { mutableStateOf(false) }
+    LaunchedEffect(running) {
+        while (running && vm.replayPly < solution.moves.size) {
+            delay(RUN_STEP_MILLIS)
+            vm.stepReplay(1)
+        }
+        running = false
+    }
     // Arrow keys work right away: the replay takes the focus when a solution is shown; App's root key
     // handler covers the case where the focus is elsewhere (but not in a text field).
     LaunchedEffect(vm.run.puzzle, vm.selectedSolution) { focus.requestFocus() }
@@ -401,10 +401,29 @@ private fun ReplayPanel(vm: PuzzleViewModel) {
                 Text("Cannot show this position (invalid FEN from the solver).", color = MaterialTheme.colorScheme.error)
             }
         }
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(onClick = { vm.stepReplay(-1) }, enabled = ply > 0) { Text("<") }
+        // same order as ktoy: reset, undo, step, run
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), itemVerticalAlignment = Alignment.CenterVertically) {
+            OutlinedButton(
+                onClick = { running = false; vm.setReplay(0) },
+                enabled = ply > 0,
+                modifier = Modifier.testTag("replayReset"),
+            ) { Text("Reset") }
+            OutlinedButton(
+                onClick = { running = false; vm.stepReplay(-1) },
+                enabled = ply > 0,
+                modifier = Modifier.testTag("replayBack"),
+            ) { Text("Back") }
+            Button(
+                onClick = { running = false; vm.stepReplay(1) },
+                enabled = ply < solution.moves.size,
+                modifier = Modifier.testTag("replayStep"),
+            ) { Text("Step") }
+            Button(
+                onClick = { running = !running },
+                enabled = running || ply < solution.moves.size,
+                modifier = Modifier.testTag("replayRun"),
+            ) { Text(if (running) "Stop" else "Run") }
             Text("ply $ply / ${solution.moves.size}", style = MaterialTheme.typography.labelLarge)
-            OutlinedButton(onClick = { vm.stepReplay(1) }, enabled = ply < solution.moves.size) { Text(">") }
         }
         if (solution.moves.isNotEmpty()) {
             Slider(
@@ -441,6 +460,8 @@ private fun ReplayPanel(vm: PuzzleViewModel) {
         }
     }
 }
+
+private const val RUN_STEP_MILLIS = 1000L
 
 /** The board of [solution] at [ply], or null if its FEN is unreadable. */
 private fun replayCells(solution: Solution, ply: Int): List<Char>? {

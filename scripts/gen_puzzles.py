@@ -56,18 +56,7 @@ CHESS_COM = [
             "stands on d5. Several move orders work."),
         "source": {"name": CHESS_COM_NAME, "url": CHESS_COM_URL, "year": 2017},
     }),
-    ("puzzle2.puzzle", "2", {
-        "title": "Where is the white king?",
-        "question": "unknownPiece",
-        "project": ["piece@0:K"],
-        "description": (
-            "Given: black king d1, black rook b5, black bishop d5 and a white bishop "
-            "on a4; the rest of the board is left open here. The white king must be "
-            "somewhere. Which square can it legally stand on? Position only: the unique answer needs retro reasoning about how the "
-            "position arose, which a 0-ply SAT window does not prove, so the solver "
-            "lists every square that passes the static checks."),
-        "source": {"name": CHESS_COM_NAME, "url": CHESS_COM_URL, "year": 2017},
-    }),
+    # chess-com-5/2.json (3-ply window, "white king or empty" squares) is hand-written: not converted.
     ("puzzle3.puzzle", "3", {
         "title": "King walk into mate",
         "question": "helpmate",
@@ -101,11 +90,9 @@ CHESS_COM = [
         "composer": "Raymond Smullyan",
         "project": ["square@0:h4"],
         "description": (
-            "Exactly one piece stands on h4, but neither its type nor its colour is "
-            "given. Which one is it? Position only: the real answer comes from "
-            "counting captures and pawn moves backwards, which a 0-ply SAT window "
-            "does not prove, so the solver shows every piece that passes the static "
-            "checks."),
+            "Exactly one piece stands on h4, type and colour unknown. Which one? The "
+            "solver shows every piece that passes the static checks; the real answer "
+            "comes from counting captures and pawn moves backwards."),
         "source": {"name": "The Chess Mysteries of Sherlock Holmes (via the "
                    + CHESS_COM_NAME + ")",
                    "url": CHESS_COM_URL, "year": 1979},

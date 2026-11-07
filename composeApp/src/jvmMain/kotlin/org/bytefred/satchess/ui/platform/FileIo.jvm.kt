@@ -10,7 +10,7 @@ import javax.swing.filechooser.FileNameExtensionFilter
 @Composable
 actual fun rememberFileLoader(onLoaded: (text: String) -> Unit): () -> Unit = {
     val chooser = JFileChooser().apply {
-        dialogTitle = "Import puzzle"
+        dialogTitle = "Load puzzle"
         fileFilter = FileNameExtensionFilter("Puzzle files (*.json)", "json")
     }
     if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
@@ -22,7 +22,7 @@ actual fun rememberFileLoader(onLoaded: (text: String) -> Unit): () -> Unit = {
 actual fun rememberFileSaver(onSaved: (fileName: String?) -> Unit): (suggestedName: String, text: String) -> Unit =
     { suggestedName, text ->
         val chooser = JFileChooser().apply {
-            dialogTitle = "Export puzzle"
+            dialogTitle = "Save puzzle"
             selectedFile = File("$suggestedName.json")
             fileFilter = FileNameExtensionFilter("Puzzle files (*.json)", "json")
         }

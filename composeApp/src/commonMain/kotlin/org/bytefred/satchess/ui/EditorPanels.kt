@@ -28,7 +28,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -45,7 +44,6 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import org.bytefred.satchess.chess.Sq
@@ -109,13 +107,12 @@ fun QuestionSection(vm: PuzzleViewModel, modifier: Modifier = Modifier, collapsi
         ) {
             ChoiceDropdown(p.question, Question.entries, { it.label }, vm::setQuestion, Modifier.testTag("question"))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                OutlinedTextField(
+                CompactField(
                     value = vm.pliesText,
                     onValueChange = vm::setPliesInput,
-                    label = { Text("N") },
-                    isError = vm.pliesError,
-                    singleLine = true,
                     modifier = Modifier.width(88.dp).testTag("plies"),
+                    label = "N",
+                    isError = vm.pliesError,
                 )
                 Spacer(Modifier.width(6.dp))
                 ChoiceChips(null, vm.pliesUnit, PliesUnit.entries, { it.name.lowercase() }, vm::changePliesUnit)
@@ -261,12 +258,11 @@ private fun PlyPickerDialog(plies: Int, onPick: (Int) -> Unit, onDismiss: () -> 
         onDismissRequest = onDismiss,
         title = { Text("Board constraint at ply") },
         text = {
-            OutlinedTextField(
+            CompactField(
                 value = text,
                 onValueChange = { text = it },
-                label = { Text("Ply (0 = A ... $plies = B)") },
+                label = "Ply (0 = A ... $plies = B)",
                 isError = text.isNotBlank() && t == null,
-                singleLine = true,
             )
         },
         confirmButton = { TextButton(onClick = { t?.let(onPick) }, enabled = t != null) { Text("Edit board") } },
@@ -316,15 +312,16 @@ private fun MovePatternDialog(
         onDismissRequest = onDismiss,
         title = { Text("Move pattern") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(ply, { ply = it }, label = { Text("Move from ply t to t+1, t =") }, singleLine = true, isError = t == null)
-                OutlinedTextField(san, { san = it }, label = { Text("SAN, e.g. Kf2 (optional)") }, singleLine = true)
+            val vScroll = rememberScrollState()
+            ScrollbarBox(vScroll) { Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.verticalScroll(vScroll)) {
+                CompactField(ply, { ply = it }, label = "Move from ply t to t+1, t =", isError = t == null)
+                CompactField(san, { san = it }, label = "SAN, e.g. Kf2 (optional)")
                 FieldLabel("or any of these fields")
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(piece, { piece = it.trim() }, label = { Text("Piece") }, singleLine = true, modifier = Modifier.weight(1f))
-                    OutlinedTextField(from, { from = it.trim() }, label = { Text("From") }, singleLine = true, modifier = Modifier.weight(1f))
-                    OutlinedTextField(to, { to = it.trim() }, label = { Text("To") }, singleLine = true, modifier = Modifier.weight(1f))
-                    OutlinedTextField(promo, { promo = it.trim() }, label = { Text("Promo") }, singleLine = true, modifier = Modifier.weight(1f))
+                    Box(Modifier.weight(1f)) { CompactField(piece, { piece = it.trim() }, Modifier.fillMaxWidth(), label = "Piece") }
+                    Box(Modifier.weight(1f)) { CompactField(from, { from = it.trim() }, Modifier.fillMaxWidth(), label = "From") }
+                    Box(Modifier.weight(1f)) { CompactField(to, { to = it.trim() }, Modifier.fillMaxWidth(), label = "To") }
+                    Box(Modifier.weight(1f)) { CompactField(promo, { promo = it.trim() }, Modifier.fillMaxWidth(), label = "Promo") }
                 }
                 TriStateChips("Capture", capture) { capture = it }
                 TriStateChips("Check", check) { check = it }
@@ -332,7 +329,7 @@ private fun MovePatternDialog(
                     castle = it.ifEmpty { null }
                 }
                 error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
-            }
+            } }
         },
         confirmButton = { TextButton(onClick = { t?.let { onSave(it, pattern) } }, enabled = error == null) { Text("Save") } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
@@ -365,7 +362,7 @@ fun BoardEditorSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
         val hybrid = vm.inputMode == InputMode.HYBRID
         BoardView(
             cells = vm.board,
-            modifier = Modifier.fillMaxWidth().testTag("editorBoard"),
+            modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth().testTag("editorBoard"),
             options = vm.boardOptions,
             showCoordinates = vm.showCoordinates,
             onTap = if (hybrid) vm::clickSquare else { sq -> dialogSquare = sq },
@@ -403,14 +400,14 @@ fun BoardEditorSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
                 modifier = Modifier.testTag("unknownSquaresOptions"),
             ) { Text("Change ...") }
         }
-        OutlinedTextField(
+        CompactField(
             value = vm.fenText,
             onValueChange = vm::setFenInput,
-            label = { Text(if (t == 0) "FEN ('?' = unknown; a full FEN also sets the start)" else "FEN placement ('?' = unknown)") },
-            isError = vm.fenError != null,
-            supportingText = vm.fenError?.let { { Text(it) } },
-            textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
             modifier = Modifier.fillMaxWidth().testTag("fen"),
+            label = if (t == 0) "FEN ('?' = unknown; a full FEN also sets the start)" else "FEN placement ('?' = unknown)",
+            isError = vm.fenError != null,
+            supporting = vm.fenError,
+            mono = true,
         )
     }
 
@@ -454,7 +451,8 @@ private fun OptionsDialog(heading: String, initial: Set<Char>, onApply: (Set<Cha
         onDismissRequest = onDismiss,
         title = { Text(heading) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.verticalScroll(rememberScrollState())) {
+            val vScroll = rememberScrollState()
+            ScrollbarBox(vScroll) { Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.verticalScroll(vScroll)) {
                 Text("What can stand here?", style = MaterialTheme.typography.bodyMedium)
                 for (row in listOf(ALL_OPTIONS.take(6), ALL_OPTIONS.drop(6))) {
                     Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -483,7 +481,7 @@ private fun OptionsDialog(heading: String, initial: Set<Char>, onApply: (Set<Cha
                     style = MaterialTheme.typography.bodySmall,
                     color = if (allowed.isEmpty()) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-            }
+            } }
         },
         confirmButton = {
             TextButton(onClick = { onApply(allowed) }, enabled = allowed.isNotEmpty(), modifier = Modifier.testTag("applyOptions")) {
@@ -624,14 +622,13 @@ fun StartSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        OutlinedTextField(
+        CompactField(
             value = vm.enPassantText,
             onValueChange = vm::setEnPassantInput,
-            label = { Text("En passant square (- or e.g. e3)") },
-            isError = vm.enPassantError != null,
-            supportingText = vm.enPassantError?.let { { Text(it) } },
-            singleLine = true,
             modifier = Modifier.width(260.dp),
+            label = "En passant square (- or e.g. e3)",
+            isError = vm.enPassantError != null,
+            supporting = vm.enPassantError,
         )
     }
 }

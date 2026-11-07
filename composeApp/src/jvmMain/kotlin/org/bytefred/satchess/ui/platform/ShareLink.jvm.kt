@@ -6,3 +6,7 @@ actual val shareSupported: Boolean = false
 actual fun shareLink(puzzleJson: String, onResult: (copied: Boolean) -> Unit) = Unit
 
 actual fun sharedPuzzleJson(): String? = null
+
+actual fun clearShareLink() = Unit
+
+actual fun listenForShareLinks(onOpened: (String) -> Unit) = Unit

@@ -7,7 +7,7 @@
     "url": "https://www.chess.com/article/view/can-you-solve-these-5-easy-retrograde-puzzles",
     "year": 1979
   },
-  "description": "Exactly one piece stands on h4, but neither its type nor its colour is given. Which one is it? Position only: the real answer comes from counting captures and pawn moves backwards, which a 0-ply SAT window does not prove, so the solver shows every piece that passes the static checks.",
+  "description": "Exactly one piece stands on h4, type and colour unknown. Which one? The solver shows every piece that passes the static checks; the real answer comes from counting captures and pawn moves backwards.",
   "question": "unknownPiece",
   "plies": 0,
   "start": {

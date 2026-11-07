@@ -22,7 +22,7 @@ python3 scripts/gen_puzzles.py
 `chess-com-5/` and `janko-shorties/` are converted from the Python sat-chess
 project (`../sat-chess/configs/puzzles`). Their titles, credits and descriptions live in
 the selection lists in `scripts/gen_puzzles.py`, so edit them there and re-run with
-`--convert` (this overwrites those two folders; `demos/` is hand-written and never
+`--convert` (this overwrites those two folders; `demos/` and `chess-com-5/2.json` are hand-written and never
 touched):
 
 ```bash

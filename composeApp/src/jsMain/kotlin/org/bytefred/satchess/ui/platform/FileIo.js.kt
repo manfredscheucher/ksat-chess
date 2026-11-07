@@ -11,7 +11,7 @@ import org.w3c.files.BlobPropertyBag
 import org.w3c.files.FileReader
 import org.w3c.files.get
 
-// Browser: import via a hidden <input type=file> + FileReader; export via a Blob download.
+// Browser: load via a hidden <input type=file> + FileReader; save via a Blob download.
 
 private const val REVOKE_DELAY_MS = 10_000
 

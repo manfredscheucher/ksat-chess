@@ -15,7 +15,7 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
     "url": null,
     "year": 2026
   },
-  "description": "The fastest possible checkmate: from the initial position, Black mates White after 2.0 moves (4 plies). Both sides cooperate, so the solver looks for every 4-ply line that ends in mate. The mating pattern is always the same queen check on the e1-h4 diagonal, but White's two pawn moves and Black's pawn move can vary.",
+  "description": "The fastest possible checkmate: Black mates White after 2 moves (4 plies). The solver finds every line that ends in mate.",
   "question": "helpmate",
   "plies": 4,
   "start": {
@@ -36,7 +36,7 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
     "url": null,
     "year": 2026
   },
-  "description": "Black to move and in check from the knight on f7. The previous position is left completely open. Where did the knight come from? The white king cannot have moved, because every square next to a1 is occupied. Five knight origins remain.",
+  "description": "Black to move and in check from the knight on f7. The previous position is open. Where did the knight come from? Five origins remain.",
   "question": "lastMoves",
   "plies": 1,
   "start": {
@@ -83,7 +83,7 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
     "url": null,
     "year": 2026
   },
-  "description": "Black has just played d7-d5, so the start position carries the en passant square d6. In one ply the white pawn on e5 must end up on d6 while the black pawn on d5 disappears: only the en passant capture does that. Set enPassant to \"-\" and the puzzle has no solution.",
+  "description": "Black has just played d7-d5, so the start carries the en passant square d6. In one ply the pawn on e5 must end on d6 while the pawn on d5 disappears. Set enPassant to \"-\" and there is no solution.",
   "question": "custom",
   "plies": 1,
   "start": {
@@ -201,7 +201,7 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
     "url": "https://www.chess.com/article/view/can-you-solve-these-5-easy-retrograde-puzzles",
     "year": 2017
   },
-  "description": "Given: black king d1, black rook b5, black bishop d5 and a white bishop on a4; there are no other men, only the white king is missing. Every other square is either the white king or empty. Where is the white king? The window looks 3 plies back from an open earlier position: the static checks alone allow 36 squares, a 3-ply history leaves exactly one (it needs an en passant capture).",
+  "description": "Black king d1, black rook b5, black bishop d5, white bishop a4. Every other square is the white king or empty. Where is the white king? The answer needs 3 plies of history, with an en passant capture.",
   "question": "unknownPiece",
   "plies": 3,
   "start": {
@@ -275,7 +275,7 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
     "url": "https://www.chess.com/article/view/can-you-solve-these-5-easy-retrograde-puzzles",
     "year": 1979
   },
-  "description": "Exactly one piece stands on h4, but neither its type nor its colour is given. Which one is it? Position only: the real answer comes from counting captures and pawn moves backwards, which a 0-ply SAT window does not prove, so the solver shows every piece that passes the static checks.",
+  "description": "Exactly one piece stands on h4, type and colour unknown. Which one? The solver shows every piece that passes the static checks; the real answer comes from counting captures and pawn moves backwards.",
   "question": "unknownPiece",
   "plies": 0,
   "start": {

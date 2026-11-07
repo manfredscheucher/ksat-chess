@@ -47,13 +47,18 @@ import org.bytefred.satchess.ui.model.withMovePattern
 import org.bytefred.satchess.ui.model.withPlies
 import org.bytefred.satchess.ui.model.withSquareDomain
 import org.bytefred.satchess.ui.model.withSquareOptions
+import org.bytefred.satchess.ui.platform.clearShareLink
+import org.bytefred.satchess.ui.platform.loadPref
 import org.bytefred.satchess.ui.solver.SolverService
 import org.bytefred.satchess.ui.solver.createSolverService
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
-/** Board input (Settings): the hybrid palette/drag mode, or a dialog per clicked square. */
+/** Board input (View menu): the hybrid palette/drag mode, or a dialog per clicked square. */
 enum class InputMode { HYBRID, DIALOG }
+
+/** Layout (View menu): by window width, stacked, or side by side. */
+enum class LayoutMode { AUTO, PORTRAIT, LANDSCAPE }
 
 /** "Max solutions" in Advanced: 1, a number N, or all. */
 enum class SolutionLimit { ONE, N, ALL }
@@ -101,9 +106,13 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
     var projectionText by mutableStateOf(NEW_PUZZLE.project.joinToString(", ")); private set
     var projectionError by mutableStateOf(false); private set
 
-    // Settings
-    var inputMode by mutableStateOf(InputMode.HYBRID)
-    var showCoordinates by mutableStateOf(true)
+    // View menu; MenuBar stores a change, so it is still there after a reload
+    var inputMode by mutableStateOf(InputMode.entries.firstOrNull { it.name == loadPref(INPUT_MODE_PREF) } ?: InputMode.HYBRID)
+    var showCoordinates by mutableStateOf(loadPref(COORDINATES_PREF) != "false")
+    var layoutMode by mutableStateOf(LayoutMode.entries.firstOrNull { it.name == loadPref(LAYOUT_PREF) } ?: LayoutMode.AUTO)
+
+    /** The shares of the side-by-side panels, per panel key. */
+    var panelWeights by mutableStateOf<Map<String, Float>>(emptyMap())
 
     /** The open square options dialog, or null. */
     var optionsTarget by mutableStateOf<OptionsTarget?>(null); private set
@@ -126,8 +135,6 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
     /** Results: flat solution list (default) or "Group similar solutions" (same events, any move order). */
     var groupSimilar by mutableStateOf(false)
 
-    /** Phone layout: results are their own view (tab); Solve switches to it. */
-    var resultsView by mutableStateOf(false)
     private var runStart: TimeMark? = null
     /** Elapsed time of the finished run. */
     var finishedMillis by mutableStateOf(0L); private set
@@ -147,7 +154,9 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
 
     fun load(p: Puzzle) {
         solverService.cancel()
+        if (!openingShareLink) clearShareLink()
         update(p)
+        savedPuzzle = p
         selectedPly = if (p.positions.containsKey(p.plies.toString())) p.plies else 0
         pliesText = formatPlies(p.plies, pliesUnit)
         pliesError = false
@@ -158,7 +167,6 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
         optionsTarget = null
         run = SolveRun()
         clearSolutions()
-        resultsView = false
         selectedSolution = 0
         replayPly = 0
         syncFen()
@@ -172,8 +180,20 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
     fun start(sharedJson: String?, examples: List<Example>) {
         if (started) return
         started = true
-        if (sharedJson != null && importJson(sharedJson)) return
+        if (sharedJson != null && openShareLink(sharedJson)) return
         examples.firstOrNull()?.let { load(it.puzzle) }
+    }
+
+    private var openingShareLink = false
+
+    /** Opens a puzzle from a share link; the link stays in the URL until another puzzle is opened. */
+    fun openShareLink(json: String): Boolean {
+        openingShareLink = true
+        try {
+            return importJson(json)
+        } finally {
+            openingShareLink = false
+        }
     }
 
     /** Imports puzzle JSON; returns false (and shows a message) on invalid input. */
@@ -191,6 +211,41 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
     }
 
     fun exportJson(): String = PuzzleJson.encode(puzzle)
+
+    // ── unsaved edits ───────────────────────────────────────────────────────
+    // Derived from what the last load or save held. A solver run or looking through boards is no edit.
+
+    private var savedPuzzle: Puzzle = NEW_PUZZLE
+    val unsavedEdits: Boolean get() = puzzle != savedPuzzle
+
+    /** What New / Load / Examples wants to do once "Save changes?" is answered; the dialog shows while it is set. */
+    var pendingLeave by mutableStateOf<(() -> Unit)?>(null); private set
+
+    /** Run [action] (which replaces the puzzle), asking first if there are unsaved edits. */
+    fun leave(action: () -> Unit) {
+        if (unsavedEdits) pendingLeave = action else action()
+    }
+
+    fun discardAndLeave() {
+        val action = pendingLeave
+        pendingLeave = null
+        action?.invoke()
+    }
+
+    fun cancelLeave() {
+        pendingLeave = null
+    }
+
+    /** The save finished: [fileName] is null if it was cancelled, which also cancels a pending leave. */
+    fun fileSaved(fileName: String?) {
+        if (fileName == null) {
+            cancelLeave()
+            return
+        }
+        savedPuzzle = puzzle
+        showMessage("Saved $fileName")
+        discardAndLeave()
+    }
 
     /** Compact JSON for the share link (no pretty-printing whitespace in the URL). */
     fun shareJson(): String = compactJson.encodeToString(Puzzle.serializer(), puzzle)
@@ -362,7 +417,6 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
         }
         run = SolveRun(running = true, puzzle = solving)
         clearSolutions()
-        resultsView = true
         runStart = TimeSource.Monotonic.markNow()
         selectedSolution = 0
         replayPly = 0

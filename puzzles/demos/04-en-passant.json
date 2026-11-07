@@ -7,7 +7,7 @@
     "url": null,
     "year": 2026
   },
-  "description": "Black has just played d7-d5, so the start position carries the en passant square d6. In one ply the white pawn on e5 must end up on d6 while the black pawn on d5 disappears: only the en passant capture does that. Set enPassant to \"-\" and the puzzle has no solution.",
+  "description": "Black has just played d7-d5, so the start carries the en passant square d6. In one ply the pawn on e5 must end on d6 while the pawn on d5 disappears. Set enPassant to \"-\" and there is no solution.",
   "question": "custom",
   "plies": 1,
   "start": {
