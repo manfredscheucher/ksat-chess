@@ -252,7 +252,8 @@ results as their own view.
     Deviation from ktoy (Claude's decision): the selected example also shows its board, credits and
     source link, because a puzzle title alone says little and the credits should stay visible.
   - Replay controls in ktoy's order: Reset, Back, Step, Run. Run steps once per second.
-  - Inputs as low as buttons (`CompactField`), bundled DejaVu Sans Mono, neutral backgrounds.
+  - Inputs as low as buttons (`CompactField`), neutral backgrounds (the bundled DejaVu Sans Mono
+    was dropped again on 2026-11-09).
   - View choices and the welcome dialog are remembered (`Prefs`, localStorage on the web).
   - Welcome dialog with feedback box, About with links, Help texts.
   - Not taken over because ktoy's web version has none: tab-close guard, browser back handling.
@@ -287,8 +288,18 @@ results as their own view.
     ktoy's; no "ask how it came about", no "existential", no "PG" in the plies line. A language
     reviewer then removed the rest: "contents", "window", "domains", "constraint", "line" (now
     "solution"), "Helpmate in k" (now "Helpmate"), the chess.com questions closer to the article.
-  - About like ktoy: one line per part with link and license (app, ksat, cburnett pieces, DejaVu
-    font, chess.com article); the full license texts only behind "License texts". Developer notes
+  - **Simpler start, simpler screen** (Manfred, 2026-11-09): no en passant field in the UI (a
+    puzzle that needs it starts one ply earlier with both boards given, as demo 04 does now; the
+    file field `start.enPassant` stays for the solver and the tests); castling is four checkboxes
+    "May still castle" (ticked = what the board allows; unticking stores explicit rights, the
+    "? (free)" mode is gone from the UI, chess.com #2 uses auto); columns reordered: question,
+    start and advanced on the left, timeline and board in the middle, Solve above the results on
+    the right; editor and replay board share one width (420 dp); Edit menu with Undo / Redo
+    (Ctrl/Cmd+Z, Shift for redo, 100 steps, a run of N keystrokes is one step); the bundled
+    monospace font is gone ("brauchst ja nie nen andren font typ"), with it the resources plugin
+    and the DejaVu notice.
+  - About like ktoy: one line per part with link and license (app, ksat, cburnett pieces,
+    chess.com article); the full license texts only behind "License texts". Developer notes
     on the piece graphics moved from `composeApp/NOTICE-pieces.md` to `doc/pieces.md`; the app
     ships only the plain license text (`doc/licenses/LICENSE_CBURNETT.txt`). `puzzles/NOTICE.md`
     is no longer shown in the app.

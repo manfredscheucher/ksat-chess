@@ -238,14 +238,32 @@ fun isCastlingField(value: String): Boolean =
     value in listOf("auto", "?", "-") ||
         (value.isNotEmpty() && value.all { it in "KQkq" } && value.toSet().size == value.length)
 
-/** Toggles one castling right; the result is written in canonical KQkq order, "-" when empty. */
-fun toggleCastlingRight(castling: String, right: Char, on: Boolean): String {
-    val current = if (castling.all { it in "KQkq" }) castling.toSet() else emptySet()
-    val next = if (on) current + right else current - right
+/** The castling rights to show for [castling] on board [cells]: "auto" and "?" as the rights the board allows. */
+fun shownCastling(castling: String, cells: List<Char>): Set<Char> = when (castling) {
+    "auto", "?" -> autoCastling(cells)
+    else -> castling.filter { it in "KQkq" }.toSet()
+}
+
+/** Rights whose king and rook squares hold the right piece or '?' (what "auto" can give). */
+fun autoCastling(cells: List<Char>): Set<Char> {
+    fun at(square: String, piece: Char) = cells[Sq.parse(square)!!].let { it == piece || it == '?' }
+    return buildSet {
+        if (at("e1", 'K') && at("h1", 'R')) add('K')
+        if (at("e1", 'K') && at("a1", 'R')) add('Q')
+        if (at("e8", 'k') && at("h8", 'r')) add('k')
+        if (at("e8", 'k') && at("a8", 'r')) add('q')
+    }
+}
+
+/** The castling field after ticking / unticking [right]: "auto" when that is what the board gives anyway. */
+fun castlingAfterToggle(castling: String, cells: List<Char>, right: Char, on: Boolean): String {
+    val shown = shownCastling(castling, cells)
+    val next = if (on) shown + right else shown - right
+    if (next == autoCastling(cells)) return "auto"
     return "KQkq".filter { it in next }.ifEmpty { "-" }
 }
 
-/** Null if [ep] is a valid e.p. field for [side] ("-" or a rank-3/6 square), else the error. */
+/** Null if [ep] is a valid e.p. field for [side] ("-" or a rank-3/6 square), else the error (FEN field, imports). */
 fun enPassantError(ep: String, side: String): String? {
     if (ep == "-") return null
     if (Sq.parse(ep) == null) return "En passant must be - or a square like e3"

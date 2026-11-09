@@ -161,8 +161,7 @@ class GuiBuildChessComTest {
         plies(s, 3)
         // A: everything open, side to move and castling free
         button(s, "All ?")
-        button(s, "? (either)")
-        button(s, "? (free)")
+        button(s, "either")
         // B: the four known pieces; every other square is the white king or empty
         ply(s, "B")
         place(s, 'r', "b5")
@@ -237,7 +236,7 @@ class GuiBuildChessComTest {
         plies(s, 2)
         // A: everything open, side to move free
         button(s, "All ?")
-        button(s, "? (either)")
+        button(s, "either")
         // B: the diagram; h4 holds some piece of either colour
         ply(s, "B")
         button(s, "Clear")

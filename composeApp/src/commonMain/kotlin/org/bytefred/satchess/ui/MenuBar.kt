@@ -77,8 +77,9 @@ fun MenuBar(vm: PuzzleViewModel, onExamples: () -> Unit) {
 
     // a menu entry: closes the menu, then runs [onClick]
     @Composable
-    fun Item(label: String, onClick: () -> Unit) = DropdownMenuItem(
+    fun Item(label: String, enabled: Boolean = true, onClick: () -> Unit) = DropdownMenuItem(
         text = { Text(label) },
+        enabled = enabled,
         onClick = { openMenu = null; onClick() },
     )
 
@@ -98,7 +99,7 @@ fun MenuBar(vm: PuzzleViewModel, onExamples: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             MenuButton("File", openMenu, { openMenu = it }) {
-                Item("Examples…", onExamples)
+                Item("Examples…", onClick = onExamples)
                 Item("New") { vm.leave(vm::newPuzzle) }
                 Item("Load…") { vm.leave(loadFromDisk) }
                 Item("Save…") { save() }
@@ -109,6 +110,10 @@ fun MenuBar(vm: PuzzleViewModel, onExamples: () -> Unit) {
                         }
                     }
                 }
+            }
+            MenuButton("Edit", openMenu, { openMenu = it }) {
+                Item("Undo", enabled = vm.canUndo) { vm.undo() }
+                Item("Redo", enabled = vm.canRedo) { vm.redo() }
             }
             MenuButton("View", openMenu, { openMenu = it }) {
                 CheckItem("Coordinates", vm.showCoordinates) {
@@ -204,14 +209,14 @@ private val MENU_BAR_COLOR = Color(0xFFE6E8EB)
 @Composable
 private fun CheckItem(label: String, checked: Boolean, onToggle: () -> Unit) {
     DropdownMenuItem(
-        text = { Text((if (checked) "✓ " else "   ") + label, style = monoStyle()) },
+        text = { Text((if (checked) "✓ " else "    ") + label) },
         onClick = onToggle,
     )
 }
 
 @Composable
 private fun MenuHeading(label: String) {
-    Text(label, style = monoStyle(), modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp))
+    Text(label, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp))
 }
 
 @Composable
@@ -242,7 +247,7 @@ private fun TextDialog(title: String, body: String, onDismiss: () -> Unit) {
             ScrollbarBox(vScroll, Modifier.heightIn(max = 480.dp), hScroll) {
                 Text(
                     body,
-                    style = monoStyle(),
+                    style = MaterialTheme.typography.bodyMedium,
                     softWrap = false,
                     modifier = Modifier.verticalScroll(vScroll).horizontalScroll(hScroll),
                 )
@@ -269,7 +274,6 @@ private fun AboutDialog(onDismiss: () -> Unit) {
                     ProjectLine("sat-chess-kotlin", "https://github.com/manfredscheucher/sat-chess-kotlin", "this app")
                     ProjectLine("ksat", "https://github.com/manfredscheucher/ksat", "the SAT solvers")
                     ProjectLine("cburnett", CBURNETT_URL, "chess pieces by Colin M.L. Burnett", license = "BSD 3-clause")
-                    ProjectLine("DejaVu Sans Mono", DEJAVU_URL, "font", license = "Bitstream Vera license")
                     ProjectLine("chess.com article", CHESS_COM_ARTICLE_URL, "example puzzles, by FM Mike Klein", license = null)
                     Spacer(Modifier.height(8.dp))
                     Text(
@@ -285,7 +289,7 @@ private fun AboutDialog(onDismiss: () -> Unit) {
                         for (notice in GeneratedLicenses.NOTICES) {
                             HorizontalDivider(Modifier.padding(vertical = 8.dp))
                             Text(notice.title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
-                            Text(notice.text, style = monoStyle().copy(fontSize = MaterialTheme.typography.labelSmall.fontSize))
+                            Text(notice.text, style = MaterialTheme.typography.bodySmall)
                         }
                     }
                 }
@@ -305,7 +309,6 @@ private fun ProjectLine(name: String, url: String, note: String, license: String
 }
 
 private const val CBURNETT_URL = "https://commons.wikimedia.org/wiki/Category:SVG_chess_pieces"
-private const val DEJAVU_URL = "https://dejavu-fonts.github.io/"
 private const val CHESS_COM_ARTICLE_URL = "https://www.chess.com/article/view/can-you-solve-these-5-easy-retrograde-puzzles"
 
 /** "sha · committed <date> · built <date>"; unknown parts are left out. */
@@ -417,7 +420,10 @@ Both modes
   pieces on one square. Such squares are
   hatched amber.
 
-View -> Board input switches the mode."""
+View -> Board input switches the mode.
+
+Edit -> Undo / Redo (Ctrl+Z, Ctrl+Shift+Z)
+take puzzle and board changes back."""
 
 private const val RESULTS_HELP = """Solve lists every solution; each one is
 checked by playing the moves through.

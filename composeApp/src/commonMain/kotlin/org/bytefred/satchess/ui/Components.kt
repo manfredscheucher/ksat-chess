@@ -27,22 +27,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import org.bytefred.satchess.resources.Res
-import org.bytefred.satchess.resources.dejavu_sans_mono
-import org.jetbrains.compose.resources.Font
 
 /** A titled card; with [expanded] / [onToggle] it collapses to its header. */
 @Composable
@@ -149,7 +141,6 @@ fun CompactField(
     label: String? = null,
     isError: Boolean = false,
     supporting: String? = null,
-    mono: Boolean = false,
 ) {
     val colors = MaterialTheme.colorScheme
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -158,7 +149,7 @@ fun CompactField(
             value = value,
             onValueChange = onValueChange,
             singleLine = true,
-            textStyle = (if (mono) monoStyle() else MaterialTheme.typography.bodyMedium).copy(color = colors.onSurface),
+            textStyle = MaterialTheme.typography.bodyMedium.copy(color = colors.onSurface),
             cursorBrush = SolidColor(colors.onSurface),
             modifier = modifier.height(ButtonDefaults.MinHeight),
             // centre the text vertically instead of fixed padding, so a larger font scale doesn't clip it
@@ -179,18 +170,4 @@ fun CompactField(
             )
         }
     }
-}
-
-private val LocalMonoStyle = staticCompositionLocalOf { TextStyle(fontFamily = FontFamily.Monospace, fontSize = 13.sp) }
-
-/** The bundled monospace style (DejaVu Sans Mono; FontFamily.Monospace is not monospaced on the web). */
-@Composable
-fun monoStyle(): TextStyle = LocalMonoStyle.current
-
-/** Bundled font: DejaVu Sans Mono, license in doc/licenses/LICENSE_DEJAVU.txt. */
-@Composable
-fun ProvideMonoStyle(content: @Composable () -> Unit) {
-    val family = FontFamily(Font(Res.font.dejavu_sans_mono))
-    val style = remember(family) { TextStyle(fontFamily = family, fontSize = 13.sp) }
-    CompositionLocalProvider(LocalMonoStyle provides style, content = content)
 }

@@ -83,15 +83,16 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
     "url": null,
     "year": null
   },
-  "description": "Black has just played d7-d5. Which white move leaves a pawn on d6 and d5 empty?",
+  "description": "Black to move, a white pawn on e5. Two plies later a white pawn stands on d6 and d5 is empty. Which two moves?",
   "question": "custom",
-  "plies": 1,
+  "plies": 2,
   "start": {
-    "board": "rnbqkbnr/ppp1pppp/8/3pP3/8/8/PPPP1PPP/RNBQKBNR",
-    "enPassant": "d6"
+    "board": "rnbqkbnr/pppppppp/8/4P3/8/8/PPPP1PPP/RNBQKBNR",
+    "sideToMove": "b"
   },
   "positions": {
-    "1": "rnbqkbnr/ppp1pppp/3P4/8/8/8/PPPP1PPP/RNBQKBNR"
+    "1": "rnbqkbnr/ppp1pppp/8/3pP3/8/8/PPPP1PPP/RNBQKBNR",
+    "2": "rnbqkbnr/ppp1pppp/3P4/8/8/8/PPPP1PPP/RNBQKBNR"
   },
   "project": [
     "moves"
@@ -206,8 +207,7 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
   "plies": 3,
   "start": {
     "board": "????????/????????/????????/????????/????????/????????/????????/????????",
-    "sideToMove": "?",
-    "castling": "?"
+    "sideToMove": "?"
   },
   "project": [
     "piece@3:K"

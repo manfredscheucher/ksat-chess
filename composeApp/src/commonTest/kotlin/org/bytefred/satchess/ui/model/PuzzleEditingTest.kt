@@ -208,26 +208,6 @@ class PuzzleEditingTest {
     // ── start parameters, patterns, projection ──
 
     @Test
-    fun castlingRightsToggleInCanonicalOrder() {
-        assertEquals("Kq", toggleCastlingRight("q", 'K', true))
-        assertEquals("-", toggleCastlingRight("K", 'K', false))
-        assertEquals("k", toggleCastlingRight("auto", 'k', true))
-        assertTrue(isCastlingField("KQkq"))
-        assertFalse(isCastlingField("KK"))
-        assertFalse(isCastlingField("X"))
-    }
-
-    @Test
-    fun enPassantValidation() {
-        assertNull(enPassantError("-", "w"))
-        assertNull(enPassantError("e3", "b"))
-        assertNull(enPassantError("d6", "?"))
-        assertNotNull(enPassantError("e3", "w"))
-        assertNotNull(enPassantError("e4", "b"))
-        assertNotNull(enPassantError("z9", "b"))
-    }
-
-    @Test
     fun movePatternsAndSquareDomains() {
         val p = proofGame.withMovePattern(0, MovePattern(san = "e4")).withSquareDomain(1, "h4", "QR")
         assertEquals(setOf(0), p.movePatternPlies())
@@ -256,4 +236,28 @@ class PuzzleEditingTest {
 
     private fun setSquareText(cells: List<Char>, square: String, value: Char) =
         setSquare(cells, Sq.parse(square)!!, value)
+
+    @Test
+    fun castlingCheckboxesFollowTheBoard() {
+        val start = Fen.parsePattern("startpos").cells
+        assertEquals(setOf('K', 'Q', 'k', 'q'), shownCastling("auto", start))
+        assertEquals(setOf('K', 'k'), shownCastling("Kk", start))
+        // unticking White O-O-O gives explicit rights, ticking it again is "auto" once more
+        assertEquals("Kkq", castlingAfterToggle("auto", start, 'Q', false))
+        assertEquals("auto", castlingAfterToggle("Kkq", start, 'Q', true))
+        // a king off its square: nothing to tick, and ticking is "-" at most
+        val kings = Fen.parsePattern("4k3/8/8/8/8/8/8/K7").cells
+        assertEquals(emptySet(), autoCastling(kings))
+        assertEquals("auto", castlingAfterToggle("K", kings, 'K', false)) // nothing left to allow: back to auto
+    }
+
+    @Test
+    fun enPassantFieldValidation() {
+        assertNull(enPassantError("-", "w"))
+        assertNull(enPassantError("e3", "b"))
+        assertNull(enPassantError("d6", "?"))
+        assertNotNull(enPassantError("e3", "w"))
+        assertNotNull(enPassantError("e4", "b"))
+        assertNotNull(enPassantError("z9", "b"))
+    }
 }

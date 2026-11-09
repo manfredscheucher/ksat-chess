@@ -145,6 +145,17 @@ class UsabilityUiTest {
     }
 
     @Test
+    fun editMenuUndoesTheLastChange() = runComposeUiTest {
+        val vm = PuzzleViewModel(FakeSolverService())
+        setContent { App(vm) }
+        val before = vm.puzzle
+        runOnIdle { vm.clearBoard() }
+        onNodeWithTag("menu-Edit").performClick()
+        onNodeWithText("Undo").performClick()
+        runOnIdle { assertEquals(before, vm.puzzle) }
+    }
+
+    @Test
     fun askBeforeReplacingAnEditedPuzzle() = runComposeUiTest {
         val vm = PuzzleViewModel(FakeSolverService())
         setContent { App(vm) }

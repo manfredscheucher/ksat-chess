@@ -65,6 +65,7 @@ import org.bytefred.satchess.ui.model.PliesUnit
 import org.bytefred.satchess.ui.model.SquareState
 import org.bytefred.satchess.ui.model.UNKNOWN
 import org.bytefred.satchess.ui.model.boardAt
+import org.bytefred.satchess.ui.model.castlingAfterToggle
 import org.bytefred.satchess.ui.model.constraintLevel
 import org.bytefred.satchess.ui.model.defaultOptionsAt
 import org.bytefred.satchess.ui.model.formatMoves
@@ -72,9 +73,12 @@ import org.bytefred.satchess.ui.model.label
 import org.bytefred.satchess.ui.model.movePatternPlies
 import org.bytefred.satchess.ui.model.optionsLabel
 import org.bytefred.satchess.ui.model.pliesSentence
+import org.bytefred.satchess.ui.model.shownCastling
 import org.bytefred.satchess.ui.model.sideToMoveAt
 import org.bytefred.satchess.ui.model.squareStateAt
-import org.bytefred.satchess.ui.model.toggleCastlingRight
+
+/** The editor board and the replay board share this width, so both look the same. */
+val BOARD_MAX_WIDTH = 420.dp
 
 /** Display name of ply [t] in a window of [plies]: A, 1, 2, ..., B. */
 fun plyName(t: Int, plies: Int): String = when (t) {
@@ -361,7 +365,7 @@ fun BoardEditorSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
         val hybrid = vm.inputMode == InputMode.HYBRID
         BoardView(
             cells = vm.board,
-            modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth().testTag("editorBoard"),
+            modifier = Modifier.widthIn(max = BOARD_MAX_WIDTH).fillMaxWidth().testTag("editorBoard"),
             options = vm.boardOptions,
             showCoordinates = vm.showCoordinates,
             onTap = if (hybrid) vm::clickSquare else { sq -> dialogSquare = sq },
@@ -406,7 +410,6 @@ fun BoardEditorSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
             label = if (t == 0) "FEN ('?' = unknown; a full FEN also sets the start)" else "FEN placement ('?' = unknown)",
             isError = vm.fenError != null,
             supporting = vm.fenError,
-            mono = true,
         )
     }
 
@@ -591,43 +594,23 @@ fun Palette(selected: Char, withOptionsTool: Boolean, onSelect: (Char) -> Unit) 
 @Composable
 fun StartSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
     val start = vm.puzzle.start
+    val cells = vm.puzzle.boardAt(0)
+    val rights = shownCastling(start.castling, cells)
     Section("Start (A)", modifier) {
         ChoiceChips("Side to move", start.sideToMove, listOf("w", "b", "?"), {
-            when (it) { "w" -> "White"; "b" -> "Black"; else -> "? (either)" }
+            when (it) { "w" -> "White"; "b" -> "Black"; else -> "either" }
         }, vm::setSideToMove)
-        val mode = when (start.castling) { "auto", "-", "?" -> start.castling; else -> "custom" }
-        ChoiceChips("Castling rights", mode, listOf("auto", "-", "custom", "?"), {
-            when (it) { "auto" -> "auto"; "-" -> "none"; "custom" -> "custom"; else -> "? (free)" }
-        }) { vm.setCastling(if (it == "custom") "KQkq" else it) }
-        if (mode == "custom") {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                for ((right, name) in listOf('K' to "White O-O", 'Q' to "White O-O-O", 'k' to "Black O-O", 'q' to "Black O-O-O")) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(
-                            checked = right in start.castling,
-                            onCheckedChange = { vm.setCastling(toggleCastlingRight(start.castling, right, it)) },
-                        )
-                        Text(name, style = MaterialTheme.typography.bodyMedium)
-                    }
+        FieldLabel("May still castle")
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            for ((right, name) in listOf('K' to "White O-O", 'Q' to "White O-O-O", 'k' to "Black O-O", 'q' to "Black O-O-O")) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(
+                        checked = right in rights,
+                        onCheckedChange = { vm.setCastling(castlingAfterToggle(start.castling, cells, right, it)) },
+                    )
+                    Text(name, style = MaterialTheme.typography.bodyMedium)
                 }
             }
         }
-        Text(
-            when (mode) {
-                "auto" -> "A right exists iff king and rook are on their home squares."
-                "?" -> "Each right is free (king and rook must still be at home)."
-                else -> "Exactly these rights."
-            },
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        CompactField(
-            value = vm.enPassantText,
-            onValueChange = vm::setEnPassantInput,
-            modifier = Modifier.width(260.dp),
-            label = "En passant square (- or e.g. e3)",
-            isError = vm.enPassantError != null,
-            supporting = vm.enPassantError,
-        )
     }
 }

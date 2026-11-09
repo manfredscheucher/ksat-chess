@@ -73,8 +73,6 @@ kotlin {
             implementation(compose.foundation)
             implementation(compose.material3)
             implementation(compose.ui)
-            // bundled DejaVu Sans Mono (composeResources/font)
-            implementation(compose.components.resources)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.kotlinx.coroutines.core)
@@ -98,10 +96,6 @@ kotlin {
             implementation(compose.desktop.uiTestJUnit4)
         }
     }
-}
-
-compose.resources {
-    packageOfResClass = "org.bytefred.satchess.resources"
 }
 
 compose.desktop {
@@ -265,7 +259,6 @@ val licenseNotices = listOf(
     "MiniSat (MIT)" to satSolversDir.resolve("licenses/minisat-LICENSE.txt"),
     "CaDiCaL (MIT)" to satSolversDir.resolve("licenses/cadical-LICENSE.txt"),
     "kissat (MIT)" to satSolversDir.resolve("licenses/kissat-LICENSE.txt"),
-    "DejaVu Sans Mono (Bitstream Vera license)" to rootProject.file("doc/licenses/LICENSE_DEJAVU.txt"),
 )
 val generateLicenses = tasks.register<GenerateLicenses>("generateLicenses") {
     titles.set(licenseNotices.map { it.first })

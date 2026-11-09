@@ -237,5 +237,24 @@ class PuzzleViewModelTest {
         assertFalse(vm.importJson("""{"plies": 2, "start": {"sideToMove": "w", "enPassant": "e3"}}"""))
         assertTrue(vm.importJson("""{"plies": 2, "squares": {"2": {"?": "Kk."}}}"""))
     }
-}
 
+    @Test
+    fun undoAndRedoFollowTheEdits() {
+        val original = vm.puzzle
+        vm.clearBoard()
+        val cleared = vm.puzzle
+        assertTrue(vm.canUndo)
+        vm.undo()
+        assertEquals(original, vm.puzzle)
+        assertTrue(vm.canRedo)
+        vm.redo()
+        assertEquals(cleared, vm.puzzle)
+        vm.setPliesInput("5")
+        vm.setPliesInput("6")
+        assertEquals(6, vm.puzzle.plies)
+        vm.undo() // the keystrokes of N are one step
+        assertEquals(cleared, vm.puzzle)
+        vm.load(Puzzle(plies = 2))
+        assertFalse(vm.canUndo || vm.canRedo)
+    }
+}

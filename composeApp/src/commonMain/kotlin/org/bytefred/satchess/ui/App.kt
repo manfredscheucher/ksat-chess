@@ -22,7 +22,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
@@ -56,93 +60,94 @@ private val THREE_COLUMNS = 1200.dp
 @Composable
 fun App(vm: PuzzleViewModel = viewModel { PuzzleViewModel() }) {
     SatChessTheme {
-      ProvideMonoStyle {
-        val examples = remember { loadExamples() }
-        var showExamples by remember { mutableStateOf(false) }
-        // outlives the dialog, so it reopens as it was left
-        val examplesState = remember { ExamplesTreeState() }
-        val snackbar = remember { SnackbarHostState() }
-        LaunchedEffect(Unit) {
-            vm.start(sharedPuzzleJson(), examples)
-            listenForShareLinks { json -> vm.leave { vm.openShareLink(json) } }
-        }
-        LaunchedEffect(vm.message) {
-            vm.message?.let {
-                snackbar.showSnackbar(it)
-                vm.showMessage(null)
-            }
-        }
+      val examples = remember { loadExamples() }
+      var showExamples by remember { mutableStateOf(false) }
+      // outlives the dialog, so it reopens as it was left
+      val examplesState = remember { ExamplesTreeState() }
+      val snackbar = remember { SnackbarHostState() }
+      LaunchedEffect(Unit) {
+          vm.start(sharedPuzzleJson(), examples)
+          listenForShareLinks { json -> vm.leave { vm.openShareLink(json) } }
+      }
+      LaunchedEffect(vm.message) {
+          vm.message?.let {
+              snackbar.showSnackbar(it)
+              vm.showMessage(null)
+          }
+      }
 
-        BoxWithConstraints(Modifier.fillMaxSize()) {
-            val stacked = when (vm.layoutMode) {
-                LayoutMode.AUTO -> maxWidth < WIDE_LAYOUT
-                LayoutMode.PORTRAIT -> true
-                LayoutMode.LANDSCAPE -> false
-            }
-            // Replay keys bubble up here from any focused element that does not use them (text fields do).
-            val replayKeys = Modifier.onKeyEvent { event ->
-                event.type == KeyEventType.KeyDown && vm.replayKey(event.key)
-            }
-            Scaffold(
-                modifier = replayKeys,
-                topBar = { MenuBar(vm, onExamples = { showExamples = true }) },
-                bottomBar = {
-                    if (stacked) {
-                        SolveBar(vm, Modifier.padding(8.dp))
-                    }
-                },
-                snackbarHost = { SnackbarHost(snackbar) },
-                containerColor = MaterialTheme.colorScheme.background,
-            ) { padding ->
-                if (stacked) {
-                    StackedLayout(vm, Modifier.padding(padding))
-                } else {
-                    SideBySideLayout(vm, threeColumns = maxWidth >= THREE_COLUMNS, Modifier.padding(padding))
-                }
-            }
-        }
+      BoxWithConstraints(Modifier.fillMaxSize()) {
+          val stacked = when (vm.layoutMode) {
+              LayoutMode.AUTO -> maxWidth < WIDE_LAYOUT
+              LayoutMode.PORTRAIT -> true
+              LayoutMode.LANDSCAPE -> false
+          }
+          // Replay keys bubble up here from any focused element that does not use them (text fields do).
+          val replayKeys = Modifier.onKeyEvent { event ->
+              event.type == KeyEventType.KeyDown && vm.replayKey(event.key)
+          }
+          Scaffold(
+              modifier = replayKeys,
+              topBar = { MenuBar(vm, onExamples = { showExamples = true }) },
+              bottomBar = {
+                  if (stacked) {
+                      SolveBar(vm, Modifier.padding(8.dp))
+                  }
+              },
+              snackbarHost = { SnackbarHost(snackbar) },
+              containerColor = MaterialTheme.colorScheme.background,
+          ) { padding ->
+              if (stacked) {
+                  StackedLayout(vm, Modifier.padding(padding))
+              } else {
+                  SideBySideLayout(vm, threeColumns = maxWidth >= THREE_COLUMNS, Modifier.padding(padding))
+              }
+          }
+      }
 
-        if (showExamples) {
-            ExamplesDialog(
-                examples = examples,
-                state = examplesState,
-                onLoad = { puzzle ->
-                    showExamples = false
-                    vm.leave { vm.load(puzzle) }
-                },
-                onDismiss = { showExamples = false },
-            )
-        }
+      if (showExamples) {
+          ExamplesDialog(
+              examples = examples,
+              state = examplesState,
+              onLoad = { puzzle ->
+                  showExamples = false
+                  vm.leave { vm.load(puzzle) }
+              },
+              onDismiss = { showExamples = false },
+          )
       }
     }
 }
 
 /**
- * The board panel (timeline + board editor), the question panel (header, question, start, advanced,
- * Solve) and, from [THREE_COLUMNS] on, a separate results panel.
+ * Left: what is asked (header, question, start, advanced). Middle: timeline and board. Right (from
+ * [THREE_COLUMNS] on): Solve and the results; with two columns they follow the board.
  */
 @Composable
 private fun SideBySideLayout(vm: PuzzleViewModel, threeColumns: Boolean, modifier: Modifier) {
     val panels = buildList {
-        add(SplitPanel("board") { m ->
-            ScrollPanel(m) {
-                TimelineSection(vm)
-                BoardEditorSection(vm)
-            }
-        })
         add(SplitPanel("question") { m ->
             ScrollPanel(m) {
                 PuzzleHeader(vm, compact = false)
                 QuestionSection(vm)
                 StartSection(vm)
                 AdvancedSection(vm)
-                SolveBar(vm)
-                if (!threeColumns) ResultsSection(vm)
+            }
+        })
+        add(SplitPanel("board") { m ->
+            ScrollPanel(m) {
+                TimelineSection(vm)
+                BoardEditorSection(vm)
+                if (!threeColumns) {
+                    SolveBar(vm)
+                    ResultsSection(vm)
+                }
             }
         })
         if (threeColumns) {
             add(SplitPanel("results") { m ->
                 ScrollPanel(m) {
+                    SolveBar(vm)
                     if (vm.run.puzzle == null) {
                         Section("Results") { Text("Solutions appear here, with a replay board.") }
                     }
@@ -191,9 +196,9 @@ private fun StackedLayout(vm: PuzzleViewModel, modifier: Modifier) {
         ) {
             PuzzleHeader(vm, compact = true)
             QuestionSection(vm, collapsible = true)
+            StartSection(vm)
             TimelineSection(vm)
             BoardEditorSection(vm)
-            StartSection(vm)
             AdvancedSection(vm)
             Box(Modifier.onGloballyPositioned { resultsTop = it.positionInParent().y.toInt() }) { ResultsSection(vm) }
         }

@@ -103,7 +103,7 @@ private fun SquareDomains(vm: PuzzleViewModel) {
         for ((square, allowed) in domains) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 val where = if (square == UNKNOWN_SQUARES) "every '?' square" else square
-                Text("ply ${plyName(ply.toIntOrNull() ?: 0, p.plies)}: $where in $allowed", style = monoStyle())
+                Text("ply ${plyName(ply.toIntOrNull() ?: 0, p.plies)}: $where in $allowed", style = MaterialTheme.typography.bodyMedium)
                 Spacer(Modifier.width(8.dp))
                 TextButton(onClick = { vm.setSquareDomain(ply.toIntOrNull() ?: 0, square, "") }) { Text("Remove") }
             }
@@ -362,7 +362,7 @@ private fun ReplayPanel(vm: PuzzleViewModel) {
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         FieldLabel("Solution #${vm.selectedSolution + 1} (arrow keys to step)")
-        Box(Modifier.widthIn(max = 420.dp).fillMaxWidth()) {
+        Box(Modifier.widthIn(max = BOARD_MAX_WIDTH).fillMaxWidth()) {
             if (cells != null) {
                 BoardView(
                     cells = cells,
@@ -405,7 +405,7 @@ private fun ReplayPanel(vm: PuzzleViewModel) {
                 onValueChange = { vm.setReplay(it.toInt()) },
                 valueRange = 0f..solution.moves.size.toFloat(),
                 steps = (solution.moves.size - 1).coerceAtLeast(0),
-                modifier = Modifier.widthIn(max = 420.dp),
+                modifier = Modifier.widthIn(max = BOARD_MAX_WIDTH),
             )
         }
         if (solution.moves.isNotEmpty()) FlowRow(

@@ -3,6 +3,7 @@ package org.bytefred.satchess.ui
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.input.key.Key
@@ -28,7 +29,6 @@ import org.bytefred.satchess.ui.model.SimilarGrouper
 import org.bytefred.satchess.ui.model.applyFenText
 import org.bytefred.satchess.ui.model.applyPreset
 import org.bytefred.satchess.ui.model.boardAt
-import org.bytefred.satchess.ui.model.enPassantError
 import org.bytefred.satchess.ui.model.fenTextAt
 import org.bytefred.satchess.ui.model.formatPlies
 import org.bytefred.satchess.ui.model.movePiece
@@ -99,8 +99,11 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
 
     var fenText by mutableStateOf(NEW_PUZZLE.fenTextAt(0)); private set
     var fenError by mutableStateOf<String?>(null); private set
-    var enPassantText by mutableStateOf("-"); private set
-    var enPassantError by mutableStateOf<String?>(null); private set
+
+    private val undoStack = mutableStateListOf<Puzzle>()
+    private val redoStack = mutableStateListOf<Puzzle>()
+    val canUndo: Boolean get() = undoStack.isNotEmpty()
+    val canRedo: Boolean get() = redoStack.isNotEmpty()
 
     // View menu; MenuBar stores a change, so it is still there after a reload
     var inputMode by mutableStateOf(InputMode.entries.firstOrNull { it.name == loadPref(INPUT_MODE_PREF) } ?: InputMode.HYBRID)
@@ -143,7 +146,7 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
 
     /** Allowed contents of the '?' squares of the selected ply (for drawing the options). */
     val boardOptions: Map<Int, Set<Char>> get() = puzzle.optionsAt(selectedPly)
-    val canSolve: Boolean get() = !run.running && !pliesError && fenError == null && enPassantError == null
+    val canSolve: Boolean get() = !run.running && !pliesError && fenError == null
 
     // ── loading ──────────────────────────────────────────────────────────────
 
@@ -155,8 +158,8 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
         selectedPly = if (p.positions.containsKey(p.plies.toString())) p.plies else 0
         pliesText = formatPlies(p.plies, pliesUnit)
         pliesError = false
-        enPassantText = p.start.enPassant
-        enPassantError = null
+        undoStack.clear()
+        redoStack.clear()
         optionsTarget = null
         run = SolveRun()
         clearSolutions()
@@ -256,8 +259,6 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
 
     fun setQuestion(question: Question) {
         update(applyPreset(puzzle, question))
-        enPassantText = puzzle.start.enPassant
-        enPassantError = null
         selectedPly = selectedPly.coerceAtMost(puzzle.plies)
         syncFen()
     }
@@ -273,7 +274,9 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
         if (plies == null) return
         val base = pliesEditBase ?: (puzzle to selectedPly).also { pliesEditBase = it }
         val (basePuzzle, baseSelected) = base
-        puzzle = basePuzzle.withPlies(plies)
+        val next = basePuzzle.withPlies(plies)
+        if (next != puzzle && undoStack.lastOrNull() !== basePuzzle) remember(basePuzzle) // one undo step per run of keystrokes
+        puzzle = next
         selectedPly = if (baseSelected == basePuzzle.plies) plies else baseSelected.coerceAtMost(plies)
         syncFen()
     }
@@ -292,23 +295,9 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
 
     // ── start parameters ─────────────────────────────────────────────────────
 
-    fun setSideToMove(side: String) {
-        update(puzzle.copy(start = puzzle.start.copy(sideToMove = side)))
-        checkEnPassant()
-    }
+    fun setSideToMove(side: String) = update(puzzle.copy(start = puzzle.start.copy(sideToMove = side)))
 
     fun setCastling(castling: String) = update(puzzle.copy(start = puzzle.start.copy(castling = castling)))
-
-    fun setEnPassantInput(text: String) {
-        enPassantText = text
-        checkEnPassant()
-    }
-
-    private fun checkEnPassant() {
-        val ep = enPassantText.trim().ifEmpty { "-" }
-        enPassantError = enPassantError(ep, puzzle.start.sideToMove)
-        if (enPassantError == null) update(puzzle.copy(start = puzzle.start.copy(enPassant = ep)))
-    }
 
     // ── board editing ────────────────────────────────────────────────────────
 
@@ -364,11 +353,7 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
         fenText = text
         val edit = applyFenText(puzzle, selectedPly, text)
         fenError = edit.error
-        edit.puzzle?.let { p ->
-            update(p)
-            enPassantText = p.start.enPassant
-            enPassantError = null
-        }
+        edit.puzzle?.let(::update)
     }
 
     private fun syncFen() {
@@ -382,8 +367,39 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
     fun setSquareDomain(t: Int, square: String, allowed: String) = update(puzzle.withSquareDomain(t, square, allowed))
 
     private fun update(p: Puzzle) {
+        if (p != puzzle) remember(puzzle)
         puzzle = p
         pliesEditBase = null
+    }
+
+    // ── undo / redo ──────────────────────────────────────────────────────────
+
+    private fun remember(before: Puzzle) {
+        undoStack += before
+        if (undoStack.size > UNDO_LIMIT) undoStack.removeAt(0)
+        redoStack.clear()
+    }
+
+    fun undo() {
+        if (undoStack.isEmpty()) return
+        redoStack += puzzle
+        restore(undoStack.removeAt(undoStack.lastIndex))
+    }
+
+    fun redo() {
+        if (redoStack.isEmpty()) return
+        undoStack += puzzle
+        restore(redoStack.removeAt(redoStack.lastIndex))
+    }
+
+    private fun restore(p: Puzzle) {
+        puzzle = p
+        pliesEditBase = null
+        selectedPly = selectedPly.coerceAtMost(p.plies)
+        pliesText = formatPlies(p.plies, pliesUnit)
+        pliesError = false
+        optionsTarget = null
+        syncFen()
     }
 
     // ── solving ──────────────────────────────────────────────────────────────
@@ -476,6 +492,8 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
     }
 
     companion object {
+        /** Undo steps kept. */
+        const val UNDO_LIMIT = 100
         private val compactJson = Json(from = PuzzleJson.json) { prettyPrint = false }
 
         /** Default "Max solutions" N. */
