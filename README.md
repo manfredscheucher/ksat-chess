@@ -6,8 +6,8 @@ legal way the game can have reached it. Every solution is checked by playing it 
 **Try it in the browser: <https://manfredscheucher.github.io/ksat-chess/>**
 
 <p>
-  <img src="doc/screenshot.png" height="400" alt="SAT chess on the desktop: board editor, question and a solved puzzle with replay">
-  <img src="doc/screenshot-mobile.png" height="400" alt="SAT chess on a phone: solutions and replay below the puzzle">
+  <img src="doc/screenshot.png" height="400" alt="ksat-chess on the desktop: board editor, question and a solved puzzle with replay">
+  <img src="doc/screenshot-mobile.png" height="400" alt="ksat-chess on a phone: solutions and replay below the puzzle">
 </p>
 
 A puzzle is N plies between a start board A and an end board B. Squares can be unknown or limited
@@ -15,8 +15,8 @@ to a few pieces, moves can be constrained, the end can be required to be mate or
 sides cooperate, as in a helpmate; the solver does not look for forced mates. Built in: a few demos and the 5 retro puzzles from a chess.com
 article by Mike Klein.
 
-SAT chess is in early development. Feedback is very welcome:
-[manfred.scheucher@proton.me](mailto:manfred.scheucher@proton.me?subject=sat-chess%20feedback&body=hi%20manfred%2C%0A%0A)
+ksat-chess is in early development. Feedback is very welcome:
+[manfred.scheucher@proton.me](mailto:manfred.scheucher@proton.me?subject=ksat-chess%20feedback&body=hi%20manfred%2C%0A%0A)
 
 ## The app
 

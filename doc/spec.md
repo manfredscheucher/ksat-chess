@@ -324,8 +324,9 @@ results as their own view.
 ## 8. Open points / follow-ups
 
 - Repo renamed to `ksat-chess` on GitHub (Manfred, 2026-11-09); Pages URL
-  https://manfredscheucher.github.io/ksat-chess/. Gradle's `rootProject.name` and the local folder
-  keep the old name for now (only bundle file names depend on it).
+  https://manfredscheucher.github.io/ksat-chess/. The app is called ksat-chess too (Welcome, About,
+  page title, feedback mail), the Welcome dialog links to the repo, `rootProject.name` is
+  `ksat-chess`; only the local folder keeps its old name.
 
 - Idea (Manfred, 2026-11-09): Chess960 castling, with a general rule "castling is possible when
   the king stands between its two rooks and neither has moved", plus a Chess960 example. Not

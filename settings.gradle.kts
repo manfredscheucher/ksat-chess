@@ -1,4 +1,4 @@
-rootProject.name = "sat-chess-kotlin"
+rootProject.name = "ksat-chess"
 
 pluginManagement {
     repositories {

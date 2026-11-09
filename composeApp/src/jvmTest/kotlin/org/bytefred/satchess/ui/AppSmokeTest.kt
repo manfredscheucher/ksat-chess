@@ -100,7 +100,7 @@ class AppSmokeTest {
         onNodeWithText("Cancel").performClick()
 
         onNodeWithTag("menu-Help").performClick()
-        onNodeWithText("About SAT chess").performClick()
+        onNodeWithText("About ksat-chess").performClick()
         onNodeWithTag("about").assertIsDisplayed()
         onNodeWithText("CaDiCaL (MIT)").assertDoesNotExist()
         onNodeWithText("License texts").performScrollTo().performClick()

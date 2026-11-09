@@ -152,7 +152,7 @@ fun MenuBar(vm: PuzzleViewModel, onExamples: () -> Unit) {
                 Item("Puzzles") { help = "Puzzles" to PUZZLE_HELP }
                 Item("Board input") { help = "Board input" to INPUT_HELP }
                 Item("Results") { help = "Results" to RESULTS_HELP }
-                Item("About SAT chess") { showAbout = true }
+                Item("About ksat-chess") { showAbout = true }
             }
         }
     }
@@ -271,7 +271,7 @@ private fun TextDialog(title: String, body: String, onDismiss: () -> Unit) {
 private fun AboutDialog(onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("SAT chess") },
+        title = { Text("ksat-chess") },
         text = {
             val vScroll = rememberScrollState()
             ScrollbarBox(vScroll, Modifier.heightIn(max = 520.dp)) {
@@ -280,7 +280,7 @@ private fun AboutDialog(onDismiss: () -> Unit) {
                     Spacer(Modifier.height(8.dp))
                     FeedbackBox()
                     Spacer(Modifier.height(8.dp))
-                    ProjectLine("ksat-chess", "https://github.com/manfredscheucher/ksat-chess", "this app")
+                    ProjectLine("ksat-chess", REPO_URL, "this app")
                     ProjectLine("ksat", "https://github.com/manfredscheucher/ksat", "the SAT solvers")
                     ProjectLine("cburnett", CBURNETT_URL, "chess pieces by Colin M.L. Burnett", license = "BSD 3-clause")
                     ProjectLine("chess.com article", CHESS_COM_ARTICLE_URL, "example puzzles, by FM Mike Klein", license = null)
@@ -317,6 +317,7 @@ private fun ProjectLine(name: String, url: String, note: String, license: String
     }
 }
 
+private const val REPO_URL = "https://github.com/manfredscheucher/ksat-chess"
 private const val CBURNETT_URL = "https://commons.wikimedia.org/wiki/Category:SVG_chess_pieces"
 private const val CHESS_COM_ARTICLE_URL = "https://www.chess.com/article/view/can-you-solve-these-5-easy-retrograde-puzzles"
 
@@ -336,10 +337,12 @@ private fun WelcomeDialog(close: () -> Unit) {
     AlertDialog(
         onDismissRequest = ::done,
         confirmButton = { TextButton(onClick = ::done, modifier = Modifier.testTag("welcomeStart")) { Text("Start") } },
-        title = { Text("Welcome to SAT chess") },
+        title = { Text("Welcome to ksat-chess") },
         text = {
             Column {
                 Text("Set up a position, and a SAT solver finds every legal way the game can have reached it.")
+                Spacer(Modifier.height(6.dp))
+                Row { Text("Code and puzzles: "); LinkText("github.com/manfredscheucher/ksat-chess", REPO_URL) }
                 Spacer(Modifier.height(10.dp))
                 FeedbackBox()
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -358,7 +361,7 @@ private fun FeedbackBox() {
         Modifier.fillMaxWidth().background(Color(0xFFFFF3B0), RoundedCornerShape(8.dp))
             .border(1.dp, Color(0xFFE0C200), RoundedCornerShape(8.dp)).padding(10.dp),
     ) {
-        Text("SAT chess is in early development. Feedback is very welcome:", color = Color(0xFF3A3000))
+        Text("ksat-chess is in early development. Feedback is very welcome:", color = Color(0xFF3A3000))
         LinkText(EMAIL, FEEDBACK_MAILTO)
     }
 }
@@ -394,7 +397,7 @@ internal const val SOLUTION_VIEW_PREF = "solutionView"
 private const val EMAIL = "manfred.scheucher@proton.me"
 // subject "sat-chess feedback", body "hi manfred," + blank line
 private const val FEEDBACK_MAILTO =
-    "mailto:$EMAIL?subject=sat-chess%20feedback&body=hi%20manfred%2C%0A%0A"
+    "mailto:$EMAIL?subject=ksat-chess%20feedback&body=hi%20manfred%2C%0A%0A"
 
 private const val PUZZLE_HELP = """A puzzle is N plies of play: board A
 at the start, board B at the end.
