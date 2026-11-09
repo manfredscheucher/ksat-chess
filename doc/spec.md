@@ -373,6 +373,10 @@ Manfred's layout for the left column, implemented literally:
   size. Not taken (Manfred's words stand): "any" for the goal, "Available castling options",
   "Goal at the end".
 
+### Board title uniform (Manfred, 2026-11-09)
+"Board at A (start)", "Board at 2 (after ply 2)", "Board at B (after ply 4)": the same shape for
+every ply; before, A and B had no bracket.
+
 ## 8. Open points / follow-ups
 
 - Idea (Manfred, 2026-11-09): the goal belongs to the board, not the Question row, so a goal

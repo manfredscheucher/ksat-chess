@@ -358,7 +358,7 @@ fun BoardEditorSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
     val t = vm.selectedPly
     var dialogSquare by remember { mutableStateOf<Int?>(null) }
     val side = sideToMoveAt(p.start.sideToMove, t)
-    val title = "Board at ${plyName(t, p.plies)}" + (if (t in 1 until p.plies) " (after ply $t)" else "") +
+    val title = "Board at ${plyName(t, p.plies)} (${if (t == 0) "start" else "after ply $t"})" +
         " · " + (side?.let { if (it == 'w') "White to move" else "Black to move" } ?: "side to move free")
     val openOptions = { sq: Int -> vm.openOptions(OptionsTarget.Square(sq)) }
 
