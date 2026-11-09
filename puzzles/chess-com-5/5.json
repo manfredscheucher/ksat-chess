@@ -7,18 +7,23 @@
     "url": "https://www.chess.com/article/view/can-you-solve-these-5-easy-retrograde-puzzles",
     "year": 1979
   },
-  "description": "Exactly one piece stands on h4, type and colour unknown. Which one? The solver shows every piece that passes the static checks; the real answer comes from counting captures and pawn moves backwards.",
+  "description": "Exactly one piece stands on h4, and Smullyan does not even tell its colour. Which piece is it, and from which army? The window has two plies, so the last move of each side counts; the rest is the history of the pawns.",
   "question": "unknownPiece",
-  "plies": 0,
+  "plies": 2,
   "start": {
-    "board": "2nR3K/pk1Rp1p1/p2p4/P1p5/1Pp4?/2PP2P1/4P2P/n7"
+    "board": "????????/????????/????????/????????/????????/????????/????????/????????",
+    "sideToMove": "?"
+  },
+  "positions": {
+    "2": "2nR3K/pk1Rp1p1/p2p4/P1p5/1Pp4?/2PP2P1/4P2P/n7"
+  },
+  "squares": {
+    "2": {
+      "h4": "KQRBNPkqrbnp"
+    }
   },
   "project": [
-    "square@0:h4"
+    "square@2:h4"
   ],
-  "rules": {
-    "oneKingEach": false,
-    "checkRules": false
-  },
-  "expected": 13
+  "expected": 1
 }

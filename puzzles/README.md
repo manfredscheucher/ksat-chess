@@ -21,8 +21,8 @@ python3 scripts/gen_puzzles.py
 `chess-com-5/` is converted from the Python sat-chess project
 (`../sat-chess/configs/puzzles`). Titles, credits and descriptions live in the
 selection list in `scripts/gen_puzzles.py`, so edit them there and re-run with
-`--convert` (this overwrites that folder; `demos/` and `chess-com-5/2.json` are
-hand-written and never touched):
+`--convert` (this overwrites that folder; `demos/`, `chess-com-5/2.json` and `chess-com-5/5.json`
+are hand-written and never touched):
 
 ```bash
 python3 scripts/gen_puzzles.py --convert

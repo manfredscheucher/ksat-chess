@@ -80,19 +80,7 @@ CHESS_COM = [
         "source": {"name": "Die Schwalbe; reprinted in the " + CHESS_COM_NAME,
                    "url": CHESS_COM_URL, "year": 1976},
     }),
-    ("puzzle5.puzzle", "5", {
-        "title": "The piece on h4",
-        "question": "unknownPiece",
-        "composer": "Raymond Smullyan",
-        "project": ["square@0:h4"],
-        "description": (
-            "Exactly one piece stands on h4, type and colour unknown. Which one? The "
-            "solver shows every piece that passes the static checks; the real answer "
-            "comes from counting captures and pawn moves backwards."),
-        "source": {"name": "The Chess Mysteries of Sherlock Holmes (via the "
-                   + CHESS_COM_NAME + ")",
-                   "url": CHESS_COM_URL, "year": 1979},
-    }),
+    # chess-com-5/5.json (1-ply window, retro accounting) is hand-written: not converted.
 ]
 
 
@@ -115,13 +103,6 @@ def convert(d):
         out["positions"] = positions
     if d.get("project_piece"):
         out["project"] = ["piece@0:" + d["project_piece"]]
-    rules = {}
-    if d.get("no_king"):
-        rules["oneKingEach"] = False
-    if d.get("no_check"):
-        rules["checkRules"] = False
-    if rules:
-        out["rules"] = rules
     out["expected"] = d.get("expected")
     return out
 
@@ -130,7 +111,7 @@ def ordered(p):
     """Stable key order for the written JSON."""
     keys = ["id", "title", "composer", "source", "description", "question", "plies",
             "start", "positions", "squares", "moves", "goal", "shortest", "project",
-            "rules", "expected"]
+            "expected"]
     return {k: p[k] for k in keys if k in p}
 
 

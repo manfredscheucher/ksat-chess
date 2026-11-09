@@ -7,7 +7,6 @@ import org.bytefred.satchess.chess.Position
 import org.bytefred.satchess.chess.Rules
 import org.bytefred.satchess.chess.Sq
 import org.bytefred.satchess.puzzle.Puzzle
-import org.bytefred.satchess.puzzle.RuleFlags
 import org.bytefred.satchess.puzzle.Start
 import org.bytefred.satchess.puzzle.UNKNOWN_SQUARES
 import kotlin.test.Test
@@ -50,7 +49,6 @@ class ProjectionTest {
             positions = mapOf("1" to "7k/8/8/8/8/8/8/?3K3"),
             squares = mapOf("1" to mapOf("a1" to "Rr")),
             project = listOf("moves"),
-            rules = RuleFlags(materialSane = false), // irrelevant here, and slow on an open board
         )
         val perSide = listOf("w", "b").map { solveAll(puzzle.copy(start = puzzle.start.copy(sideToMove = it))).count }
         assertEquals(listOf(14, 12), perSide)
@@ -95,15 +93,6 @@ class ProjectionTest {
         )
         assertEquals(setOf("4k3/8/8/8/8/8/8/R3K3", "4k3/8/8/8/8/8/8/4K3"), keys(puzzle))
     }
-
-    private fun material(board: String) =
-        solveAll(Puzzle(plies = 0, start = Start(board = board), rules = RuleFlags(materialSane = true))).count
-
-    @Test fun ninePawns() = assertEquals(0, material("4k3/8/8/8/P7/8/PPPPPPPP/4K3"))
-    @Test fun threeKnightsNeedAPromotion() = assertEquals(0, material("4k3/8/8/8/8/N7/PPPPPPPP/1N2K1N1"))
-    @Test fun threeKnightsWithSevenPawns() = assertEquals(1, material("4k3/8/8/8/8/N7/PPPPPPP1/1N2K1N1"))
-    @Test fun twoDarkBishops() = assertEquals(0, material("4k3/8/8/8/8/8/PPPPPPPP/2B1K1B1"))
-    @Test fun lightAndDarkBishops() = assertEquals(1, material("4k3/8/8/8/8/8/PPPPPPPP/2B1KB2"))
 
     @Test
     fun defaultSanityWithUnknownSquare() {

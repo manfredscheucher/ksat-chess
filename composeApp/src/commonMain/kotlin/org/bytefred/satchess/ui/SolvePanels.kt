@@ -45,7 +45,6 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import org.bytefred.satchess.chess.Fen
 import org.bytefred.satchess.chess.Sq
-import org.bytefred.satchess.puzzle.RuleFlags
 import org.bytefred.satchess.puzzle.UNKNOWN_SQUARES
 import org.bytefred.satchess.sat.ShortestCheck
 import org.bytefred.satchess.sat.Solution
@@ -60,7 +59,7 @@ import org.bytefred.satchess.ui.model.squareDomainError
 
 // ── advanced ────────────────────────────────────────────────────────────────
 
-/** Max solutions, shortest, rule flags and square domains (collapsible). */
+/** Max solutions, shortest and square domains (collapsible). */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun AdvancedSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
@@ -82,12 +81,6 @@ fun AdvancedSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
             }
         }
         CheckRow("Shortest: also prove that N - 2 plies are not enough", p.shortest, vm::setShortest)
-        FieldLabel("Rules")
-        CheckRow("Exactly one king per side", p.rules.oneKingEach) { vm.setRules(p.rules.copy(oneKingEach = it)) }
-        CheckRow("Check rules (no move into / staying in check)", p.rules.checkRules) { vm.setRules(p.rules.copy(checkRules = it)) }
-        ChoiceChips("Material sanity (pawn and piece counts, bishop colours)", p.rules.materialSane, listOf(null, true, false), {
-            when (it) { null -> "auto (on with '?')"; true -> "on"; false -> "off" }
-        }) { vm.setRules(RuleFlags(p.rules.oneKingEach, p.rules.checkRules, it)) }
         SquareDomains(vm)
     }
 }

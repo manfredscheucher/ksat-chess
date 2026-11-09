@@ -25,7 +25,8 @@ data class EncoderOptions(val moveAmo: MoveAmo = MoveAmo.SRC_TGT)
 
 /**
  * The CNF of one puzzle for one side to move at ply 0, plus the variable maps needed to decode
- * models. Encoding plan: doc/spec.md section 5, details in doc/encoding.md.
+ * models. Encoding plan: doc/spec.md section 5, details in doc/encoding.md. The position at ply 0
+ * must be reachable from the initial array as far as [History] can tell.
  *
  * Plies t = 0..[plies]; ply t's move leads from board t to board t + 1 and is made by [side] (t).
  */
@@ -37,7 +38,6 @@ class Encoding(
     val cnf = Cnf()
     val plies: Int = puzzle.plies
     val patterns: Map<Int, BoardPattern>
-    val checkRules: Boolean = puzzle.rules.checkRules
 
     fun side(t: Int): Color = if (t % 2 == 0) sideToMove else sideToMove.opposite
 
@@ -95,8 +95,8 @@ class Encoding(
         for (t in 0..plies) encodeBoard(t)
         encodeStart()
         for (t in 0 until plies) encodePly(t)
-        if (checkRules) for (t in 0..plies) encodeKingSafety(t)
-        if (puzzle.rules.materialSane ?: patterns.values.any { !it.isFixed }) encodeMaterial()
+        for (t in 0..plies) encodeKingSafety(t)
+        History(cnf) { sq, piece -> at(0, sq, piece) }
         encodeGoal()
         encodeMovePatterns(this)
     }
@@ -141,9 +141,8 @@ class Encoding(
                 cnf.add(-at(t, sq, Piece.BP))
             }
         }
-        if (puzzle.rules.oneKingEach) {
-            for (king in listOf(Piece.WK, Piece.BK)) cnf.exactlyOneLadder(IntArray(64) { at(t, it, king) })
-        }
+        // implied by History at ply 0 and by king safety afterwards; stated per ply to help propagation
+        for (king in listOf(Piece.WK, Piece.BK)) cnf.exactlyOneLadder(IntArray(64) { at(t, it, king) })
         patterns[t]?.let { pattern ->
             for (sq in 0 until 64) {
                 val c = pattern.cells[sq]
@@ -365,7 +364,7 @@ class Encoding(
             val v = castleMove(t, right)
             cnf.defineAnd(v, intArrayOf(move(t, Geometry.pairIndex(castle.kingFrom, castle.kingTo)), castling(t, right)))
             for (sq in castle.empty) cnf.add(-v, empty(t, sq))
-            if (checkRules) for (sq in castle.kingPath) cnf.add(-v, -attacked(t, sq, c.opposite))
+            for (sq in castle.kingPath) cnf.add(-v, -attacked(t, sq, c.opposite))
             cnf.add(-v, at(t + 1, castle.rookTo, Piece.of(c, PieceType.ROOK)))
             cnf.add(-v, empty(t + 1, castle.rookFrom))
             special[castle.rookFrom] += v
@@ -383,31 +382,6 @@ class Encoding(
         val mover = side(t)
         val king = pieceIndex(mover.opposite, PieceType.KING)
         for (sq in 0 until 64) cnf.add(-at(t, sq, king), -attacked(t, sq, mover))
-    }
-
-    /**
-     * Material sanity at ply 0 (later plies inherit it, since moves only remove men or turn a
-     * pawn into a piece): per side at most 16 men, and pawns + promoted pieces <= 8, where
-     * promoted pieces are the excess over the initial set (Q > 1, R > 2, N > 2, and more than
-     * one bishop on the same square colour).
-     */
-    private fun encodeMaterial() {
-        for (c in Color.entries) {
-            val men = IntArray(64) { sq -> cnf.or(IntArray(6) { at(0, sq, pieceIndex(c, PieceType.entries[it])) }) }
-            cnf.add(-cnf.unaryCount(men, 17)[16])
-
-            fun count(type: PieceType, squares: List<Int>, initial: Int): List<Int> {
-                val counter = cnf.unaryCount(squares.map { at(0, it, Piece.of(c, type)) }.toIntArray(), initial + 9)
-                return counter.drop(initial)
-            }
-            val all = (0 until 64).toList()
-            val pawnSquares = all.filter { Sq.row(it) in 1..6 }
-            val bits = count(PieceType.PAWN, pawnSquares, 0) +
-                count(PieceType.QUEEN, all, 1) + count(PieceType.ROOK, all, 2) + count(PieceType.KNIGHT, all, 2) +
-                count(PieceType.BISHOP, all.filter { Sq.isLight(it) }, 1) +
-                count(PieceType.BISHOP, all.filter { !Sq.isLight(it) }, 1)
-            cnf.add(-cnf.unaryCount(bits.toIntArray(), 9)[8])
-        }
     }
 
     /**

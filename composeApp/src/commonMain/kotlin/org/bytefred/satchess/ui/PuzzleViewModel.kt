@@ -15,7 +15,6 @@ import org.bytefred.satchess.puzzle.MovePattern
 import org.bytefred.satchess.puzzle.Puzzle
 import org.bytefred.satchess.puzzle.PuzzleJson
 import org.bytefred.satchess.puzzle.Question
-import org.bytefred.satchess.puzzle.RuleFlags
 import org.bytefred.satchess.sat.Solution
 import org.bytefred.satchess.sat.SolveEvent
 import org.bytefred.satchess.sat.SolveOptions
@@ -290,7 +289,6 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
 
     fun setGoal(goal: Goal) = update(puzzle.copy(goal = goal))
     fun setShortest(on: Boolean) = update(puzzle.copy(shortest = on))
-    fun setRules(rules: RuleFlags) = update(puzzle.copy(rules = rules))
 
     // ── start parameters ─────────────────────────────────────────────────────
 

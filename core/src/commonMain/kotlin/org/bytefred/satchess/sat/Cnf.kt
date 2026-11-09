@@ -79,6 +79,21 @@ class Cnf {
         for (i in xs.indices) for (j in i + 1 until xs.size) add(-xs[i], -xs[j])
     }
 
+    /** At most one of [xs] with a sequential ladder (about 3n clauses, n - 2 auxiliaries). */
+    fun atMostOneLadder(xs: IntArray) {
+        if (xs.size <= 4) { atMostOnePairwise(xs); return }
+        var prev = xs[0] // prev <=> some earlier x is true (one direction is enough for at-most-one)
+        for (i in 1 until xs.size) {
+            val x = xs[i]
+            add(-x, -prev)
+            if (i == xs.size - 1) break
+            val s = newVar()
+            add(-prev, s)
+            add(-x, s)
+            prev = s
+        }
+    }
+
     /**
      * Exactly one of [xs] with a sequential ladder: s_i <=> s_(i-1) OR x_i (so the auxiliary
      * variables are functionally determined), x_i => NOT s_(i-1), and s_n must hold.

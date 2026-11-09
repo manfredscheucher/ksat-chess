@@ -71,7 +71,6 @@ means *both sides cooperate* (helpmate / proof game style). A real **directmate*
   "goal": "none",
   "shortest": false,
   "project": ["moves", "board@0"],
-  "rules": { "oneKingEach": true, "checkRules": true, "materialSane": true },
   "expected": 1
 }
 ```
@@ -83,8 +82,8 @@ means *both sides cooperate* (helpmate / proof game style). A real **directmate*
   (`.` = empty allowed). Keeps FEN strings pure. The key `"?"` is the domain of every `?`
   square of that ply's board (explicit square entries override it), e.g. "where is the white
   king?": board `8/8/8/1r1b4/B7/8/8/3k4` with all other squares `?` and
-  `"squares": {"0": {"?": "K."}}` (each unknown square is a white king or empty; with
-  `oneKingEach` exactly one of them is the king). *(Requested by Manfred, 2026-10-21.)*
+  `"squares": {"0": {"?": "K."}}` (each unknown square is a white king or empty; exactly one
+  of them is the king). *(Requested by Manfred, 2026-10-21.)*
 - `moves`: optional per-ply **move patterns**, either SAN (`"Kf2"`) or an object with any of
   `piece, from, to, capture, promo, castle, check`. Covers "White played f3, Kf2, Kg3, Kh4",
   "Black's last move was a capture", "White castled".
@@ -103,11 +102,10 @@ means *both sides cooperate* (helpmate / proof game style). A real **directmate*
   Default `["moves", "board@0"]` (= the whole path, since every board follows from A + moves).
   Puzzles like "where is the white king?" use `["piece@0:K"]`; "which piece on h4?" uses
   `["square@0:h4"]`.
-- `rules`: `oneKingEach`, `checkRules` (for converted Python oddities), and
-  `materialSane` (default on whenever a board has `?`): at most 8 pawns and 16 men per
-  side, promoted pieces ≤ missing pawns, bishops by square colour, no pawn on rank 1/8.
-  This is still **not** full retro-legality; puzzles that need deeper retro reasoning are
-  marked "position only" in the examples.
+- No rule switches (the `rules` flags were removed on 2026-11-09, old files with a `rules`
+  key still load). Legal moves, exactly one king per side and the retro **history** of the
+  position at ply 0 (pawn paths, captures, promotions, bishop colours; `doc/encoding.md`
+  section 11) always hold.
 - `question`: UI preset that filled the fields (`proofGame`, `lastMoves`, `helpmate`,
   `unknownPiece`, `custom`). Informational for the solver.
 - `expected`: known solution count under `project`, or null. Used by tests and shown in
@@ -129,6 +127,9 @@ Ported semantics, with these optimizations / generalizations / fixes:
    which only changed the t=0 check test).
 5. Castling rights and en passant are state variables at **every** ply incl. t=0 and t=N.
 6. No pawns on rank 1/8 at any ply (Python allowed them from `?` squares).
+7. Retro history at ply 0 (2026-11-09, `doc/encoding.md` section 11): pawn paths with
+   capture squares, identity of every man, boxed bishops, pawns that cannot pass each other.
+   Needed for Smullyan's h4 puzzle; replaces the material-count heuristic and the rule flags.
 7. Auxiliary variables (AMO ladders etc.) are functionally determined where cheap;
    enumeration always blocks over the **projected** variables only. Exported DIMACS is
    for SAT, not for #SAT model counting, unless stated.
@@ -165,9 +166,9 @@ Reviewed by a fresh UX reviewer; decisions:
   off the board removes them. Settings offer one alternative, "click opens a dialog",
   because Manfred asked for switchable input modes.
 - **Question preset first** (Proof game / Last move(s)? / Helpmate in k / Find unknown
-  piece / Custom). The preset fills A, B, N, goal and projection. Max solutions, Shortest,
-  rules and square domains live under "Advanced" (solver choice and the projection field were
-  removed on 2026-11-09).
+  piece / Custom). The preset fills A, B, N, goal and projection. Max solutions, Shortest and
+  square domains live under "Advanced" (solver choice, the projection field and the rule
+  switches were removed on 2026-11-09).
 - **Plies vs moves**: one number with a unit toggle plus a live sentence, e.g.
   "13 plies = PG 6.5 · White starts · White moves last · Black to move at B".
 - **Timeline**: `(A)─1─2─…─(B)` chips; the icon shows fixed / partial / open (derived from
@@ -272,6 +273,12 @@ results as their own view.
   - "Projection (what makes two solutions distinct)" field removed from Advanced ("weg damit"):
     nobody understood `board@0` / `square@0:h4`. The puzzle file keeps `project` (set by the
     question preset and the examples); "Group similar solutions" in the results stays.
+  - **Smullyan's h4 puzzle really solved** (Manfred: "du sollst das 5er lösen, du hast ja sat …
+    schummeln geht gar ned"). chess.com #5 had been shipped with 13 "answers" and the check rule
+    switched off. Now: retro history in the encoder (section 5 item 7, `doc/encoding.md` section
+    11), #5 as a 2-ply window with the diagram at ply 2 and h4 = any piece, answer h4 = B, unique.
+    The rule switches "Check rules" / "Exactly one king" / "Material sanity" are gone from the UI
+    and the format: no real puzzle needs illegal moves, and the history subsumes the other two.
   - About like ktoy: one line per part with link and license (app, ksat, cburnett pieces, DejaVu
     font, chess.com article); the full license texts only behind "License texts". Developer notes
     on the piece graphics moved from `composeApp/NOTICE-pieces.md` to `doc/pieces.md`; the app

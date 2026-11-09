@@ -40,11 +40,12 @@ Per board `t = 0..N`:
 
 - **Square content**: exactly one of 13 per square (one at-least-one clause + 78 pairwise AMO).
 - **No pawns on rank 1 / 8** (unit clauses). *Python allowed them on `?` squares.*
-- **One king per colour** (`rules.oneKingEach`): exactly-one ladder over the 64 king variables,
+- **One king per colour**: exactly-one ladder over the 64 king variables,
   `s_i <=> s_(i-1) OR x_i`, `x_i => NOT s_(i-1)`, `s_64`. 63 auxiliaries and about 250 clauses per
-  king instead of Python's 2,016 pairwise clauses.
+  king instead of Python's 2,016 pairwise clauses. (Implied by the history at ply 0 and by king
+  safety afterwards; stated per ply for propagation.)
 - **Castling invariant**: `castling(t, r) => king and rook of r on their home squares`.
-- **King safety** (`rules.checkRules`): the king of the side *not* to move is not attacked by
+- **King safety**: the king of the side *not* to move is not attacked by
   the side to move. At `t = 0` this is the "the side that just moved is not in check" rule, at
   `t > 0` it is "a move may not leave the own king in check".
 - Puzzle constraints: board patterns (`start.board` at 0, `positions`), square domains (one
@@ -79,16 +80,10 @@ Per ply `t < N`, mover `c = side(t)`:
   home; `-` none; a subset of `KQkq` = exactly those; `?` = free (still needs king and rook at home).
 - **Castling move** (both ways): `castleMove(t, r) <=> move(king home, king target) AND
   castling(t, r)`; it forces the squares between king and rook empty, king start / transit /
-  target not attacked (with `checkRules`), the rook on its target at `t+1` and its home empty.
+  target not attacked, the rook on its target at `t+1` and its home empty.
 
-At ply 0 only:
-
-- **Material sanity** (`rules.materialSane`, default on iff some board has `?`): per side at
-  most 16 men, and `pawns + promoted pieces <= 8`, where promoted pieces are the excess over the
-  initial set: queens over 1, rooks over 2, knights over 2, and **bishops over 1 per square
-  colour**. Built from exact unary counters (sequential counters whose outputs are equivalences).
-  Later plies inherit sanity, because moves only remove men or turn a pawn into a piece. Still
-  not full retro-legality (e.g. pawn structures that need captures are not checked).
+At ply 0 only: the **history** (section 11), which replaced the earlier material-count check
+on 2026-11-09. Later plies inherit it, because moves only remove men or turn a pawn into a piece.
 
 At ply N: the goal, see section 5.
 
@@ -146,7 +141,7 @@ on a quiet machine.
   - `FULL_STATE` (as first written in the spec): the full state at ply N, about 850 literals.
   - `ESCAPE_MOVE` (default since 2026-10-21; exact, 5-13x fewer refinement calls): take one
     legal move of the side to move (not castling or e.p., which depend on rights / e.p. state; if only such moves exist, or the
-    side to move does not have exactly one king (`oneKingEach: false`), fall back to the full state) and block only the squares that make it legal: from, to, the squares between,
+    side to move does not have exactly one king, fall back to the full state) and block only the squares that make it legal: from, to, the squares between,
     the king square after the move, its knight and king neighbours, and each of its 8 rays up to
     and including the first piece (on the board after the move; every such square has the same
     content before the move except from / to, which are in the clause). Every position that
@@ -223,8 +218,8 @@ or `any`), `check`.
 
 Every solution is replayed with the reference move generator: each decoded move must be in
 `Rules.legalMoves` of the decoded position and `Rules.apply` must give exactly the next decoded
-position (board, side, castling, e.p.), the start must not have the side not to move in check
-(with `checkRules`), and the goal must hold. `Solution.verified` reports the result; the tests
+position (board, side, castling, e.p.), the start must not have the side not to move in check,
+and the goal must hold. `Solution.verified` reports the result; the tests
 require it for every solution.
 
 ## 9. Measurements
@@ -235,10 +230,11 @@ the Python encoder (7x smaller). Python with native CaDiCaL took about 14-45 s f
 the Kotlin ports need 12-28 s CPU (table in section 4), i.e. within the "small factor of native"
 assumed in the spec.
 
-`cli run` over the bundled puzzles (Kissat): chess-com-5/1 (4), /4 (1), /5 (13) match
-`expected`; /3 finds 2 lines; /2 (`oneKingEach: false`, `piece@0:K` over an open board)
-enumerates tens of thousands of king sets and needs a better puzzle definition. (The janko.at
-shorties measured here were removed from the repo on 2026-11-09.)
+`cli run` over the bundled puzzles (Kissat, 2026-10): chess-com-5/1 (4), /4 (1) match `expected`;
+/3 finds 2 lines; /2 (`piece@0:K` over an open board, before it got its 3-ply definition)
+enumerated tens of thousands of king sets. /5 reported 13 "answers" then; with the history
+(section 11) it is unique, h4 = B, in about 2 s on the JVM. (The janko.at shorties measured here
+were removed from the repo on 2026-11-09.)
 
 Two performance problems of the Kotlin **CaDiCaL port** (`~/github/sat-solvers-kotlin`, not
 changed here) were found with JFR:
@@ -255,9 +251,57 @@ Both look like one-line fixes (grow geometrically; test the conflict limit first
 ## 10. Known limitations
 
 - All answers are existential (cooperative play); directmates are out of scope (spec section 4).
-- `materialSane` is not full retro-legality (no pawn-structure / capture-count reasoning).
+- The history (section 11) is sound but not complete: it does not track piece moves (a rook
+  behind unmoved pawns, castling rights versus king moves), squares passed by double steps, or the
+  order of events beyond the two pawn rules. A position it accepts may still be unreachable.
 - A position with both `enPassant` and castling rights is accepted as given (no retro check).
 - `#` in a move pattern only demands check.
-- `rules.checkRules: false` turns off king safety and the castling path test (Python's
-  `no_check`); solutions of such puzzles are usually reported as not verified.
 - Solver ports: see section 9 for two performance problems found in the Kotlin CaDiCaL port.
+
+## 11. History (retro accounting at ply 0)
+
+`History.kt`, since 2026-11-09, always on. The position at ply 0 must be one that can arise from
+the initial array, as far as these rules can tell; the puzzle format has no switch for it (the old
+`rules` flags `oneKingEach`, `checkRules`, `materialSane` are gone). Variables per side:
+
+- for each of the 8 pawns: `vis(sq)` / `end(sq)` over its reachable squares (file shift at most
+  the ranks advanced), one step variable per push, double step and diagonal capture; `died`;
+  promotion type (Q/R/B/N); the promoted piece's `alivePromo(sq)` / `deadPromoAt(sq)`;
+- for each of the 8 original pieces: `alive(sq)` / `deadAt(sq)` (bishops only on their colour, the
+  king has no death squares).
+
+Rules, each sound for every legal game:
+
+1. **Paths**: `vis(home)`; a visited square is left by exactly one step or is the end; every other
+   visited square has exactly one incoming step. Rows are monotone, so this is one simple path.
+   A pawn ending on the last rank promoted; elsewhere it is alive (`alivePawn`) or died there.
+2. **Identity**: a board square with a pawn of colour c holds exactly one alive pawn of c; a square
+   with a piece holds exactly one alive original of that type or one promoted pawn of that type;
+   every unit is on at most one square; each original is alive or died exactly once; a promoted
+   bishop keeps the colour of its promotion square. Material counts, promotions versus missing
+   pawns and bishop colours all follow.
+3. **Captures**: each diagonal step of a pawn onto `sq` needs exactly one victim: an enemy unit
+   whose death square is `sq`, or (on the e.p. target row) the enemy pawn of that file that died on
+   the square behind after its double step. A death is matched to at most one pawn capture;
+   captures by pieces are free.
+4. **Home squares**: a pawn alive on its home square never moved, so nothing else was ever on that
+   square: no enemy pawn visited it, no unit of either side died there.
+5. **Boxed bishops**: if both neighbouring pawns of a bishop's home stand at home, the bishop is at
+   home or died at home.
+6. **Crossing**: two pawns on one file cannot pass each other. For a pawn `w` that never made a
+   diagonal step and is alive on its file at rank `R`: an enemy pawn `b` whose straight run down
+   that file from square `s` reaches the first two ranks of `w`'s side was below `w` throughout
+   that run (`w` was on the file the whole game, `b` on those ranks is below it, and the order
+   cannot change), so the run started below `R`: `reach(b, s)` is false for every `s` at `R` or
+   beyond. `reach` is defined square by square from the deep end (`vis(s)` and a vertical step
+   whose target reaches).
+
+What this solves: Smullyan's "which piece on h4?" (chess.com #5), see `HistoryTest`. Two plies of
+window are needed there (White's cxd8=R+ and Black's move before it); the pawn rules then give:
+Black promoted (3 knights or a second dark bishop would be needed otherwise), its h-pawn had to
+leave the h-file (rule 4 / 6 with h2 unmoved) and enter the g-file at g2 (rule 6 with g3 unmoved),
+all five Black pawn captures were on light squares, so White's dark-squared bishop never died.
+
+Cost: about 18,000 variables and 60,000 clauses for both sides; on a fixed board most of it is
+decided by propagation. Unreachable test positions are now rejected, e.g. chessprogramming's
+perft "position 5" (five white pawn captures, one missing black man).

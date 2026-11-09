@@ -33,7 +33,6 @@ data class Puzzle(
     val shortest: Boolean = false,
     /** Projection items: "moves", "board@t", "square@t:h4", "piece@t:K", "sideToMove@0". */
     val project: List<String> = listOf("moves", "board@0"),
-    val rules: RuleFlags = RuleFlags(),
     /** Known number of solutions under [project], or null. */
     val expected: Int? = null,
 )
@@ -88,11 +87,3 @@ enum class Question {
     @SerialName("unknownPiece") UNKNOWN_PIECE,
     @SerialName("custom") CUSTOM,
 }
-
-@Serializable
-data class RuleFlags(
-    val oneKingEach: Boolean = true,
-    val checkRules: Boolean = true,
-    /** null = on whenever some board has '?'. */
-    val materialSane: Boolean? = null,
-)

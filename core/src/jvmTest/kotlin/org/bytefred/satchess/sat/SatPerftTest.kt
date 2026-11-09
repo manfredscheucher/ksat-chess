@@ -44,8 +44,11 @@ class SatPerftTest {
             Fen.START,
             KIWIPETE,
             "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1",
-            "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1",
-            "r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1",
+            // promotions with capture and castling for both sides (chessprogramming's "position 5" and
+            // its mirror are not used: they cannot arise from the initial array, five white pawn
+            // captures against one missing black man, so History rejects them)
+            "1r2k2r/P5pp/8/8/8/8/6PP/R3K2R w KQk - 0 1",
+            "r3k2r/6pp/8/8/8/8/p5PP/1R2K2R b Kk - 0 1",
             "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8",
             "rnbqkbnr/ppp1p1pp/8/3pPp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 3",
             "rnbqkbnr/pppp1ppp/8/8/3Pp3/4P3/PPP2PPP/RNBQKBNR b KQkq d3 0 3",

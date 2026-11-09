@@ -5,7 +5,6 @@ import org.bytefred.satchess.chess.Position
 import org.bytefred.satchess.chess.Rules
 import org.bytefred.satchess.puzzle.Goal
 import org.bytefred.satchess.puzzle.Puzzle
-import org.bytefred.satchess.puzzle.RuleFlags
 import org.bytefred.satchess.puzzle.Start
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -28,15 +27,15 @@ class GoalTest {
         return count(Fen.parsePosition(fen), plies)
     }
 
-    private fun sat(fen: String, plies: Int, goal: Goal, refinement: Refinement, rules: RuleFlags) = solveAll(
-        puzzleFromFen(fen, plies, listOf("moves")).copy(goal = goal, rules = rules),
+    private fun sat(fen: String, plies: Int, goal: Goal, refinement: Refinement) = solveAll(
+        puzzleFromFen(fen, plies, listOf("moves")).copy(goal = goal),
         options = SolveOptions(TEST_SOLVER, 0, refinement = refinement),
     ).count
 
-    private fun assertMatchesOracle(fen: String, plies: Int, goal: Goal, rules: RuleFlags = RuleFlags()) {
+    private fun assertMatchesOracle(fen: String, plies: Int, goal: Goal) {
         val expected = oracle(fen, plies, goal)
         for (refinement in Refinement.entries) {
-            assertEquals(expected, sat(fen, plies, goal, refinement, rules), "$goal in $plies from $fen ($refinement)")
+            assertEquals(expected, sat(fen, plies, goal, refinement), "$goal in $plies from $fen ($refinement)")
         }
     }
 
@@ -53,13 +52,6 @@ class GoalTest {
     @Test fun stalemateInOne() = assertMatchesOracle("7k/8/6Q1/8/8/8/8/K7 w - - 0 1", 1, Goal.STALEMATE)
     @Test fun stalemateInTwoBlackToMove() = assertMatchesOracle("k7/2Q5/8/8/8/8/8/6K1 b - - 0 1", 2, Goal.STALEMATE)
     @Test fun checkmateInTwo() = assertMatchesOracle("6k1/8/6K1/8/8/8/8/R7 b - - 0 1", 2, Goal.CHECKMATE)
-
-    // Without exactly one king of the side to move, ESCAPE_MOVE falls back to the full state.
-    private val kingsFree = RuleFlags(oneKingEach = false)
-    @Test fun stalemateWithoutKingToMove() = assertMatchesOracle("4k3/8/8/8/8/8/8/R7 w - - 0 1", 0, Goal.STALEMATE, kingsFree)
-    @Test fun stalemateInOneWithoutWhiteKing() = assertMatchesOracle("4k3/8/8/8/8/8/8/R7 w - - 0 1", 1, Goal.STALEMATE, kingsFree)
-    @Test fun stalemateInOneWithoutBlackKing() = assertMatchesOracle("8/8/8/8/8/8/r7/7K b - - 0 1", 1, Goal.STALEMATE, kingsFree)
-    @Test fun stalemateWithTwoKingsToMove() = assertMatchesOracle("4k3/8/8/8/8/8/8/K6K w - - 0 1", 0, Goal.STALEMATE, kingsFree)
 
     @Test
     fun checkmateWithOpenStartBoard() {

@@ -21,8 +21,8 @@ enum class Refinement {
 
 /**
  * Refinement clause for a final position [p] that has a legal move, per [mode]. [Refinement.ESCAPE_MOVE]
- * needs exactly one king of the side to move (the escape squares are taken around it); without
- * one (no king, or two with `oneKingEach: false`) the full state is blocked instead.
+ * needs exactly one king of the side to move (the escape squares are taken around it); otherwise
+ * the full state is blocked (cannot happen with [History], kept as a safety net).
  */
 internal fun refinementClause(e: Encoding, model: (Int) -> Boolean, p: Position, mode: Refinement): IntArray {
     val escape = if (mode == Refinement.ESCAPE_MOVE && kingCount(p) == 1) {

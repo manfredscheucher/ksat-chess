@@ -33,7 +33,7 @@ internal class Decoder(private val e: Encoding, private val projection: Projecti
 
     fun solution(model: (Int) -> Boolean): Solution {
         val positions = (0..e.plies).map { position(model, it) }
-        var verified = !e.checkRules || !Rules.isInCheck(positions[0], positions[0].sideToMove.opposite)
+        var verified = !Rules.isInCheck(positions[0], positions[0].sideToMove.opposite)
         val moves = (0 until e.plies).map { t ->
             val pair = Geometry.pairs.first { model(e.move(t, it.index)) }
             val promotion = Encoding.PROMOTIONS.indices.firstOrNull { model(e.promotion(t, it)) }
