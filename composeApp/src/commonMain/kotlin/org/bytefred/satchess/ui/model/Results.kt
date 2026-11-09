@@ -6,6 +6,8 @@ import org.bytefred.satchess.chess.Piece
 import org.bytefred.satchess.chess.PieceType
 import org.bytefred.satchess.chess.Sq
 import org.bytefred.satchess.sat.Solution
+import kotlin.math.ceil
+import kotlin.math.sqrt
 
 /** Solutions sharing one projected value, e.g. "h4 = R" with the lines that lead to it. */
 data class AnswerGroup(val key: String, val solutions: List<Solution>)
@@ -61,6 +63,9 @@ fun sanLine(sans: List<String>, whiteStarts: Boolean): String = buildString {
         white = !white
     }
 }
+
+/** Columns of the static solution view: ceil(sqrt(k + 1)) for k plies, i.e. k + 1 boards (Manfred's formula). */
+fun staticColumns(plies: Int): Int = ceil(sqrt((plies + 1).toDouble())).toInt()
 
 // ── "Group similar solutions" ────────────────────────────────────────────────
 

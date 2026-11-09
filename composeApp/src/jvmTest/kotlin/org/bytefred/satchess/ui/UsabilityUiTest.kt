@@ -10,6 +10,7 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsFocused
@@ -45,6 +46,7 @@ class UsabilityUiTest {
         savePref(COORDINATES_PREF, "true")
         savePref(INPUT_MODE_PREF, InputMode.HYBRID.name)
         savePref(LAYOUT_PREF, LayoutMode.AUTO.name)
+        savePref(SOLUTION_VIEW_PREF, SolutionView.ANIMATED.name)
     }
 
     @BeforeTest fun before() = resetPrefs()
@@ -241,6 +243,25 @@ class UsabilityUiTest {
         mainClock.advanceTimeBy(4500)
         mainClock.autoAdvance = true
         runOnIdle { assertEquals(4, vm.replayPly) }
+    }
+
+    @Test
+    fun staticViewShowsEveryBoardOfTheSolution() = runComposeUiTest {
+        val solver = FakeSolverService()
+        val vm = PuzzleViewModel(solver)
+        setContent { App(vm) }
+        onNodeWithTag("solve").performScrollTo().performClick()
+        runOnIdle {
+            solver.emit(SolveEvent.Found(0, sampleSolution("f3", "e5", "g4", "Qh4#"), 40))
+            solver.emit(SolveEvent.Done(1, complete = true, millis = 50))
+        }
+        onNodeWithTag("replayBoard").performScrollTo().assertIsDisplayed()
+        onNodeWithTag("solutionViewToggle").performScrollTo().performClick()
+        onAllNodesWithTag("staticBoard").assertCountEquals(5) // 4 plies: boards A, 1, 2, 3, B
+        onNodeWithTag("replayBoard").assertDoesNotExist()
+        runOnIdle { assertEquals(SolutionView.STATIC.name, loadPref(SOLUTION_VIEW_PREF)) }
+        onNodeWithTag("solutionViewToggle").performScrollTo().performClick()
+        onNodeWithTag("replayBoard").performScrollTo().assertIsDisplayed()
     }
 
     @Test

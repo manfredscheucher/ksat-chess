@@ -58,6 +58,9 @@ enum class InputMode { HYBRID, DIALOG }
 /** Layout (View menu): by window width, stacked, or side by side. */
 enum class LayoutMode { AUTO, PORTRAIT, LANDSCAPE }
 
+/** How a solution is shown: one board with replay controls, or all its boards at once. */
+enum class SolutionView { ANIMATED, STATIC }
+
 /** "Max solutions" in Advanced: 1, a number N, or all. */
 
 /** Target of the square options dialog: one square of the selected ply, or the ply's '?' default. */
@@ -108,6 +111,7 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
     var inputMode by mutableStateOf(InputMode.entries.firstOrNull { it.name == loadPref(INPUT_MODE_PREF) } ?: InputMode.HYBRID)
     var showCoordinates by mutableStateOf(loadPref(COORDINATES_PREF) != "false")
     var layoutMode by mutableStateOf(LayoutMode.entries.firstOrNull { it.name == loadPref(LAYOUT_PREF) } ?: LayoutMode.AUTO)
+    var solutionView by mutableStateOf(SolutionView.entries.firstOrNull { it.name == loadPref(SOLUTION_VIEW_PREF) } ?: SolutionView.ANIMATED)
 
     /** The shares of the side-by-side panels, per panel key. */
     var panelWeights by mutableStateOf<Map<String, Float>>(emptyMap())

@@ -39,4 +39,9 @@ class ResultsTest {
         assertEquals("1... e5 2. Nf3 Nc6", sanLine(listOf("e5", "Nf3", "Nc6"), whiteStarts = false))
         assertEquals("", sanLine(emptyList(), whiteStarts = true))
     }
+
+    @Test
+    fun staticGridColumnsAreCeilSqrtOfTheBoardCount() {
+        assertEquals(listOf(1, 2, 2, 2, 3, 3, 3, 3, 3, 4), (0..9).map(::staticColumns))
+    }
 }

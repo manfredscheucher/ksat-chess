@@ -52,6 +52,8 @@ import org.bytefred.satchess.ui.model.answerSummary
 import org.bytefred.satchess.ui.model.countSummary
 import org.bytefred.satchess.ui.model.groupByProjection
 import org.bytefred.satchess.ui.model.isPathProjection
+import org.bytefred.satchess.ui.model.staticColumns
+import org.bytefred.satchess.ui.platform.savePref
 import org.bytefred.satchess.ui.model.sanLine
 import org.bytefred.satchess.ui.model.similaritySummary
 import org.bytefred.satchess.ui.model.squareDomainError
@@ -278,7 +280,22 @@ private fun ReplayPanel(vm: PuzzleViewModel) {
             .focusable(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        FieldLabel("Solution #${vm.selectedSolution + 1} (arrow keys to step)")
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            val static = vm.solutionView == SolutionView.STATIC
+            FieldLabel(if (static) "Solution #${vm.selectedSolution + 1}" else "Solution #${vm.selectedSolution + 1} (arrow keys to step)")
+            Spacer(Modifier.weight(1f))
+            TextButton(
+                onClick = {
+                    vm.solutionView = if (static) SolutionView.ANIMATED else SolutionView.STATIC
+                    savePref(SOLUTION_VIEW_PREF, vm.solutionView.name)
+                },
+                modifier = Modifier.testTag("solutionViewToggle"),
+            ) { Text(if (static) "Show animation" else "Show static") }
+        }
+        if (vm.solutionView == SolutionView.STATIC) {
+            StaticBoards(vm, solution)
+            return@Column
+        }
         Box(Modifier.widthIn(max = BOARD_MAX_WIDTH).fillMaxWidth()) {
             if (cells != null) {
                 BoardView(
@@ -347,6 +364,37 @@ private fun ReplayPanel(vm: PuzzleViewModel) {
                 ) {
                     Text(token, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp))
                 }
+            }
+        }
+    }
+}
+
+/** All k + 1 boards of [solution] in a grid with [staticColumns] columns, ply 0 (A) first. */
+@Composable
+private fun StaticBoards(vm: PuzzleViewModel, solution: Solution) {
+    val plies = solution.moves.size
+    val columns = staticColumns(plies)
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        for (row in (0..plies).chunked(columns)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                for (t in row) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(plyName(t, plies), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        val cells = remember(solution, t) { replayCells(solution, t) }
+                        if (cells != null) {
+                            val lastMove = solution.moves.getOrNull(t - 1)
+                            BoardView(
+                                cells = cells,
+                                modifier = Modifier.fillMaxWidth().testTag("staticBoard"),
+                                showCoordinates = false,
+                                highlights = lastMove?.let { setOf(it.from, it.to) } ?: emptySet(),
+                            )
+                        } else {
+                            Text("Cannot show this position.", color = MaterialTheme.colorScheme.error)
+                        }
+                    }
+                }
+                repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
             }
         }
     }

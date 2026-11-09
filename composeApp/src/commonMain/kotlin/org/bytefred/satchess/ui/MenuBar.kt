@@ -130,6 +130,15 @@ fun MenuBar(vm: PuzzleViewModel, onExamples: () -> Unit) {
                     }
                 }
                 HorizontalDivider()
+                MenuHeading("Solutions")
+                for (view in SolutionView.entries) {
+                    CheckItem(view.name.lowercase(), vm.solutionView == view) {
+                        openMenu = null
+                        vm.solutionView = view
+                        savePref(SOLUTION_VIEW_PREF, view.name)
+                    }
+                }
+                HorizontalDivider()
                 MenuHeading("Layout")
                 for (mode in LayoutMode.entries) {
                     CheckItem(mode.name.lowercase(), vm.layoutMode == mode) {
@@ -381,6 +390,7 @@ internal const val WELCOME_PREF = "welcome"
 internal const val COORDINATES_PREF = "coordinates"
 internal const val INPUT_MODE_PREF = "inputMode"
 internal const val LAYOUT_PREF = "layout"
+internal const val SOLUTION_VIEW_PREF = "solutionView"
 private const val EMAIL = "manfred.scheucher@proton.me"
 // subject "sat-chess feedback", body "hi manfred," + blank line
 private const val FEEDBACK_MAILTO =
@@ -430,7 +440,9 @@ checked by playing the moves through.
 
 Replay: Reset, Back, Step, Run, the
 slider, a click on a move, or the arrow
-keys and Home / End.
+keys and Home / End. "Show static" (or
+View -> Solutions) shows all boards of
+the solution at once instead.
 
 Group similar solutions puts solutions
 with the same moves in a different order

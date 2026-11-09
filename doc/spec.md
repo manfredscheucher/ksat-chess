@@ -303,6 +303,10 @@ results as their own view.
   - **Demo "Castling not allowed"** (Manfred, 2026-11-09): the castling demo with the rights
     switched off, expected 0, so the effect of a moved king or rook is visible. Chess960 castling
     is noted as an idea in section 8.
+  - **Static solution view** (Manfred, 2026-11-09): View -> Solutions, animated (the replay
+    board with Reset / Back / Step / Run and the slider) or static (all k + 1 boards of the
+    solution, ply 0 included, in a grid with ceil(sqrt(k + 1)) columns); a "Show static" /
+    "Show animation" button above the boards toggles the same setting, which is remembered.
   - **No Advanced section** (Manfred: "das ganze advanced kannst wegschmeißen"): the solver
     always enumerates all solutions, the Solve button turns into Cancel while it runs; "Shortest"
     and the square-domain editor are gone from the UI (`shortest` and `squares` stay in the file
