@@ -7,7 +7,7 @@
     "url": null,
     "year": null
   },
-  "description": "The game starts after 1.e4 with Black to move. Reach the Ruy Lopez position in 4 plies. Each side has two different moves to make and both orders work for each side, so there are four lines.",
+  "description": "The game starts after 1. e4, Black to move. Reach this position in 4 plies.",
   "question": "proofGame",
   "plies": 4,
   "start": {

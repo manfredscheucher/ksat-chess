@@ -1,7 +1,7 @@
 # sat-chess-kotlin
 
-Retrograde chess puzzles solved with SAT, in the browser. Set up a position, ask how it came about,
-and a SAT solver finds every line of play that fits. A move generator verifies each one.
+Retro chess puzzles solved with SAT, in the browser: set up a position, and the solver finds every
+legal way the game can have reached it. Every solution is checked by playing it through.
 
 **Try it in the browser: <https://manfredscheucher.github.io/sat-chess-kotlin/>**
 
@@ -10,10 +10,10 @@ and a SAT solver finds every line of play that fits. A move generator verifies e
   <img src="doc/screenshot-mobile.png" height="400" alt="SAT chess on a phone: solutions and replay below the puzzle">
 </p>
 
-A puzzle is a window of N plies with constraints: start and target board, unknown squares, "a king
-or nothing stands here", move patterns, mate or stalemate at the end. All answers are cooperative
-(helpmate style): a forced mate against every defence is out of scope. Examples are built in: small
-demos and the 5 chess.com retrograde puzzles.
+A puzzle is N plies between a start board A and an end board B. Squares can be unknown or limited
+to a few pieces, moves can be constrained, the end can be required to be mate or stalemate. Both
+sides cooperate, as in a helpmate; the solver does not look for forced mates. Built in: a few demos and the 5 retro puzzles from a chess.com
+article by Mike Klein.
 
 SAT chess is in early development. Feedback is very welcome:
 [manfred.scheucher@proton.me](mailto:manfred.scheucher@proton.me?subject=sat-chess%20feedback&body=hi%20manfred%2C%0A%0A)

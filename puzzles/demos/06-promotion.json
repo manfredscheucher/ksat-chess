@@ -7,7 +7,7 @@
     "url": null,
     "year": null
   },
-  "description": "The pawn on b7 moves to b8 and must promote. The square b8 is left open in the target position, and the result lists what can stand there afterwards: queen, rook, bishop or knight.",
+  "description": "The pawn on b7 moves to b8. What can stand on b8 afterwards?",
   "question": "custom",
   "plies": 1,
   "start": {

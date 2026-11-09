@@ -7,7 +7,7 @@
     "url": null,
     "year": null
   },
-  "description": "Black to move and in check. The only candidate checker stands on a1 and is restricted to a white queen, rook, bishop or knight by a square domain. Only pieces that attack h8 along the long diagonal fit: bishop or queen.",
+  "description": "Black is in check. On a1 stands a white queen, rook, bishop or knight: which of them fit?",
   "question": "unknownPiece",
   "plies": 0,
   "start": {

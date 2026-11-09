@@ -7,7 +7,7 @@
     "url": null,
     "year": null
   },
-  "description": "Black has just played d7-d5, so the start carries the en passant square d6. In one ply the pawn on e5 must end on d6 while the pawn on d5 disappears. Set enPassant to \"-\" and there is no solution.",
+  "description": "Black has just played d7-d5. Which white move leaves a pawn on d6 and d5 empty?",
   "question": "custom",
   "plies": 1,
   "start": {

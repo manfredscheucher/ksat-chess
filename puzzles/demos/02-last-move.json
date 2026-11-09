@@ -7,7 +7,7 @@
     "url": null,
     "year": null
   },
-  "description": "Black to move and in check from the knight on f7. The previous position is open. Where did the knight come from? Five origins remain.",
+  "description": "Black is in check from the knight on f7. Where did it come from?",
   "question": "lastMoves",
   "plies": 1,
   "start": {

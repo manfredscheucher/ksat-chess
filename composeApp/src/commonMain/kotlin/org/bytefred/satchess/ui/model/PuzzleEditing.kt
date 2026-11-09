@@ -122,10 +122,10 @@ fun sideToMoveAt(startSide: String, t: Int): Char? {
 
 /**
  * The live sentence next to the N field, e.g.
- * "13 plies = PG 6.5 · White starts · White moves last · Black to move at B".
+ * "13 plies = 6.5 moves · White starts · White moves last · Black to move at B".
  */
 fun pliesSentence(plies: Int, startSide: String): String {
-    val head = "$plies ${if (plies == 1) "ply" else "plies"} = PG ${formatMoves(plies)}"
+    val head = "$plies ${if (plies == 1) "ply" else "plies"} = ${formatMoves(plies)} moves"
     val start = sideToMoveAt(startSide, 0) ?: return "$head · either side starts"
     if (plies == 0) return "$head · position only · ${colorName(start)} to move"
     val lastMover = sideToMoveAt(startSide, plies - 1)!!
@@ -187,9 +187,9 @@ fun applyPreset(puzzle: Puzzle, question: Question): Puzzle {
 val Question.label: String
     get() = when (this) {
         Question.PROOF_GAME -> "Proof game"
-        Question.LAST_MOVES -> "Last move(s)?"
-        Question.HELPMATE -> "Helpmate in k"
-        Question.UNKNOWN_PIECE -> "Find unknown piece"
+        Question.LAST_MOVES -> "Last moves"
+        Question.HELPMATE -> "Helpmate"
+        Question.UNKNOWN_PIECE -> "Unknown piece"
         Question.CUSTOM -> "Custom"
     }
 

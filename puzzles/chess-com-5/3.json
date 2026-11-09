@@ -7,7 +7,7 @@
     "url": "https://www.chess.com/article/view/can-you-solve-these-5-easy-retrograde-puzzles",
     "year": 2017
   },
-  "description": "White opened with 1. f3, 2. Kf2, 3. Kg3 and 4. Kh4. Which four black moves, alternating with White's as in a real game, checkmate the white king on Black's fourth move? Black may not play anything that would make one of White's moves illegal.",
+  "description": "White plays 1. f3, 2. Kf2, 3. Kg3 and 4. Kh4, no matter what. Which four black moves mate on move 4?",
   "question": "helpmate",
   "plies": 8,
   "start": {

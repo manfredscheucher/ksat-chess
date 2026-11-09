@@ -95,7 +95,7 @@ fun QuestionSection(vm: PuzzleViewModel, modifier: Modifier = Modifier, collapsi
     val p = vm.puzzle
     var expanded by remember { mutableStateOf(!collapsible) }
     Section(
-        if (expanded) "Question" else "${p.question.label} · ${p.plies} ${if (p.plies == 1) "ply" else "plies"} = PG ${formatMoves(p.plies)} · goal ${p.goal.label}",
+        if (expanded) "Question" else "${p.question.label} · ${p.plies} ${if (p.plies == 1) "ply" else "plies"} = ${formatMoves(p.plies)} moves · goal ${p.goal.label}",
         modifier,
         expanded = expanded,
         onToggle = if (collapsible) ({ expanded = !expanded }) else null,
@@ -130,8 +130,7 @@ fun QuestionSection(vm: PuzzleViewModel, modifier: Modifier = Modifier, collapsi
         )
         if (p.goal != Goal.NONE) {
             Text(
-                "Cooperative: both sides work together (helpmate style). All answers are existential, " +
-                    "a forced mate against every defence is out of scope.",
+                "Both sides cooperate (helpmate), no forced mates.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -170,7 +169,7 @@ fun TimelineSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
                 OutlinedButton(onClick = { addMenu = true }, modifier = Modifier.testTag("timelineAdd")) { Text("+") }
                 DropdownMenu(expanded = addMenu, onDismissRequest = { addMenu = false }) {
                     DropdownMenuItem(
-                        text = { Text("Board constraint at ply ...") },
+                        text = { Text("Board at ply ...") },
                         onClick = { addMenu = false; pickPly = true },
                     )
                     DropdownMenuItem(
@@ -199,7 +198,7 @@ fun TimelineSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
             }
         }
         Text(
-            "Filled: fixed board · half: some '?' or options · empty: open · thick bar: move pattern",
+            "Filled: board given · half: some squares '?' · empty: all '?' · thick bar: move pattern",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -256,7 +255,7 @@ private fun PlyPickerDialog(plies: Int, onPick: (Int) -> Unit, onDismiss: () -> 
     val t = text.trim().toIntOrNull()?.takeIf { it in 0..plies }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Board constraint at ply") },
+        title = { Text("Which ply?") },
         text = {
             CompactField(
                 value = text,
@@ -314,7 +313,7 @@ private fun MovePatternDialog(
         text = {
             val vScroll = rememberScrollState()
             ScrollbarBox(vScroll) { Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.verticalScroll(vScroll)) {
-                CompactField(ply, { ply = it }, label = "Move from ply t to t+1, t =", isError = t == null)
+                CompactField(ply, { ply = it }, label = "Ply t (the move from t to t+1)", isError = t == null)
                 CompactField(san, { san = it }, label = "SAN, e.g. Kf2 (optional)")
                 FieldLabel("or any of these fields")
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -374,11 +373,11 @@ fun BoardEditorSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
         if (hybrid) Palette(vm.paletteSelection, withOptionsTool = true, onSelect = { vm.paletteSelection = it })
         Text(
             if (hybrid) {
-                "Click a square to place the selected piece, click it again to empty it. With \"Options\" (or a long " +
-                    "press / right click) choose several possible contents. Drag pieces to move them, off the board to remove them."
+                "Click a square to put the selected piece there, click again to empty it. Long press or right-click " +
+                    "a square to allow several pieces on it. Drag a piece to move it, drag it off the board to remove it."
             } else {
-                "Click a square to choose its content (or several options). Long press / right click opens the options. " +
-                    "Drag pieces to move them, off the board to remove them."
+                "Click a square and pick what stands there. Long press or right-click to allow several. " +
+                    "Drag a piece to move it, drag it off the board to remove it."
             },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -575,7 +574,7 @@ fun Palette(selected: Char, withOptionsTool: Boolean, onSelect: (Char) -> Unit) 
             FilterChip(
                 selected = selected == OPTIONS_TOOL,
                 onClick = { onSelect(OPTIONS_TOOL) },
-                label = { Text("Options ... (several possible contents per square)") },
+                label = { Text("One of several ...") },
                 leadingIcon = {
                     Canvas(Modifier.width(18.dp).aspectRatio(1f)) { drawOptions(setOf('K', EMPTY), Offset.Zero, size.width, painters) }
                 },

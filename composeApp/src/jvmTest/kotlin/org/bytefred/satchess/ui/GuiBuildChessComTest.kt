@@ -157,7 +157,7 @@ class GuiBuildChessComTest {
     // ── 2: where is the white king? ─────────────────────────────────────────────
 
     private fun ComposeUiTest.build2() = build(2) { s ->
-        question(s, "Find unknown piece")
+        question(s, "Unknown piece")
         plies(s, 3)
         // A: everything open, side to move and castling free
         button(s, "All ?")
@@ -194,7 +194,7 @@ class GuiBuildChessComTest {
     // ── 3: helpmate, White plays f3 Kf2 Kg3 Kh4 ─────────────────────────────────
 
     private fun ComposeUiTest.build3() = build(3) { s ->
-        question(s, "Helpmate in k") // also sets goal checkmate, but Black to move first
+        question(s, "Helpmate") // also sets goal checkmate, but Black to move first
         button(s, "White")
         plies(s, 8)
         movePattern(s, "A", "f3")
@@ -233,7 +233,7 @@ class GuiBuildChessComTest {
     // ── 5: the piece on h4 (Smullyan): a 2-ply window, the diagram at B ──────────
 
     private fun ComposeUiTest.build5() = build(5) { s ->
-        question(s, "Find unknown piece")
+        question(s, "Unknown piece")
         plies(s, 2)
         // A: everything open, side to move free
         button(s, "All ?")
@@ -247,7 +247,7 @@ class GuiBuildChessComTest {
         place(s, 'n', "c8", "a1")
         place(s, 'p', "a7", "e7", "g7", "a6", "d6", "c5", "c4")
         place(s, 'P', "a5", "b4", "c3", "d3", "g3", "e2", "h2")
-        onNodeWithText("Options ... (several possible contents per square)").performScrollTo().performClick(); s.step("tool 'Options ...'")
+        onNodeWithText("One of several ...").performScrollTo().performClick(); s.step("tool 'One of several ...'")
         squares(s, "h4")
         onNodeWithText("Any piece (not empty)").performClick(); s.step("shortcut 'Any piece (not empty)'")
         onNodeWithTag("applyOptions").performClick(); s.step("Apply")

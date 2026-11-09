@@ -110,7 +110,7 @@ means *both sides cooperate* (helpmate / proof game style). A real **directmate*
   `unknownPiece`, `custom`). Informational for the solver.
 - `expected`: known solution count under `project`, or null. Used by tests and shown in
   the results ("unique", "3 solutions, expected 3").
-- UI shows plies and moves together ("13 plies = PG 6.5"); the file always stores plies.
+- UI shows plies and moves together ("13 plies = 6.5 moves"); the file always stores plies.
 - Python `.puzzle` files convert 1:1 (`0` → `start.board`, other int keys → `positions`,
   `no_king`/`no_check`/`black_first`/`project_piece` → fields).
 
@@ -165,12 +165,12 @@ Reviewed by a fresh UX reviewer; decisions:
   empties it; otherwise it overwrites. Pieces on the board can always be dragged; dragging
   off the board removes them. Settings offer one alternative, "click opens a dialog",
   because Manfred asked for switchable input modes.
-- **Question preset first** (Proof game / Last move(s)? / Helpmate in k / Find unknown
-  piece / Custom). The preset fills A, B, N, goal and projection. Max solutions, Shortest and
+- **Question preset first** (Proof game / Last moves / Helpmate / Unknown piece / Custom; until
+  2026-11-09 "Last move(s)?", "Helpmate in k", "Find unknown piece"). The preset fills A, B, N, goal and projection. Max solutions, Shortest and
   square domains live under "Advanced" (solver choice, the projection field and the rule
   switches were removed on 2026-11-09).
 - **Plies vs moves**: one number with a unit toggle plus a live sentence, e.g.
-  "13 plies = PG 6.5 · White starts · White moves last · Black to move at B".
+  "13 plies = 6.5 moves · White starts · White moves last · Black to move at B".
 - **Timeline**: `(A)─1─2─…─(B)` chips; the icon shows fixed / partial / open (derived from
   the number of `?`, not a mode switch). Clicking a ply opens its board; "+" adds an
   intermediate board constraint or a move pattern.
@@ -178,7 +178,7 @@ Reviewed by a fresh UX reviewer; decisions:
 Desktop:
 ```
 [Examples][New][Import/Export][Share]                       [Settings]
-Question: [Proof game v]  N: [13] plies|moves  Goal: [none v]  "PG 6.5 ..."
+Question: [Proof game v]  N: [13] plies|moves  Goal: [none v]  "6.5 moves ..."
 Timeline: (A)--1--2--...--(B)
 + board (selected ply) +  + palette 6x2 + empty + ?  +
 |                      |  | [Initial][Clear][All ?]  |
@@ -282,6 +282,11 @@ results as their own view.
   - **No spoilers** (Manfred, 2026-11-09: the descriptions gave away knight tours and the en
     passant capture; "richt dich nach chess.com"): titles and descriptions of the chess.com
     puzzles now restate the article's questions in our own words and nothing more.
+  - **Plain language** (Manfred: "kein mensch redet so … ktoy kennst ja auch"): Welcome, Help,
+    hints, demo descriptions and the README intro rewritten in short, direct sentences like
+    ktoy's; no "ask how it came about", no "existential", no "PG" in the plies line. A language
+    reviewer then removed the rest: "contents", "window", "domains", "constraint", "line" (now
+    "solution"), "Helpmate in k" (now "Helpmate"), the chess.com questions closer to the article.
   - About like ktoy: one line per part with link and license (app, ksat, cburnett pieces, DejaVu
     font, chess.com article); the full license texts only behind "License texts". Developer notes
     on the piece graphics moved from `composeApp/NOTICE-pieces.md` to `doc/pieces.md`; the app

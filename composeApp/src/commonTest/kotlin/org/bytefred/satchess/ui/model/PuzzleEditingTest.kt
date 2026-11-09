@@ -113,15 +113,15 @@ class PuzzleEditingTest {
     @Test
     fun pliesSentence() {
         assertEquals(
-            "13 plies = PG 6.5 · White starts · White moves last · Black to move at B",
+            "13 plies = 6.5 moves · White starts · White moves last · Black to move at B",
             pliesSentence(13, "w"),
         )
         assertEquals(
-            "4 plies = PG 2 · Black starts · White moves last · Black to move at B",
+            "4 plies = 2 moves · Black starts · White moves last · Black to move at B",
             pliesSentence(4, "b"),
         )
-        assertEquals("1 ply = PG 0.5 · either side starts", pliesSentence(1, "?"))
-        assertEquals("0 plies = PG 0 · position only · White to move", pliesSentence(0, "w"))
+        assertEquals("1 ply = 0.5 moves · either side starts", pliesSentence(1, "?"))
+        assertEquals("0 plies = 0 moves · position only · White to move", pliesSentence(0, "w"))
     }
 
     // ── presets ──

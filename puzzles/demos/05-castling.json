@@ -7,7 +7,7 @@
     "url": null,
     "year": null
   },
-  "description": "Kings and rooks only, all castling rights given. In one move each, White ends up castled short and Black castled long. A king travels two squares and a rook jumps over it in a single move, which only castling allows.",
+  "description": "Kings and rooks only, all castling rights. One move each: White ends up castled short, Black castled long.",
   "question": "custom",
   "plies": 2,
   "start": {

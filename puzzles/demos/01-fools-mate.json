@@ -7,7 +7,7 @@
     "url": null,
     "year": null
   },
-  "description": "The fastest possible checkmate: Black mates White after 2 moves (4 plies). The solver finds every line that ends in mate.",
+  "description": "The quickest mate: Black mates on move 2. Find every move order.",
   "question": "helpmate",
   "plies": 4,
   "start": {

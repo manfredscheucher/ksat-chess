@@ -262,7 +262,7 @@ private fun AboutDialog(onDismiss: () -> Unit) {
             val vScroll = rememberScrollState()
             ScrollbarBox(vScroll, Modifier.heightIn(max = 520.dp)) {
                 Column(Modifier.verticalScroll(vScroll).testTag("about")) {
-                    Text("Retrograde chess puzzles solved with SAT.")
+                    Text("Retro chess puzzles solved with SAT.")
                     Spacer(Modifier.height(8.dp))
                     FeedbackBox()
                     Spacer(Modifier.height(8.dp))
@@ -327,7 +327,7 @@ private fun WelcomeDialog(close: () -> Unit) {
         title = { Text("Welcome to SAT chess") },
         text = {
             Column {
-                Text("Set up a chess position, ask how it came about, and a SAT solver finds every line that fits.")
+                Text("Set up a position, and a SAT solver finds every legal way the game can have reached it.")
                 Spacer(Modifier.height(10.dp))
                 FeedbackBox()
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -383,50 +383,49 @@ private const val EMAIL = "manfred.scheucher@proton.me"
 private const val FEEDBACK_MAILTO =
     "mailto:$EMAIL?subject=sat-chess%20feedback&body=hi%20manfred%2C%0A%0A"
 
-private const val PUZZLE_HELP = """A puzzle is a window of N plies:
-board A at ply 0, board B at ply N.
+private const val PUZZLE_HELP = """A puzzle is N plies of play: board A
+at the start, board B at the end.
 
-Each board can be
-  fixed      every square given
-  partial    '?' squares are unknown
-  open       all squares '?'
+A board can be given completely, have
+'?' squares (unknown), or be all '?'.
+A square can also be one of a few
+things, e.g. white king or empty.
 
-Options on a square limit what can
-stand there, e.g. "a king or nothing".
+Goal at B: check, checkmate or stalemate.
+Both sides cooperate, as in a helpmate.
+The solver does not look for forced mates.
 
-Goal at B: checkmate or stalemate.
-Both sides cooperate: a forced mate
-against every defence is out of scope.
+N counts plies; moves like 6.5 work too.
 
-N counts plies, or moves ("6.5").
-
-File -> Save stores a puzzle as JSON,
-Load opens it again, Share link puts
-it into the address."""
+File -> Save writes the puzzle as JSON,
+Load reads it back, Share link puts it
+into the address bar."""
 
 private const val INPUT_HELP = """Palette + drag
-  Pick a piece, click squares. Clicking
-  the same piece again empties the
-  square. Drag a piece to move it, off
-  the board to remove it.
+  Pick a piece, click a square to put it
+  there. Click again with the same piece
+  to empty the square. Drag a piece to
+  move it, drag it off the board to
+  remove it.
 
 Click opens a dialog
-  A click on a square asks what stands
+  Click a square and pick what stands
   there.
 
-Both
-  Long press or right click opens the
-  square's options. Amber hatched squares
-  are only possible, not fixed.
+Both modes
+  Long press or right click: allow several
+  pieces on one square. Such squares are
+  hatched amber.
 
 View -> Board input switches the mode."""
 
-private const val RESULTS_HELP = """Solve lists every line that fits. The
-move generator verifies each one.
+private const val RESULTS_HELP = """Solve lists every solution; each one is
+checked by playing the moves through.
 
 Replay: Reset, Back, Step, Run, the
 slider, a click on a move, or the arrow
 keys and Home / End.
 
-Group similar solutions joins lines with
-the same moves in another order."""
+Group similar solutions puts solutions
+with the same moves in a different order
+together."""

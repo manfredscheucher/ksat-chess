@@ -7,7 +7,7 @@
     "url": "https://www.chess.com/article/view/can-you-solve-these-5-easy-retrograde-puzzles",
     "year": 2017
   },
-  "description": "From the initial position, how can this position be reached after exactly four moves by each side? The moves need not be good, only legal.",
+  "description": "From the starting position, how can this position be reached in exactly four moves for each side? The moves don't need to be good, just legal.",
   "question": "proofGame",
   "plies": 8,
   "start": {

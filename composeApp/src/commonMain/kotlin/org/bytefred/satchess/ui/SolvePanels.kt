@@ -68,7 +68,7 @@ fun AdvancedSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
     Section("Advanced", modifier, expanded = expanded, onToggle = { expanded = !expanded }) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             ChoiceChips("Max solutions", vm.limit, SolutionLimit.entries, {
-                when (it) { SolutionLimit.ONE -> "1"; SolutionLimit.N -> "N"; SolutionLimit.ALL -> "all" }
+                when (it) { SolutionLimit.ONE -> "1"; SolutionLimit.N -> "limit"; SolutionLimit.ALL -> "all" }
             }) { vm.limit = it }
             if (vm.limit == SolutionLimit.N) {
                 Spacer(Modifier.width(8.dp))
@@ -76,11 +76,11 @@ fun AdvancedSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
                     value = vm.limitN.toString(),
                     onValueChange = { text -> text.toIntOrNull()?.takeIf { it > 0 }?.let { vm.limitN = it } },
                     modifier = Modifier.width(90.dp),
-                    label = "N",
+                    label = "how many",
                 )
             }
         }
-        CheckRow("Shortest: also prove that N - 2 plies are not enough", p.shortest, vm::setShortest)
+        CheckRow("Shortest: also prove that two plies less are not enough", p.shortest, vm::setShortest)
         SquareDomains(vm)
     }
 }
@@ -98,7 +98,7 @@ private fun CheckRow(label: String, checked: Boolean, onChange: (Boolean) -> Uni
 @Composable
 private fun SquareDomains(vm: PuzzleViewModel) {
     val p = vm.puzzle
-    FieldLabel("Square domains (allowed contents, '.' = empty)")
+    FieldLabel("Allowed on a square ('.' = empty)")
     for ((ply, domains) in p.squares.entries.sortedBy { it.key.toIntOrNull() ?: 0 }) {
         for ((square, allowed) in domains) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -170,7 +170,7 @@ fun SolveBar(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
 }
 
 private fun solveStatus(run: SolveRun, found: Int, elapsedMillis: Long): String {
-    if (run.puzzle == null) return "Set up the question, then solve."
+    if (run.puzzle == null) return "Set up the puzzle, then press Solve."
     val parts = mutableListOf<String>()
     if (run.variables != null) parts += "${run.variables} vars / ${run.clauses} clauses"
     else if (run.running) parts += "encoding ..."
@@ -227,11 +227,11 @@ fun ResultsSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
 }
 
 private fun shortestLabel(check: ShortestCheck, plies: Int): String = when (check) {
-    ShortestCheck.PROVEN -> "Shortest: proven, ${plies - 2} plies are impossible."
-    ShortestCheck.NOT_SHORTEST -> "Shortest: NO, ${plies - 2} plies are enough."
+    ShortestCheck.PROVEN -> "Shortest: yes, ${plies - 2} plies are impossible."
+    ShortestCheck.NOT_SHORTEST -> "Shortest: no, ${plies - 2} plies are enough."
     ShortestCheck.NOT_PROVEN_RELAXED ->
-        "Shortest: not proven. ${plies - 2} plies are enough once move patterns and intermediate boards are dropped."
-    ShortestCheck.CANCELLED -> "Shortest: not checked (cancelled)."
+        "Shortest: unclear. ${plies - 2} plies are enough without the move patterns and middle boards."
+    ShortestCheck.CANCELLED -> "Shortest: not checked."
 }
 
 /**
@@ -272,7 +272,7 @@ private fun SolutionList(vm: PuzzleViewModel, showKey: Boolean) {
                         Spacer(Modifier.width(8.dp))
                         Text(similaritySummary(group.key), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
                         val n = group.indices.size
-                        Text("$n ${if (n == 1) "line" else "lines"}", style = MaterialTheme.typography.labelLarge)
+                        Text("$n ${if (n == 1) "solution" else "solutions"}", style = MaterialTheme.typography.labelLarge)
                     }
                 }
             }
@@ -361,7 +361,7 @@ private fun ReplayPanel(vm: PuzzleViewModel) {
             .focusable(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        FieldLabel("Replay of solution #${vm.selectedSolution + 1} (arrow keys step)")
+        FieldLabel("Solution #${vm.selectedSolution + 1} (arrow keys to step)")
         Box(Modifier.widthIn(max = 420.dp).fillMaxWidth()) {
             if (cells != null) {
                 BoardView(

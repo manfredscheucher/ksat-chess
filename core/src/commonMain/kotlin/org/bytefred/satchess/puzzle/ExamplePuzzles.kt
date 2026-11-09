@@ -15,7 +15,7 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
     "url": null,
     "year": null
   },
-  "description": "The fastest possible checkmate: Black mates White after 2 moves (4 plies). The solver finds every line that ends in mate.",
+  "description": "The quickest mate: Black mates on move 2. Find every move order.",
   "question": "helpmate",
   "plies": 4,
   "start": {
@@ -36,7 +36,7 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
     "url": null,
     "year": null
   },
-  "description": "Black to move and in check from the knight on f7. The previous position is open. Where did the knight come from? Five origins remain.",
+  "description": "Black is in check from the knight on f7. Where did it come from?",
   "question": "lastMoves",
   "plies": 1,
   "start": {
@@ -59,7 +59,7 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
     "url": null,
     "year": null
   },
-  "description": "The game starts after 1.e4 with Black to move. Reach the Ruy Lopez position in 4 plies. Each side has two different moves to make and both orders work for each side, so there are four lines.",
+  "description": "The game starts after 1. e4, Black to move. Reach this position in 4 plies.",
   "question": "proofGame",
   "plies": 4,
   "start": {
@@ -83,7 +83,7 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
     "url": null,
     "year": null
   },
-  "description": "Black has just played d7-d5, so the start carries the en passant square d6. In one ply the pawn on e5 must end on d6 while the pawn on d5 disappears. Set enPassant to \"-\" and there is no solution.",
+  "description": "Black has just played d7-d5. Which white move leaves a pawn on d6 and d5 empty?",
   "question": "custom",
   "plies": 1,
   "start": {
@@ -107,7 +107,7 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
     "url": null,
     "year": null
   },
-  "description": "Kings and rooks only, all castling rights given. In one move each, White ends up castled short and Black castled long. A king travels two squares and a rook jumps over it in a single move, which only castling allows.",
+  "description": "Kings and rooks only, all castling rights. One move each: White ends up castled short, Black castled long.",
   "question": "custom",
   "plies": 2,
   "start": {
@@ -131,7 +131,7 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
     "url": null,
     "year": null
   },
-  "description": "The pawn on b7 moves to b8 and must promote. The square b8 is left open in the target position, and the result lists what can stand there afterwards: queen, rook, bishop or knight.",
+  "description": "The pawn on b7 moves to b8. What can stand on b8 afterwards?",
   "question": "custom",
   "plies": 1,
   "start": {
@@ -154,7 +154,7 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
     "url": null,
     "year": null
   },
-  "description": "Black to move and in check. The only candidate checker stands on a1 and is restricted to a white queen, rook, bishop or knight by a square domain. Only pieces that attack h8 along the long diagonal fit: bishop or queen.",
+  "description": "Black is in check. On a1 stands a white queen, rook, bishop or knight: which of them fit?",
   "question": "unknownPiece",
   "plies": 0,
   "start": {
@@ -181,7 +181,7 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
     "url": "https://www.chess.com/article/view/can-you-solve-these-5-easy-retrograde-puzzles",
     "year": 2017
   },
-  "description": "From the initial position, how can this position be reached after exactly four moves by each side? The moves need not be good, only legal.",
+  "description": "From the starting position, how can this position be reached in exactly four moves for each side? The moves don't need to be good, just legal.",
   "question": "proofGame",
   "plies": 8,
   "start": {
@@ -201,7 +201,7 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
     "url": "https://www.chess.com/article/view/can-you-solve-these-5-easy-retrograde-puzzles",
     "year": 2017
   },
-  "description": "Only one square is possible for the white king, and every square not shown is either the white king or empty. Which square is it, and what were the last few moves that brought him there?",
+  "description": "The white king is missing; every '?' square is either the king or empty. Where is he, and what were the last moves that got him there?",
   "question": "unknownPiece",
   "plies": 3,
   "start": {
@@ -231,7 +231,7 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
     "url": "https://www.chess.com/article/view/can-you-solve-these-5-easy-retrograde-puzzles",
     "year": 2017
   },
-  "description": "White opened with 1. f3, 2. Kf2, 3. Kg3 and 4. Kh4. Which four black moves, alternating with White's as in a real game, checkmate the white king on Black's fourth move? Black may not play anything that would make one of White's moves illegal.",
+  "description": "White plays 1. f3, 2. Kf2, 3. Kg3 and 4. Kh4, no matter what. Which four black moves mate on move 4?",
   "question": "helpmate",
   "plies": 8,
   "start": {
@@ -255,7 +255,7 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
     "url": "https://www.chess.com/article/view/can-you-solve-these-5-easy-retrograde-puzzles",
     "year": 1976
   },
-  "description": "It looks like a copy of puzzle 1 but is much harder: from the initial position, both sides play exactly four moves to reach this position. Four for each side, not four for White and three for Black.",
+  "description": "Same question as puzzle 1, different position: reach it from the starting position in exactly four moves for each side.",
   "question": "proofGame",
   "plies": 8,
   "start": {
@@ -275,7 +275,7 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
     "url": "https://www.chess.com/article/view/can-you-solve-these-5-easy-retrograde-puzzles",
     "year": 1979
   },
-  "description": "Exactly one piece stands on h4, and Smullyan does not even tell its colour. Which piece is it, and from which army does it come?",
+  "description": "One piece stands on h4, colour unknown. Which piece is it, and whose?",
   "question": "unknownPiece",
   "plies": 2,
   "start": {

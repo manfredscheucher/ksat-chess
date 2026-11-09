@@ -7,7 +7,7 @@
     "url": "https://www.chess.com/article/view/can-you-solve-these-5-easy-retrograde-puzzles",
     "year": 2017
   },
-  "description": "Only one square is possible for the white king, and every square not shown is either the white king or empty. Which square is it, and what were the last few moves that brought him there?",
+  "description": "The white king is missing; every '?' square is either the king or empty. Where is he, and what were the last moves that got him there?",
   "question": "unknownPiece",
   "plies": 3,
   "start": {
