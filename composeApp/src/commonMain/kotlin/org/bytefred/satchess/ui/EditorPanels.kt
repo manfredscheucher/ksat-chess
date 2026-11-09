@@ -90,7 +90,7 @@ fun SetupSection(vm: PuzzleViewModel, modifier: Modifier = Modifier, collapsible
     val rights = shownCastling(start.castling, cells)
     var expanded by remember { mutableStateOf(!collapsible) }
     Section(
-        if (expanded) "Setup" else "${p.plies} ${if (p.plies == 1) "ply" else "plies"} · goal ${p.goal.label}",
+        if (expanded) "Setup" else "${p.plies} ${if (p.plies == 1) "ply" else "plies"}" + (if (p.goal == Goal.NONE) "" else " · ends in ${p.goal.label}"),
         modifier,
         expanded = expanded,
         onToggle = if (collapsible) ({ expanded = !expanded }) else null,
@@ -310,31 +310,25 @@ private fun pieceName(letter: String): String {
 fun BoardEditorSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
     val p = vm.puzzle
     val t = vm.selectedPly
-    var dialogSquare by remember { mutableStateOf<Int?>(null) }
     val side = sideToMoveAt(p.start.sideToMove, t)
     val title = boardName(t, p.plies) + " · " + (side?.let { if (it == 'w') "White to move" else "Black to move" } ?: "side to move free")
     val openOptions = { sq: Int -> vm.openOptions(OptionsTarget.Square(sq)) }
 
     Section(title, modifier) {
-        val hybrid = vm.inputMode == InputMode.HYBRID
         BoardView(
             cells = vm.board,
             modifier = Modifier.widthIn(max = BOARD_MAX_WIDTH).fillMaxWidth().testTag("editorBoard"),
             options = vm.boardOptions,
             showCoordinates = vm.showCoordinates,
-            onTap = if (hybrid) vm::clickSquare else { sq -> dialogSquare = sq },
+            onTap = vm::clickSquare,
             onMove = vm::dragPiece,
             onDropOff = vm::dragOff,
             onOptions = openOptions,
         )
         BoardLegend()
-        if (hybrid) Palette(vm.paletteSelection, withOptionsTool = true, onSelect = vm::selectPalette)
+        Palette(vm.paletteSelection, withOptionsTool = true, onSelect = vm::selectPalette)
         Text(
-            if (hybrid) {
-                "Pick a piece, then click squares. Drag to move, drag off the board to remove."
-            } else {
-                "Click a square and pick what stands there. Drag to move, drag off the board to remove."
-            },
+            "Pick a piece, then click squares. Drag to move, drag off the board to remove.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -343,7 +337,7 @@ fun BoardEditorSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
             OutlinedButton(onClick = vm::clearBoard) { Text("Clear") }
             OutlinedButton(onClick = vm::openBoard) { Text("All ?") }
         }
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        if ('?' in vm.board) Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 "Every '?' square: ${optionsLabel(p.defaultOptionsAt(t))}",
                 style = MaterialTheme.typography.bodyMedium,
@@ -365,21 +359,6 @@ fun BoardEditorSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
         )
     }
 
-    dialogSquare?.let { sq ->
-        AlertDialog(
-            onDismissRequest = { dialogSquare = null },
-            title = { Text("Square ${Sq.name(sq)}") },
-            text = {
-                Palette(vm.board[sq], withOptionsTool = false, onSelect = { vm.setSquareTo(sq, it); dialogSquare = null })
-            },
-            confirmButton = {
-                TextButton(onClick = { dialogSquare = null; openOptions(sq) }, modifier = Modifier.testTag("dialogOptions")) {
-                    Text("Several options ...")
-                }
-            },
-            dismissButton = { TextButton(onClick = { dialogSquare = null }) { Text("Cancel") } },
-        )
-    }
     vm.optionsTarget?.let { target ->
         val (heading, initial) = when (target) {
             is OptionsTarget.Square -> "Square ${Sq.name(target.sq)}, ${boardName(t, p.plies)}" to

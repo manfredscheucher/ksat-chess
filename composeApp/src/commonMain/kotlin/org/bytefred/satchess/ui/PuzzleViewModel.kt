@@ -48,8 +48,6 @@ import org.bytefred.satchess.ui.solver.createSolverService
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
-/** Board input (View menu): the hybrid palette/drag mode, or a dialog per clicked square. */
-enum class InputMode { HYBRID, DIALOG }
 
 /** Layout (View menu): by window width, stacked, or side by side. */
 enum class LayoutMode { AUTO, PORTRAIT, LANDSCAPE }
@@ -106,7 +104,6 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
     val canRedo: Boolean get() = redoStack.isNotEmpty()
 
     // View menu; MenuBar stores a change, so it is still there after a reload
-    var inputMode by mutableStateOf(InputMode.entries.firstOrNull { it.name == loadPref(INPUT_MODE_PREF) } ?: InputMode.HYBRID)
     var showCoordinates by mutableStateOf(loadPref(COORDINATES_PREF) != "false")
     var layoutMode by mutableStateOf(LayoutMode.entries.firstOrNull { it.name == loadPref(LAYOUT_PREF) } ?: LayoutMode.AUTO)
     var solutionView by mutableStateOf(SolutionView.entries.firstOrNull { it.name == loadPref(SOLUTION_VIEW_PREF) } ?: SolutionView.ANIMATED)

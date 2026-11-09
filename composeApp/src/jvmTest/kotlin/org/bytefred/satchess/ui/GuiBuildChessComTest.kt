@@ -36,7 +36,6 @@ class GuiBuildChessComTest {
     private fun resetPrefs() {
         savePref(WELCOME_PREF, "off")
         savePref(COORDINATES_PREF, "true")
-        savePref(INPUT_MODE_PREF, InputMode.HYBRID.name)
         savePref(LAYOUT_PREF, LayoutMode.AUTO.name)
     }
 

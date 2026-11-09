@@ -44,7 +44,6 @@ class UsabilityUiTest {
     private fun resetPrefs() {
         savePref(WELCOME_PREF, "off")
         savePref(COORDINATES_PREF, "true")
-        savePref(INPUT_MODE_PREF, InputMode.HYBRID.name)
         savePref(LAYOUT_PREF, LayoutMode.AUTO.name)
         savePref(SOLUTION_VIEW_PREF, SolutionView.ANIMATED.name)
     }
@@ -79,14 +78,11 @@ class UsabilityUiTest {
         val vm = PuzzleViewModel(FakeSolverService())
         setContent { App(vm) }
         onNodeWithTag("menu-View").performClick()
-        onNodeWithText("Click opens a dialog", substring = true).performClick()
-        onNodeWithTag("menu-View").performClick()
         onNodeWithText("portrait", substring = true).performClick()
         onNodeWithTag("menu-View").performClick()
         onNodeWithText("Coordinates", substring = true).performClick()
         waitForIdle()
         val reloaded = PuzzleViewModel(FakeSolverService())
-        assertEquals(InputMode.DIALOG, reloaded.inputMode)
         assertEquals(LayoutMode.PORTRAIT, reloaded.layoutMode)
         assertFalse(reloaded.showCoordinates)
     }

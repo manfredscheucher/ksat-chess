@@ -91,14 +91,6 @@ class AppSmokeTest {
         onNodeWithTag("applyOptions").performClick()
         runOnIdle { assertEquals("Kk.", vm.puzzle.squares["0"]?.get("?")) }
 
-        // Dialog input mode: a click opens the square dialog, which leads to the options.
-        runOnIdle { vm.inputMode = InputMode.DIALOG }
-        onNodeWithTag("editorBoard").performScrollTo().performTouchInput { click(Offset(width * 15 / 16f, height / 16f)) }
-        onNodeWithTag("dialogOptions").performClick()
-        onNodeWithTag("applyOptions").assertIsDisplayed()
-        runOnIdle { assertEquals(OptionsTarget.Square(7), vm.optionsTarget) }
-        onNodeWithText("Cancel").performClick()
-
         onNodeWithTag("menu-Help").performClick()
         onNodeWithText("About ksat-chess").performClick()
         onNodeWithTag("about").assertIsDisplayed()

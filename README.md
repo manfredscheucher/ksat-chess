@@ -23,7 +23,7 @@ ksat-chess is in early development. Feedback is very welcome:
 A menu bar (File / View / Help) over panels with draggable dividers, side by side when the window
 is wide and stacked when it's narrow (View -> Layout to force portrait or landscape).
 
-- **Board**: timeline of plies, board editor with palette, drag & drop, or a dialog per square.
+- **Board**: timeline of boards and plies, board editor with palette and drag & drop.
   Long press or right click gives a square several options.
 - **Question**: N in plies or moves, goal at the end (check, checkmate, stalemate), side to move, castling.
 - **Results**: all solutions, optionally grouped, with a replay board (Reset, Back, Step, Run).

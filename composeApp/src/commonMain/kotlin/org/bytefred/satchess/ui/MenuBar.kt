@@ -126,15 +126,6 @@ fun MenuBar(vm: PuzzleViewModel, onExamples: () -> Unit) {
                     savePref(COORDINATES_PREF, vm.showCoordinates.toString())
                 }
                 HorizontalDivider()
-                MenuHeading("Board input")
-                for (mode in InputMode.entries) {
-                    CheckItem(mode.label, vm.inputMode == mode) {
-                        openMenu = null
-                        vm.inputMode = mode
-                        savePref(INPUT_MODE_PREF, mode.name)
-                    }
-                }
-                HorizontalDivider()
                 MenuHeading("Solutions")
                 for (view in SolutionView.entries) {
                     CheckItem(view.name.lowercase(), vm.solutionView == view) {
@@ -391,15 +382,8 @@ internal fun openUriSafely(uri: UriHandler, url: String) {
     try { uri.openUri(url) } catch (e: Exception) { }
 }
 
-private val InputMode.label: String
-    get() = when (this) {
-        InputMode.HYBRID -> "Palette + drag"
-        InputMode.DIALOG -> "Click opens a dialog"
-    }
-
 internal const val WELCOME_PREF = "welcome"
 internal const val COORDINATES_PREF = "coordinates"
-internal const val INPUT_MODE_PREF = "inputMode"
 internal const val LAYOUT_PREF = "layout"
 internal const val SOLUTION_VIEW_PREF = "solutionView"
 private const val EMAIL = "manfred.scheucher@proton.me"
@@ -415,15 +399,9 @@ Goal at the end: check, checkmate or stalemate. Both sides cooperate, as in a he
 
 File -> Save writes the puzzle as JSON, Load reads it back, Share link puts it into the address bar."""
 
-private const val INPUT_HELP = """Palette + drag
-Pick a piece, click a square to put it there. Click again with the same piece to empty the square. Drag a piece to move it, drag it off the board to remove it. "One of several ..." lets a square hold one of a few pieces (a long press or right click does the same).
-
-Click opens a dialog
-Click a square and pick what stands there.
+private const val INPUT_HELP = """Pick a piece, click a square to put it there. Click again with the same piece to empty the square. Drag a piece to move it, drag it off the board to remove it. "One of several ..." lets a square hold one of a few pieces (a long press or right click does the same).
 
 Squares that may hold one of several pieces are hatched amber.
-
-View -> Board input switches the mode.
 
 Edit -> Undo / Redo (Ctrl+Z, Ctrl+Shift+Z) take puzzle and board changes back."""
 

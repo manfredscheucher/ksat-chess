@@ -424,6 +424,15 @@ bar shows only "encoding ..." / elapsed / found / state; the per-solution "verif
 gone (the count line still turns red with "(k NOT verified)" if a replay ever fails, which is
 a solver bug, not information for the user). The "(arrow keys to step)" hint stays.
 
+### Less in the editor: no dialog input mode, '?' default only when needed (Manfred, 2026-11-09)
+
+Manfred: "mach wie du glaubst" on the rest of the reviewer's list, then "dritter weg macht aber
+keinen sinn denk 2 reichen". So: the View > Board input mode "Click opens a dialog" and its
+per-square dialog are gone (the options dialog is reached by the palette tool or long press /
+right click); the line "Every '?' square: ... [Change ...]" shows only while the board has a
+'?' square; the collapsed Setup card on the phone reads "4 plies · ends in checkmate" (nothing
+after the plies when the goal is "any"); the FEN label stays short.
+
 ## 8. Open points / follow-ups
 
 - Idea (Manfred, 2026-11-09): the goal belongs to the board, not the Question row, so a goal
