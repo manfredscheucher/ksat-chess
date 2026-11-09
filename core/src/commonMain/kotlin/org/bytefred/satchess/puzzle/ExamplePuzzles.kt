@@ -11,9 +11,9 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
   "title": "Fool's mate",
   "composer": null,
   "source": {
-    "name": "Own demo (sat-chess-kotlin)",
+    "name": "Well-known",
     "url": null,
-    "year": 2026
+    "year": null
   },
   "description": "The fastest possible checkmate: Black mates White after 2 moves (4 plies). The solver finds every line that ends in mate.",
   "question": "helpmate",
@@ -32,9 +32,9 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
   "title": "What was the last move?",
   "composer": null,
   "source": {
-    "name": "Own demo (sat-chess-kotlin)",
+    "name": "Rule demo",
     "url": null,
-    "year": 2026
+    "year": null
   },
   "description": "Black to move and in check from the knight on f7. The previous position is open. Where did the knight come from? Five origins remain.",
   "question": "lastMoves",
@@ -55,9 +55,9 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
   "title": "Black moves first",
   "composer": null,
   "source": {
-    "name": "Own demo (sat-chess-kotlin)",
+    "name": "Standard opening",
     "url": null,
-    "year": 2026
+    "year": null
   },
   "description": "The game starts after 1.e4 with Black to move. Reach the Ruy Lopez position in 4 plies. Each side has two different moves to make and both orders work for each side, so there are four lines.",
   "question": "proofGame",
@@ -79,9 +79,9 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
   "title": "En passant",
   "composer": null,
   "source": {
-    "name": "Own demo (sat-chess-kotlin)",
+    "name": "Rule demo",
     "url": null,
-    "year": 2026
+    "year": null
   },
   "description": "Black has just played d7-d5, so the start carries the en passant square d6. In one ply the pawn on e5 must end on d6 while the pawn on d5 disappears. Set enPassant to \"-\" and there is no solution.",
   "question": "custom",
@@ -103,9 +103,9 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
   "title": "Castling both ways",
   "composer": null,
   "source": {
-    "name": "Own demo (sat-chess-kotlin)",
+    "name": "Rule demo",
     "url": null,
-    "year": 2026
+    "year": null
   },
   "description": "Kings and rooks only, all castling rights given. In one move each, White ends up castled short and Black castled long. A king travels two squares and a rook jumps over it in a single move, which only castling allows.",
   "question": "custom",
@@ -127,9 +127,9 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
   "title": "Promotion choices",
   "composer": null,
   "source": {
-    "name": "Own demo (sat-chess-kotlin)",
+    "name": "Rule demo",
     "url": null,
-    "year": 2026
+    "year": null
   },
   "description": "The pawn on b7 moves to b8 and must promote. The square b8 is left open in the target position, and the result lists what can stand there afterwards: queen, rook, bishop or knight.",
   "question": "custom",
@@ -150,9 +150,9 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
   "title": "Which piece on a1?",
   "composer": null,
   "source": {
-    "name": "Own demo (sat-chess-kotlin)",
+    "name": "Rule demo",
     "url": null,
-    "year": 2026
+    "year": null
   },
   "description": "Black to move and in check. The only candidate checker stands on a1 and is restricted to a white queen, rook, bishop or knight by a square domain. Only pieces that attack h8 along the long diagonal fit: bishop or queen.",
   "question": "unknownPiece",
@@ -251,11 +251,11 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
   "title": "Where did the bishop go?",
   "composer": "Tibor Orban",
   "source": {
-    "name": "Die Schwalbe; reprinted in the chess.com article by FM Mike Klein and in janko.at Proof Game Shorties I-1",
+    "name": "Die Schwalbe; reprinted in the chess.com article by FM Mike Klein",
     "url": "https://www.chess.com/article/view/can-you-solve-these-5-easy-retrograde-puzzles",
     "year": 1976
   },
-  "description": "Proof game in 4.0 moves (8 plies). White's light-squared bishop and Black's d-pawn are gone, and Black's c- and e-pawns have each moved one square. One solution. Same position as janko.at Proof Game Shorties I-1.",
+  "description": "Proof game in 4.0 moves (8 plies). White's light-squared bishop and Black's d-pawn are gone, and Black's c- and e-pawns have each moved one square. One solution.",
   "question": "proofGame",
   "plies": 8,
   "start": {

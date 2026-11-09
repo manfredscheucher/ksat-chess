@@ -1,6 +1,7 @@
 package org.bytefred.satchess.ui
 
 import androidx.compose.ui.input.key.Key
+import org.bytefred.ksat.facade.Solver
 import org.bytefred.satchess.chess.Sq
 import org.bytefred.satchess.puzzle.Puzzle
 import org.bytefred.satchess.puzzle.Question
@@ -121,9 +122,9 @@ class PuzzleViewModelTest {
     }
 
     @Test
-    fun presetUpdatesTheProjectionField() {
+    fun presetSetsTheProjection() {
         vm.setQuestion(Question.HELPMATE)
-        assertEquals("moves", vm.projectionText)
+        assertEquals(listOf("moves"), vm.puzzle.project)
         assertEquals("b", vm.puzzle.start.sideToMove)
     }
 
@@ -134,6 +135,7 @@ class PuzzleViewModelTest {
         vm.solve()
         assertTrue(vm.run.running)
         assertEquals(5, solver.lastOptions?.maxSolutions)
+        assertEquals(Solver.KISSAT, solver.lastOptions?.solver)
         solver.emit(SolveEvent.Encoded(100, 2000, 5))
         solver.emit(SolveEvent.Found(0, Solution(listOf("a", "b"), emptyList(), "key", true), 10))
         assertEquals(100, vm.run.variables)
@@ -199,7 +201,6 @@ class PuzzleViewModelTest {
         vm.load(Puzzle(plies = 4, positions = mapOf("4" to "8/8/8/8/8/8/8/4K2k"), project = listOf("board@4", "square@2:e4", "piece@0:K")))
         vm.setPliesInput("6")
         assertEquals(listOf("board@6", "square@2:e4", "piece@0:K"), vm.puzzle.project)
-        assertEquals("board@6, square@2:e4, piece@0:K", vm.projectionText)
         vm.setPliesInput("1")
         assertEquals(listOf("board@1", "piece@0:K"), vm.puzzle.project)
         vm.setPliesInput("0")

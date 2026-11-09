@@ -28,10 +28,18 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import org.bytefred.satchess.ui.model.creditLine
 import org.bytefred.satchess.ui.platform.listenForShareLinks
 import org.bytefred.satchess.ui.platform.sharedPuzzleJson
 
@@ -202,9 +210,19 @@ private fun PuzzleHeader(vm: PuzzleViewModel, compact: Boolean) {
     var expanded by remember(p) { mutableStateOf(!compact) }
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Text(p.title.ifEmpty { "Untitled puzzle" }, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.testTag("puzzleTitle"))
-        val meta = listOfNotNull(p.composer, p.source?.let { s -> listOfNotNull(s.name, s.year?.toString()).joinToString(", ") })
-        if (meta.isNotEmpty()) {
-            Text(meta.joinToString(" · "), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        val meta = creditLine(p)
+        val url = p.source?.url
+        if (meta.isNotEmpty() || url != null) {
+            val uriHandler = LocalUriHandler.current
+            val linkStyle = TextLinkStyles(SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline))
+            val text = buildAnnotatedString {
+                append(meta)
+                if (url != null) {
+                    if (meta.isNotEmpty()) append(" · ")
+                    withLink(LinkAnnotation.Clickable("source", linkStyle) { openUriSafely(uriHandler, url) }) { append("Source") }
+                }
+            }
+            Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("puzzleSource"))
         }
         p.description?.let {
             Text(

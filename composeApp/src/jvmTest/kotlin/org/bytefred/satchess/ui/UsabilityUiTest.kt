@@ -6,11 +6,16 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.UriHandler
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -19,6 +24,7 @@ import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.v2.runComposeUiTest
+import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import org.bytefred.satchess.sat.SolveEvent
@@ -116,6 +122,26 @@ class UsabilityUiTest {
         onNodeWithText("En passant").assertIsDisplayed()
         onNodeWithTag("loadExample").assertIsEnabled().performClick()
         runOnIdle { assertEquals("En passant", vm.puzzle.title) }
+    }
+
+    @Test
+    fun loadedPuzzleLinksToItsSource() = runComposeUiTest {
+        val vm = PuzzleViewModel(FakeSolverService())
+        val opened = mutableListOf<String>()
+        val uriHandler = object : UriHandler { override fun openUri(uri: String) { opened += uri } }
+        setContent { CompositionLocalProvider(LocalUriHandler provides uriHandler) { App(vm) } }
+        val puzzle = loadExamples().first { it.puzzle.id == "chess-com-5/1" }.puzzle
+        runOnIdle { vm.load(puzzle) }
+        onNodeWithTag("puzzleSource").assertTextContains("Source", substring = true)
+        // the link is a span inside the credit text, not a node of its own: fire its listener
+        val text = onNodeWithTag("puzzleSource").fetchSemanticsNode().config[SemanticsProperties.Text].single()
+        val link = text.getLinkAnnotations(0, text.length).single().item as LinkAnnotation.Clickable
+        runOnIdle { link.linkInteractionListener!!.onClick(link) }
+        runOnIdle { assertEquals(listOf(puzzle.source?.url), opened) }
+
+        // no URL, no link
+        runOnIdle { vm.load(loadExamples().first { it.puzzle.id == "demos/fools-mate" }.puzzle) }
+        onNodeWithTag("puzzleSource").assertTextEquals("Well-known")
     }
 
     @Test

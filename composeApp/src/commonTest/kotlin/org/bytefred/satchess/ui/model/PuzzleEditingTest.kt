@@ -7,6 +7,7 @@ import org.bytefred.satchess.puzzle.MovePattern
 import org.bytefred.satchess.puzzle.Puzzle
 import org.bytefred.satchess.puzzle.PuzzleJson
 import org.bytefred.satchess.puzzle.Question
+import org.bytefred.satchess.puzzle.Source
 import org.bytefred.satchess.puzzle.Start
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -240,11 +241,15 @@ class PuzzleEditingTest {
     }
 
     @Test
-    fun projectionParsing() {
-        assertEquals(listOf("moves", "board@0"), parseProjection("moves, board@0"))
-        assertEquals(listOf("square@0:h4", "piece@3:K", "sideToMove@0"), parseProjection("square@0:h4,piece@3:K , sideToMove@0"))
-        assertNull(parseProjection(""))
-        assertNull(parseProjection("moves, foo"))
+    fun creditLineJoinsComposerSourceAndYear() {
+        val source = Source("Die Schwalbe", "https://example.org", 1976)
+        assertEquals("Tibor Orban · Die Schwalbe, 1976", creditLine(Puzzle(composer = "Tibor Orban", source = source)))
+        assertEquals("Rule demo", creditLine(Puzzle(source = Source("Rule demo"))))
+        assertEquals("", creditLine(Puzzle()))
+    }
+
+    @Test
+    fun pathProjection() {
         assertTrue(isPathProjection(listOf("moves", "board@0")))
         assertFalse(isPathProjection(listOf("square@0:h4")))
     }

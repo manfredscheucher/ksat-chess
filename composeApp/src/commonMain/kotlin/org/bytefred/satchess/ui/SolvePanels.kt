@@ -43,7 +43,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
-import org.bytefred.ksat.facade.Solver
 import org.bytefred.satchess.chess.Fen
 import org.bytefred.satchess.chess.Sq
 import org.bytefred.satchess.puzzle.RuleFlags
@@ -59,24 +58,15 @@ import org.bytefred.satchess.ui.model.sanLine
 import org.bytefred.satchess.ui.model.similaritySummary
 import org.bytefred.satchess.ui.model.squareDomainError
 
-private val Solver.label: String
-    get() = when (this) {
-        Solver.CADICAL -> "CaDiCaL"
-        Solver.MINISAT -> "MiniSat"
-        Solver.KISSAT -> "kissat"
-        Solver.MICROSAT -> "microsat"
-    }
-
 // ── advanced ────────────────────────────────────────────────────────────────
 
-/** Solver, max solutions, shortest, projection, rule flags and square domains (collapsible). */
+/** Max solutions, shortest, rule flags and square domains (collapsible). */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun AdvancedSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
     var expanded by remember { mutableStateOf(false) }
     val p = vm.puzzle
     Section("Advanced", modifier, expanded = expanded, onToggle = { expanded = !expanded }) {
-        ChoiceChips("SAT solver", vm.solver, listOf(Solver.CADICAL, Solver.MINISAT, Solver.KISSAT), { it.label }) { vm.solver = it }
         Row(verticalAlignment = Alignment.CenterVertically) {
             ChoiceChips("Max solutions", vm.limit, SolutionLimit.entries, {
                 when (it) { SolutionLimit.ONE -> "1"; SolutionLimit.N -> "N"; SolutionLimit.ALL -> "all" }
@@ -92,15 +82,6 @@ fun AdvancedSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
             }
         }
         CheckRow("Shortest: also prove that N - 2 plies are not enough", p.shortest, vm::setShortest)
-        CompactField(
-            value = vm.projectionText,
-            onValueChange = vm::setProjectionInput,
-            modifier = Modifier.fillMaxWidth(),
-            label = "Projection (what makes two solutions distinct)",
-            isError = vm.projectionError,
-            supporting = if (vm.projectionError) "Items: moves, board@t, square@t:h4, piece@t:K, sideToMove@0 (comma separated)"
-            else "e.g. moves, board@0 / square@0:h4 / piece@0:K",
-        )
         FieldLabel("Rules")
         CheckRow("Exactly one king per side", p.rules.oneKingEach) { vm.setRules(p.rules.copy(oneKingEach = it)) }
         CheckRow("Check rules (no move into / staying in check)", p.rules.checkRules) { vm.setRules(p.rules.copy(checkRules = it)) }

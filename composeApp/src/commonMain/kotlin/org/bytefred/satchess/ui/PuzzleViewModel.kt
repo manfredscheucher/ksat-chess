@@ -36,7 +36,6 @@ import org.bytefred.satchess.ui.model.movePiece
 import org.bytefred.satchess.ui.model.optionsAt
 import org.bytefred.satchess.ui.model.paletteClick
 import org.bytefred.satchess.ui.model.parsePliesInput
-import org.bytefred.satchess.ui.model.parseProjection
 import org.bytefred.satchess.ui.model.puzzleProblem
 import org.bytefred.satchess.ui.model.removePiece
 import org.bytefred.satchess.ui.model.setSquare
@@ -103,8 +102,6 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
     var fenError by mutableStateOf<String?>(null); private set
     var enPassantText by mutableStateOf("-"); private set
     var enPassantError by mutableStateOf<String?>(null); private set
-    var projectionText by mutableStateOf(NEW_PUZZLE.project.joinToString(", ")); private set
-    var projectionError by mutableStateOf(false); private set
 
     // View menu; MenuBar stores a change, so it is still there after a reload
     var inputMode by mutableStateOf(InputMode.entries.firstOrNull { it.name == loadPref(INPUT_MODE_PREF) } ?: InputMode.HYBRID)
@@ -119,7 +116,6 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
 
     // Advanced solver options (not part of the puzzle file). Capped by default: an open B can have
     // hundreds of thousands of lines; "all" stays selectable.
-    var solver by mutableStateOf(Solver.CADICAL)
     var limit by mutableStateOf(SolutionLimit.N)
     var limitN by mutableIntStateOf(DEFAULT_LIMIT)
 
@@ -148,7 +144,7 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
 
     /** Allowed contents of the '?' squares of the selected ply (for drawing the options). */
     val boardOptions: Map<Int, Set<Char>> get() = puzzle.optionsAt(selectedPly)
-    val canSolve: Boolean get() = !run.running && !pliesError && fenError == null && enPassantError == null && !projectionError
+    val canSolve: Boolean get() = !run.running && !pliesError && fenError == null && enPassantError == null
 
     // ── loading ──────────────────────────────────────────────────────────────
 
@@ -162,8 +158,6 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
         pliesError = false
         enPassantText = p.start.enPassant
         enPassantError = null
-        projectionText = p.project.joinToString(", ")
-        projectionError = false
         optionsTarget = null
         run = SolveRun()
         clearSolutions()
@@ -265,8 +259,6 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
         update(applyPreset(puzzle, question))
         enPassantText = puzzle.start.enPassant
         enPassantError = null
-        projectionText = puzzle.project.joinToString(", ")
-        projectionError = false
         selectedPly = selectedPly.coerceAtMost(puzzle.plies)
         syncFen()
     }
@@ -284,8 +276,6 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
         val (basePuzzle, baseSelected) = base
         puzzle = basePuzzle.withPlies(plies)
         selectedPly = if (baseSelected == basePuzzle.plies) plies else baseSelected.coerceAtMost(plies)
-        projectionText = puzzle.project.joinToString(", ")
-        projectionError = false
         syncFen()
     }
 
@@ -388,17 +378,10 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
         fenError = null
     }
 
-    // ── advanced: move patterns, square domains, projection ───────────────────
+    // ── advanced: move patterns, square domains ───────────────────────────────
 
     fun setMovePattern(t: Int, pattern: MovePattern?) = update(puzzle.withMovePattern(t, pattern))
     fun setSquareDomain(t: Int, square: String, allowed: String) = update(puzzle.withSquareDomain(t, square, allowed))
-
-    fun setProjectionInput(text: String) {
-        projectionText = text
-        val items = parseProjection(text)
-        projectionError = items == null
-        if (items != null) update(puzzle.copy(project = items))
-    }
 
     private fun update(p: Puzzle) {
         puzzle = p
@@ -420,7 +403,7 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
         runStart = TimeSource.Monotonic.markNow()
         selectedSolution = 0
         replayPly = 0
-        solverService.solve(solving, SolveOptions(solver, maxSolutions), ::onSolveEvent)
+        solverService.solve(solving, SolveOptions(Solver.KISSAT, maxSolutions), ::onSolveEvent)
     }
 
     fun cancel() {

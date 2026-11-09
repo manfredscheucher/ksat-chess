@@ -3,9 +3,9 @@
   "title": "Castling both ways",
   "composer": null,
   "source": {
-    "name": "Own demo (sat-chess-kotlin)",
+    "name": "Rule demo",
     "url": null,
-    "year": 2026
+    "year": null
   },
   "description": "Kings and rooks only, all castling rights given. In one move each, White ends up castled short and Black castled long. A king travels two squares and a rook jumps over it in a single move, which only castling allows.",
   "question": "custom",

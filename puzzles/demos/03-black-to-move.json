@@ -3,9 +3,9 @@
   "title": "Black moves first",
   "composer": null,
   "source": {
-    "name": "Own demo (sat-chess-kotlin)",
+    "name": "Standard opening",
     "url": null,
-    "year": 2026
+    "year": null
   },
   "description": "The game starts after 1.e4 with Black to move. Reach the Ruy Lopez position in 4 plies. Each side has two different moves to make and both orders work for each side, so there are four lines.",
   "question": "proofGame",

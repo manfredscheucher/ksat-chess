@@ -32,9 +32,4 @@ class PuzzleFilesTest {
     fun chessCom() {
         if (slowTests) check("chess-com-5")
     }
-
-    @Test
-    fun jankoShorties() {
-        if (slowTests) check("janko-shorties")
-    }
 }

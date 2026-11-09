@@ -237,9 +237,8 @@ assumed in the spec.
 
 `cli run` over the bundled puzzles (Kissat): chess-com-5/1 (4), /4 (1), /5 (13) match
 `expected`; /3 finds 2 lines; /2 (`oneKingEach: false`, `piece@0:K` over an open board)
-enumerates tens of thousands of king sets and needs a better puzzle definition. Janko shorties:
-every completed one matches (s1-05, s1-06, s1-10, s1-11); several need more than a minute to
-prove there is no further solution.
+enumerates tens of thousands of king sets and needs a better puzzle definition. (The janko.at
+shorties measured here were removed from the repo on 2026-11-09.)
 
 Two performance problems of the Kotlin **CaDiCaL port** (`~/github/sat-solvers-kotlin`, not
 changed here) were found with JFR:

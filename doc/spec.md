@@ -30,7 +30,7 @@ implementation against this file.
 | Encoding | Optimizing the encoding is allowed right away ("gern optimieren"). Kotlin performance is assumed to be within a small factor of native. |
 | Python repo | Manfred first said "pull sat-chess along", then "you can leave sat-chess completely alone, the language doesn't matter for building the instance". **Interpretation: `../sat-chess` stays untouched.** The Kotlin port gets a JVM CLI that can export DIMACS, so hard instances can still go to native CaDiCaL/kissat. *(Flagged to Manfred; reversible.)* |
 | Web target | Kotlin/JS + Compose (like ktoy) and the **solver runs in a Web Worker**, so the UI stays responsive, with cancel and progress. |
-| Puzzle data | **Small hand-picked selection + credits**: the 5 chess.com puzzles plus roughly 20 janko.at shorties. Only FEN, plies, composer/source/link. Descriptions are written by us, no copied prose. A separate `puzzles/NOTICE.md` says puzzle data is not covered by MIT and gives a removal contact. No bulk import (no yacpdb dump). |
+| Puzzle data | **Small hand-picked selection + credits**: the 5 chess.com puzzles (about 20 janko.at shorties were added at first and removed on 2026-11-09, see section 7). Only FEN, plies, composer/source/link. Descriptions are written by us, no copied prose. A separate `puzzles/NOTICE.md` says puzzle data is not covered by MIT and gives a removal contact. No bulk import (no yacpdb dump). |
 | Model v1 | All of: free **side to move**, goal **checkmate**, goal **stalemate**, **castling rights / en passant** settable at A. Manfred: "you see what is needed, implement it all; design the web UI nicely, discuss with reviewers". |
 
 ## 3. Licensing research summary (not legal advice)
@@ -165,8 +165,9 @@ Reviewed by a fresh UX reviewer; decisions:
   off the board removes them. Settings offer one alternative, "click opens a dialog",
   because Manfred asked for switchable input modes.
 - **Question preset first** (Proof game / Last move(s)? / Helpmate in k / Find unknown
-  piece / Custom). The preset fills A, B, N, goal and projection. Solver choice,
-  projection, rules and square domains live under "Advanced".
+  piece / Custom). The preset fills A, B, N, goal and projection. Max solutions, Shortest,
+  rules and square domains live under "Advanced" (solver choice and the projection field were
+  removed on 2026-11-09).
 - **Plies vs moves**: one number with a unit toggle plus a live sentence, e.g.
   "13 plies = PG 6.5 · White starts · White moves last · Black to move at B".
 - **Timeline**: `(A)─1─2─…─(B)` chips; the icon shows fixed / partial / open (derived from
@@ -259,6 +260,18 @@ results as their own view.
   - Known limit, same as ktoy: the web Save cannot see a cancel in a browser "save as" dialog, so
     the app then counts the puzzle as saved.
   - Trimmed the longest example descriptions (Fool's mate, chess.com #2, #5).
+- **Examples and solver cleanup** (Manfred, 2026-11-09):
+  - "nimm die janko sachen raus": the 20 janko.at shorties are removed, also from the git history
+    (rewritten before the first push; local backup tag `backup/before-janko-removal`). chess.com
+    puzzles and demos stay.
+  - Demos no longer say "Own demo": Fool's mate is "Well-known", the Ruy Lopez one "Standard
+    opening", the others "Rule demo".
+  - The loaded puzzle shows a "Source" link next to its credits (before: only in the Examples dialog).
+  - "lass die solver auswahl weg": no solver choice in the UI, it always uses kissat (as fast as or
+    faster than CaDiCaL in every measurement in `encoding.md`, and incremental).
+  - "Projection (what makes two solutions distinct)" field removed from Advanced ("weg damit"):
+    nobody understood `board@0` / `square@0:h4`. The puzzle file keeps `project` (set by the
+    question preset and the examples); "Group similar solutions" in the results stays.
 
 ## 8. Open points / follow-ups
 

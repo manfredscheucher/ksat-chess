@@ -288,13 +288,11 @@ fun squareDomainError(allowed: String): String? = when {
     else -> null
 }
 
-private val PROJECTION_ITEM = Regex("moves|sideToMove@0|board@\\d+|square@\\d+:[a-h][1-8]|piece@\\d+:[KQRBNPkqrbnp]")
-
-/** Parses the comma separated projection field; null if an item is not one of the spec's forms. */
-fun parseProjection(text: String): List<String>? {
-    val items = text.split(',').map { it.trim() }.filter { it.isNotEmpty() }
-    return items.takeIf { it.isNotEmpty() && it.all(PROJECTION_ITEM::matches) }
-}
+/** "Composer · source, year" for the puzzle header and the Examples dialog; empty if neither is set. */
+fun creditLine(p: Puzzle): String = listOfNotNull(
+    p.composer,
+    p.source?.let { s -> listOfNotNull(s.name, s.year?.toString()).joinToString(", ") },
+).joinToString(" · ")
 
 /** True if solutions are whole lines (the projection includes the moves). */
 fun isPathProjection(project: List<String>): Boolean = "moves" in project

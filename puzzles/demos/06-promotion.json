@@ -3,9 +3,9 @@
   "title": "Promotion choices",
   "composer": null,
   "source": {
-    "name": "Own demo (sat-chess-kotlin)",
+    "name": "Rule demo",
     "url": null,
-    "year": 2026
+    "year": null
   },
   "description": "The pawn on b7 moves to b8 and must promote. The square b8 is left open in the target position, and the result lists what can stand there afterwards: queen, rook, bishop or knight.",
   "question": "custom",

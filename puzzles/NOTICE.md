@@ -1,7 +1,7 @@
 # Notice: bundled example puzzles
 
-The repository's MIT license covers the code. It does **not** cover the chess
-puzzles in this folder.
+The repository's MIT license covers the code. It does **not** cover the
+puzzles in `chess-com-5/`.
 
 Each puzzle position (diagram, stipulation, number of moves) is the work of its
 credited composer. They are included with attribution, as a small selection for
@@ -10,19 +10,16 @@ the position, the number of plies, the goal, the composer and the source. Titles
 and descriptions are our own text; no prose, diagrams or images were copied from
 the sources.
 
-Sources:
+Source: the chess.com article "Can You Solve These 5 'Easy' Retrograde
+Puzzles?" by FM Mike Klein (2017),
+https://www.chess.com/article/view/can-you-solve-these-5-easy-retrograde-puzzles
+(puzzle 4 by Tibor Orban, Die Schwalbe 1976; puzzle 5 by Raymond Smullyan,
+*The Chess Mysteries of Sherlock Holmes*, 1979).
 
-- chess.com article "Can You Solve These 5 'Easy' Retrograde Puzzles?" by
-  FM Mike Klein (2017):
-  https://www.chess.com/article/view/can-you-solve-these-5-easy-retrograde-puzzles
-  (puzzle 4 by Tibor Orban, Die Schwalbe 1976; puzzle 5 by Raymond Smullyan,
-  *The Chess Mysteries of Sherlock Holmes*, 1979)
-- Proof Game Shorties I-IV, collected by Angela and Otto Janko at janko.at:
-  https://www.janko.at/Retros/Shorties/ (composer, original publication and year
-  are given in each puzzle file; "original" means first shown in that collection)
-
-The puzzles in `demos/` were made for this project and are covered by the MIT
-license like the code.
+The puzzles in `demos/` only show the rules and the puzzle format. Two of them
+are standard chess knowledge (Fool's mate, the Ruy Lopez opening); the others are
+minimal positions for one rule each. They are covered by the MIT license like the
+code.
 
 ## Removal on request
 

@@ -13,7 +13,7 @@ and a SAT solver finds every line of play that fits. A move generator verifies e
 A puzzle is a window of N plies with constraints: start and target board, unknown squares, "a king
 or nothing stands here", move patterns, mate or stalemate at the end. All answers are cooperative
 (helpmate style): a forced mate against every defence is out of scope. Examples are built in: small
-demos, the 5 chess.com retrograde puzzles and 20 proof games from janko.at.
+demos and the 5 chess.com retrograde puzzles.
 
 SAT chess is in early development. Feedback is very welcome:
 [manfred.scheucher@proton.me](mailto:manfred.scheucher@proton.me?subject=sat-chess%20feedback&body=hi%20manfred%2C%0A%0A)

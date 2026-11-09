@@ -3,9 +3,9 @@
   "title": "What was the last move?",
   "composer": null,
   "source": {
-    "name": "Own demo (sat-chess-kotlin)",
+    "name": "Rule demo",
     "url": null,
-    "year": 2026
+    "year": null
   },
   "description": "Black to move and in check from the knight on f7. The previous position is open. Where did the knight come from? Five origins remain.",
   "question": "lastMoves",

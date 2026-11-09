@@ -39,6 +39,7 @@ import org.bytefred.satchess.puzzle.Puzzle
 import org.bytefred.satchess.puzzle.PuzzleJson
 import org.bytefred.satchess.ui.board.BoardView
 import org.bytefred.satchess.ui.model.boardAt
+import org.bytefred.satchess.ui.model.creditLine
 
 /** A bundled example puzzle with its category. */
 data class Example(val category: String, val puzzle: Puzzle)
@@ -143,10 +144,7 @@ private fun ExampleDetails(puzzle: Puzzle) {
             Spacer(Modifier.width(12.dp))
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            val meta = listOfNotNull(
-                puzzle.composer,
-                puzzle.source?.let { s -> listOfNotNull(s.name, s.year?.toString()).joinToString(", ") },
-            ).joinToString(" · ")
+            val meta = creditLine(puzzle)
             if (meta.isNotEmpty()) {
                 Text(meta, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
