@@ -293,13 +293,16 @@ results as their own view.
   - **Simpler start, simpler screen** (Manfred, 2026-11-09): no en passant field in the UI (a
     puzzle that needs it starts one ply earlier with both boards given, as demo 04 does now; the
     file field `start.enPassant` stays for the solver and the tests); castling is four checkboxes
-    "May still castle" (ticked = what the board allows; unticking stores explicit rights, the
+    "Available castling options" (first "May still castle") (ticked = what the board allows; unticking stores explicit rights, the
     "? (free)" mode is gone from the UI, chess.com #2 uses auto); columns reordered: question,
     start and advanced on the left, timeline and board in the middle, Solve above the results on
     the right; editor and replay board share one width (420 dp); Edit menu with Undo / Redo
     (Ctrl/Cmd+Z, Shift for redo, 100 steps, a run of N keystrokes is one step); the bundled
     monospace font is gone ("brauchst ja nie nen andren font typ"), with it the resources plugin
     and the DejaVu notice.
+  - **Demo "Castling not allowed"** (Manfred, 2026-11-09): the castling demo with the rights
+    switched off, expected 0, so the effect of a moved king or rook is visible. Chess960 castling
+    is noted as an idea in section 8.
   - **No Advanced section** (Manfred: "das ganze advanced kannst wegschmeißen"): the solver
     always enumerates all solutions, the Solve button turns into Cancel while it runs; "Shortest"
     and the square-domain editor are gone from the UI (`shortest` and `squares` stay in the file
@@ -313,6 +316,10 @@ results as their own view.
     is no longer shown in the app.
 
 ## 8. Open points / follow-ups
+
+- Idea (Manfred, 2026-11-09): Chess960 castling, with a general rule "castling is possible when
+  the king stands between its two rooks and neither has moved", plus a Chess960 example. Not
+  built; the encoder's castling geometry is fixed to e1/e8 and the corner rooks.
 
 - Public release: the sibling projectDir remap does not work for strangers cloning the repo. Decided
   (2026-11-07): `sat-solvers-kotlin` becomes a submodule; `git submodule add` is Manfred's job, then

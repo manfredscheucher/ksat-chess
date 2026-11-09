@@ -600,7 +600,7 @@ fun StartSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
         ChoiceChips("Side to move", start.sideToMove, listOf("w", "b", "?"), {
             when (it) { "w" -> "White"; "b" -> "Black"; else -> "either" }
         }, vm::setSideToMove)
-        FieldLabel("May still castle")
+        FieldLabel("Available castling options")
         FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             for ((right, name) in listOf('K' to "White O-O", 'Q' to "White O-O-O", 'k' to "Black O-O", 'q' to "Black O-O-O")) {
                 Row(verticalAlignment = Alignment.CenterVertically) {

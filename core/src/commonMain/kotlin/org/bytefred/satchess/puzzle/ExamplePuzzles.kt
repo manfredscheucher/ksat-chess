@@ -94,6 +94,24 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
   "expected": 1
 }"""),
     ExampleSource("Demos", """{
+  "id": "demos/no-castling",
+  "title": "Castling not allowed",
+  "description": "Same kings and rooks, but both kings have already moved, so castling is off for good. The two castled positions cannot be reached in one move each: no solution.",
+  "question": "custom",
+  "plies": 2,
+  "start": {
+    "board": "r3k2r/8/8/8/8/8/8/R3K2R",
+    "castling": "-"
+  },
+  "positions": {
+    "2": "2kr3r/8/8/8/8/8/8/R4RK1"
+  },
+  "project": [
+    "moves"
+  ],
+  "expected": 0
+}"""),
+    ExampleSource("Demos", """{
   "id": "demos/promotion",
   "title": "Promotion choices",
   "description": "The pawn on b7 moves to b8. What can stand on b8 afterwards?",
