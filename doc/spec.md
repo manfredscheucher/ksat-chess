@@ -270,6 +270,8 @@ results as their own view.
   - Demos no longer say "Own demo"; first relabelled "Well-known" / "Standard opening" / "Rule
     demo", then (Manfred: "des is immer nur arrogant … sei normal") the demos carry no source or
     composer line at all.
+    Manfred asked where demo 02 (knight on f7) comes from: Claude made it up on 2026-10-20 as a
+    minimal "last move" exercise, no source. Decision (Manfred, 2026-11-09): keep it.
   - The loaded puzzle shows a "Source" link next to its credits (before: only in the Examples dialog).
   - "lass die solver auswahl weg": no solver choice in the UI, it always uses kissat (as fast as or
     faster than CaDiCaL in every measurement in `encoding.md`, and incremental).
