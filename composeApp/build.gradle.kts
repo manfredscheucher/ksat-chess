@@ -202,8 +202,8 @@ val generateVersionInfo = tasks.register("generateVersionInfo", GenerateVersionI
 // ── build-time license notices (GeneratedLicenses.kt) ───────────────────────
 // The About dialog shows the notices a binary distribution must carry. The texts are read from the
 // license files themselves (single source of truth, nothing hand-copied): this project's LICENSE, the
-// piece graphics notice, the ksat solver ports (LICENSE + licenses/ of the sibling sat-solvers-kotlin
-// checkout) and the puzzle notice.
+// piece graphics license, the ksat solver ports (LICENSE + licenses/ of the sat-solvers-kotlin
+// submodule) and the font license.
 @CacheableTask
 abstract class GenerateLicenses : DefaultTask() {
     /** Notice titles, in display order; parallel to [sources]. */
@@ -259,14 +259,13 @@ abstract class GenerateLicenses : DefaultTask() {
 val satSolversDir = project(":ksat").projectDir.parentFile
 val licenseNotices = listOf(
     "sat-chess-kotlin (MIT)" to rootProject.file("LICENSE"),
-    "Chess piece graphics: cburnett set (BSD 3-clause)" to file("NOTICE-pieces.md"),
-    "SAT solvers: ksat (MIT, Kotlin ports)" to satSolversDir.resolve("LICENSE"),
+    "Chess pieces: cburnett (BSD 3-clause)" to rootProject.file("doc/licenses/LICENSE_CBURNETT.txt"),
+    "ksat (MIT)" to satSolversDir.resolve("LICENSE"),
     "MicroSAT (MIT)" to satSolversDir.resolve("licenses/microsat-LICENSE.txt"),
     "MiniSat (MIT)" to satSolversDir.resolve("licenses/minisat-LICENSE.txt"),
     "CaDiCaL (MIT)" to satSolversDir.resolve("licenses/cadical-LICENSE.txt"),
     "kissat (MIT)" to satSolversDir.resolve("licenses/kissat-LICENSE.txt"),
-    "Font: DejaVu Sans Mono (Bitstream Vera license)" to rootProject.file("doc/licenses/LICENSE_DEJAVU.txt"),
-    "Example puzzles (not covered by the MIT license; puzzles/NOTICE.md)" to rootProject.file("puzzles/NOTICE.md"),
+    "DejaVu Sans Mono (Bitstream Vera license)" to rootProject.file("doc/licenses/LICENSE_DEJAVU.txt"),
 )
 val generateLicenses = tasks.register<GenerateLicenses>("generateLicenses") {
     titles.set(licenseNotices.map { it.first })

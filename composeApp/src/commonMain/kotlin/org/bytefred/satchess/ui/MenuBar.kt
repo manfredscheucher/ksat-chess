@@ -268,16 +268,25 @@ private fun AboutDialog(onDismiss: () -> Unit) {
                     Spacer(Modifier.height(8.dp))
                     ProjectLine("sat-chess-kotlin", "https://github.com/manfredscheucher/sat-chess-kotlin", "this app")
                     ProjectLine("ksat", "https://github.com/manfredscheucher/ksat", "the SAT solvers")
+                    ProjectLine("cburnett", CBURNETT_URL, "chess pieces by Colin M.L. Burnett", license = "BSD 3-clause")
+                    ProjectLine("DejaVu Sans Mono", DEJAVU_URL, "font", license = "Bitstream Vera license")
+                    ProjectLine("chess.com article", CHESS_COM_ARTICLE_URL, "example puzzles, by FM Mike Klein", license = null)
                     Spacer(Modifier.height(8.dp))
                     Text(
                         buildLine(),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    for (notice in GeneratedLicenses.NOTICES) {
-                        HorizontalDivider(Modifier.padding(vertical = 8.dp))
-                        Text(notice.title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
-                        Text(notice.text, style = monoStyle().copy(fontSize = MaterialTheme.typography.labelSmall.fontSize))
+                    var showLicenses by remember { mutableStateOf(false) }
+                    TextButton(onClick = { showLicenses = !showLicenses }) {
+                        Text(if (showLicenses) "Hide license texts" else "License texts")
+                    }
+                    if (showLicenses) {
+                        for (notice in GeneratedLicenses.NOTICES) {
+                            HorizontalDivider(Modifier.padding(vertical = 8.dp))
+                            Text(notice.title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                            Text(notice.text, style = monoStyle().copy(fontSize = MaterialTheme.typography.labelSmall.fontSize))
+                        }
                     }
                 }
             }
@@ -286,14 +295,18 @@ private fun AboutDialog(onDismiss: () -> Unit) {
     )
 }
 
-/** One About line "[name] (MIT): note"; only the name is a link. */
+/** One About line "[name] (license): note" (no bracket without a license); only the name is a link. */
 @Composable
-private fun ProjectLine(name: String, url: String, note: String) {
+private fun ProjectLine(name: String, url: String, note: String, license: String? = "MIT") {
     Row {
         LinkText(name, url)
-        Text(" (MIT): $note", Modifier.padding(vertical = 2.dp))
+        Text((license?.let { " ($it)" } ?: "") + ": $note", Modifier.padding(vertical = 2.dp))
     }
 }
+
+private const val CBURNETT_URL = "https://commons.wikimedia.org/wiki/Category:SVG_chess_pieces"
+private const val DEJAVU_URL = "https://dejavu-fonts.github.io/"
+private const val CHESS_COM_ARTICLE_URL = "https://www.chess.com/article/view/can-you-solve-these-5-easy-retrograde-puzzles"
 
 /** "sha · committed <date> · built <date>"; unknown parts are left out. */
 private fun buildLine(): String = buildList {

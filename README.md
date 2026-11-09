@@ -69,7 +69,7 @@ in [`doc/encoding.md`](doc/encoding.md), the website and other targets in
 MIT (see [`LICENSE`](LICENSE)), except:
 
 - the puzzles in `puzzles/`: the credited composers' works, see [`puzzles/NOTICE.md`](puzzles/NOTICE.md)
-- the piece graphics: cburnett set, BSD 3-clause, see [`composeApp/NOTICE-pieces.md`](composeApp/NOTICE-pieces.md)
+- the piece graphics: cburnett set by Colin M.L. Burnett, BSD 3-clause, see [`doc/pieces.md`](doc/pieces.md)
 - the font: DejaVu Sans Mono, see [`doc/licenses/LICENSE_DEJAVU.txt`](doc/licenses/LICENSE_DEJAVU.txt)
 
 The app's About dialog shows all bundled license texts.

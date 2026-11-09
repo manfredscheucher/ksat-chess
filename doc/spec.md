@@ -272,10 +272,15 @@ results as their own view.
   - "Projection (what makes two solutions distinct)" field removed from Advanced ("weg damit"):
     nobody understood `board@0` / `square@0:h4`. The puzzle file keeps `project` (set by the
     question preset and the examples); "Group similar solutions" in the results stays.
+  - About like ktoy: one line per part with link and license (app, ksat, cburnett pieces, DejaVu
+    font, chess.com article); the full license texts only behind "License texts". Developer notes
+    on the piece graphics moved from `composeApp/NOTICE-pieces.md` to `doc/pieces.md`; the app
+    ships only the plain license text (`doc/licenses/LICENSE_CBURNETT.txt`). `puzzles/NOTICE.md`
+    is no longer shown in the app.
 
 ## 8. Open points / follow-ups
 
 - Public release: the sibling projectDir remap does not work for strangers cloning the repo. Decided
   (2026-11-07): `sat-solvers-kotlin` becomes a submodule; `git submodule add` is Manfred's job, then
   `settings.gradle.kts` and the README switch to it. Done 2026-11-09.
-- Piece graphics: cburnett set (BSD/GPL/GFDL tri-licensed, used by lichess), credited in NOTICE.
+- Piece graphics: cburnett set (BSD/GPL/GFDL tri-licensed, used by lichess), see `doc/pieces.md`.

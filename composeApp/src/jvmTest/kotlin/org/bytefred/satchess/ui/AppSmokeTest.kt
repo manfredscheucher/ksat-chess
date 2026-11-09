@@ -102,7 +102,10 @@ class AppSmokeTest {
         onNodeWithTag("menu-Help").performClick()
         onNodeWithText("About SAT chess").performClick()
         onNodeWithTag("about").assertIsDisplayed()
+        onNodeWithText("CaDiCaL (MIT)").assertDoesNotExist()
+        onNodeWithText("License texts").performScrollTo().performClick()
         onNodeWithText("CaDiCaL (MIT)").performScrollTo().assertIsDisplayed()
+        onNodeWithText("Chess pieces: cburnett (BSD 3-clause)").performScrollTo().assertIsDisplayed()
     }
 }
 

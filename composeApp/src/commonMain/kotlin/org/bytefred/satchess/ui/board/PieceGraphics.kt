@@ -26,7 +26,7 @@
  *   of this software, even if advised of the possibility of such damage.
  *
  * The SVG path data below is copied unchanged; only the SVG styles are expressed as Compose path
- * attributes (circles written as two arcs). See composeApp/NOTICE-pieces.md.
+ * attributes (circles written as two arcs). See doc/pieces.md.
  */
 package org.bytefred.satchess.ui.board
 
