@@ -10,7 +10,7 @@ import org.bytefred.satchess.ui.App
 fun main() = application {
     Window(
         onCloseRequest = ::exitApplication,
-        title = "SAT chess",
+        title = "ksat-chess",
         state = rememberWindowState(width = 1280.dp, height = 860.dp),
     ) {
         App()
