@@ -91,26 +91,12 @@ private val PLIES_INPUT = Regex("\\d{1,4}")
 /** Parses the plies field: a whole number 0..[MAX_PLIES]. Null = invalid input. */
 fun parsePliesInput(text: String): Int? = PLIES_INPUT.matchEntire(text.trim())?.let { text.trim().toInt() }?.takeIf { it in 0..MAX_PLIES }
 
-private fun colorName(side: Char): String = if (side == 'w') "White" else "Black"
 private fun other(side: Char): Char = if (side == 'w') 'b' else 'w'
 
 /** Side to move at ply [t] ('w'/'b'), or null when the start side is free ('?'). */
 fun sideToMoveAt(startSide: String, t: Int): Char? {
     val start = startSide.singleOrNull()?.takeIf { it == 'w' || it == 'b' } ?: return null
     return if (t % 2 == 0) start else other(start)
-}
-
-/**
- * The live sentence next to the N field, e.g.
- * "13 plies · White starts · White moves last · Black to move at the end (B)".
- */
-fun pliesSentence(plies: Int, startSide: String): String {
-    val head = "$plies ${if (plies == 1) "ply" else "plies"}"
-    val start = sideToMoveAt(startSide, 0) ?: return "$head · either side starts"
-    if (plies == 0) return "$head · position only · ${colorName(start)} to move"
-    val lastMover = sideToMoveAt(startSide, plies - 1)!!
-    val atB = sideToMoveAt(startSide, plies)!!
-    return "$head · ${colorName(start)} starts · ${colorName(lastMover)} moves last · ${colorName(atB)} to move at the end (B)"
 }
 
 val Goal.label: String

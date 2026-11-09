@@ -68,7 +68,6 @@ import org.bytefred.satchess.ui.model.defaultOptionsAt
 import org.bytefred.satchess.ui.model.label
 import org.bytefred.satchess.ui.model.movePatternPlies
 import org.bytefred.satchess.ui.model.optionsLabel
-import org.bytefred.satchess.ui.model.pliesSentence
 import org.bytefred.satchess.ui.model.shownCastling
 import org.bytefred.satchess.ui.model.sideToMoveAt
 import org.bytefred.satchess.ui.model.squareStateAt
@@ -136,16 +135,11 @@ fun SetupSection(vm: PuzzleViewModel, modifier: Modifier = Modifier, collapsible
                 ChoiceDropdown(p.goal, Goal.entries, { it.label }, vm::setGoal, Modifier.testTag("goal"))
             }
         }
-        Text(
-            if (vm.pliesError) "Plies must be a whole number (0-$MAX_PLIES)" else pliesSentence(p.plies, start.sideToMove),
-            style = MaterialTheme.typography.bodyMedium,
-            color = if (vm.pliesError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        if (p.goal != Goal.NONE) {
+        if (vm.pliesError) {
             Text(
-                "Both sides cooperate (helpmate), no forced mates.",
+                "Plies must be a whole number (0-$MAX_PLIES)",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MaterialTheme.colorScheme.error,
             )
         }
     }

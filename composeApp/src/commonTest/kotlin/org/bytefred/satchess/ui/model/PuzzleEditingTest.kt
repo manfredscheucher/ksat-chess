@@ -96,20 +96,6 @@ class PuzzleEditingTest {
         assertNull(parsePliesInput("+5"))
     }
 
-    @Test
-    fun pliesSentence() {
-        assertEquals(
-            "13 plies · White starts · White moves last · Black to move at the end (B)",
-            pliesSentence(13, "w"),
-        )
-        assertEquals(
-            "4 plies · Black starts · White moves last · Black to move at the end (B)",
-            pliesSentence(4, "b"),
-        )
-        assertEquals("1 ply · either side starts", pliesSentence(1, "?"))
-        assertEquals("0 plies · position only · White to move", pliesSentence(0, "w"))
-    }
-
     // ── FEN field ──
 
     @Test

@@ -377,6 +377,11 @@ Manfred's layout for the left column, implemented literally:
 "Board at A (start)", "Board at 2 (after ply 2)", "Board at B (after ply 4)": the same shape for
 every ply; before, A and B had no bracket.
 
+### No info lines under Setup (Manfred, 2026-11-09)
+The sentence "4 plies · White starts · ..." only repeated the inputs and the helpmate note
+("Both sides cooperate ...") is covered by Help; both are gone. Only the error text for an
+invalid plies number remains.
+
 ## 8. Open points / follow-ups
 
 - Idea (Manfred, 2026-11-09): the goal belongs to the board, not the Question row, so a goal
