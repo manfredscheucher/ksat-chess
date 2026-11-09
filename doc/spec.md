@@ -152,8 +152,8 @@ Ported semantics, with these optimizations / generalizations / fixes:
 | `:worker` | js | Web Worker bundle: receives a puzzle as JSON, streams stats/solutions back |
 | `:composeApp` | jvm, js | Compose UI. JVM solves on `Dispatchers.Default`, JS posts to the worker |
 
-ksat modules are built from the sibling checkout `~/github/sat-solvers-kotlin`
-(projectDir remap, same as luckySweep). Web dev-server port **8608**.
+ksat modules are built from the submodule `sat-solvers-kotlin` (github.com/manfredscheucher/ksat,
+projectDir remap). Web dev-server port **8608**.
 
 ## 7. Web UI
 
@@ -264,5 +264,5 @@ results as their own view.
 
 - Public release: the sibling projectDir remap does not work for strangers cloning the repo. Decided
   (2026-11-07): `sat-solvers-kotlin` becomes a submodule; `git submodule add` is Manfred's job, then
-  `settings.gradle.kts` and the README switch to it.
+  `settings.gradle.kts` and the README switch to it. Done 2026-11-09.
 - Piece graphics: cburnett set (BSD/GPL/GFDL tri-licensed, used by lichess), credited in NOTICE.

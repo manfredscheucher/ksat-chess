@@ -38,17 +38,17 @@ include(":cli")         // JVM command line (solve / enumerate / write DIMACS)
 include(":worker")      // Kotlin/JS Web Worker bundle that runs the solver off the UI thread
 include(":composeApp")  // Compose UI (jvm desktop + js browser)
 
-// SAT solvers from the SIBLING checkout ~/github/sat-solvers-kotlin (same wiring as luckySweep).
+// SAT solvers from the submodule sat-solvers-kotlin (github.com/manfredscheucher/ksat).
 // :ksat is the facade (org.bytefred.ksat.facade.Ksat) over microsat/minisat/cadical/kissat.
 include(":ksat-common")
-project(":ksat-common").projectDir = file("../sat-solvers-kotlin/ksat-common")
+project(":ksat-common").projectDir = file("sat-solvers-kotlin/ksat-common")
 include(":microsat")
-project(":microsat").projectDir = file("../sat-solvers-kotlin/solver/microsat")
+project(":microsat").projectDir = file("sat-solvers-kotlin/solver/microsat")
 include(":minisat")
-project(":minisat").projectDir = file("../sat-solvers-kotlin/solver/minisat")
+project(":minisat").projectDir = file("sat-solvers-kotlin/solver/minisat")
 include(":cadical")
-project(":cadical").projectDir = file("../sat-solvers-kotlin/solver/cadical")
+project(":cadical").projectDir = file("sat-solvers-kotlin/solver/cadical")
 include(":kissat")
-project(":kissat").projectDir = file("../sat-solvers-kotlin/solver/kissat")
+project(":kissat").projectDir = file("sat-solvers-kotlin/solver/kissat")
 include(":ksat")
-project(":ksat").projectDir = file("../sat-solvers-kotlin/ksat")
+project(":ksat").projectDir = file("sat-solvers-kotlin/ksat")

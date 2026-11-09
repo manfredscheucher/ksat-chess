@@ -1,0 +1,3 @@
+[submodule "sat-solvers-kotlin"]
+	path = sat-solvers-kotlin
+	url = https://github.com/manfredscheucher/ksat.git

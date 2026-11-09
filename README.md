@@ -39,7 +39,8 @@ File -> Examples, Load, Save (JSON) and Share link (the puzzle in the URL). Help
 - `puzzles/`: the example puzzles as JSON, embedded by `scripts/gen_puzzles.py`
 
 The SAT solvers come from [ksat](https://github.com/manfredscheucher/ksat) (Kotlin ports of MicroSAT,
-MiniSat, CaDiCaL, kissat), which must be checked out next to this repo as `../sat-solvers-kotlin`.
+MiniSat, CaDiCaL, kissat), included as the submodule `sat-solvers-kotlin`. Clone with
+`git clone --recursive`, or run `git submodule update --init --recursive` afterwards.
 
 ## Build & run
 
