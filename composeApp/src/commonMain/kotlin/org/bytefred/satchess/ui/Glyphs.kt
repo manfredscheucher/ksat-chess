@@ -80,7 +80,7 @@ fun MoreGlyph(color: Color, size: Dp = 18.dp) {
     }
 }
 
-/** A tick (verified badge). */
+/** A tick (View menu check mark). */
 @Composable
 fun CheckGlyph(color: Color, size: Dp = 12.dp) {
     Canvas(Modifier.size(size)) {

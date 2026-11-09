@@ -148,7 +148,7 @@ class PuzzleViewModelTest {
         assertEquals(Solver.KISSAT, solver.lastOptions?.solver)
         solver.emit(SolveEvent.Encoded(100, 2000, 5))
         solver.emit(SolveEvent.Found(0, Solution(listOf("a", "b"), emptyList(), "key", true), 10))
-        assertEquals(100, vm.run.variables)
+        assertTrue(vm.run.encoded)
         assertEquals(1, vm.solutions.size)
         solver.emit(SolveEvent.Done(1, complete = true, millis = 20))
         assertFalse(vm.run.running)

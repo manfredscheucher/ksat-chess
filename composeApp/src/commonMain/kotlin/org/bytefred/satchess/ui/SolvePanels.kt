@@ -61,7 +61,7 @@ import org.bytefred.satchess.ui.model.squareDomainError
 
 // ── solve bar ───────────────────────────────────────────────────────────────
 
-/** Solve / Cancel with the live status (vars / clauses, elapsed, found k). */
+/** Solve / Cancel with the live status (elapsed, found k). */
 @Composable
 fun SolveBar(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
     val run = vm.run
@@ -101,8 +101,7 @@ fun SolveBar(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
 private fun solveStatus(run: SolveRun, found: Int, elapsedMillis: Long): String {
     if (run.puzzle == null) return "Set up the puzzle, then press Solve."
     val parts = mutableListOf<String>()
-    if (run.variables != null) parts += "${run.variables} vars / ${run.clauses} clauses"
-    else if (run.running) parts += "encoding ..."
+    if (run.running && !run.encoded) parts += "encoding ..."
     parts += formatSeconds(elapsedMillis)
     parts += "found $found"
     when {
@@ -226,28 +225,6 @@ private fun SolutionRow(vm: PuzzleViewModel, i: Int, showKey: Boolean) {
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
-            VerifiedBadge(solution.verified)
-        }
-    }
-}
-
-@Composable
-private fun VerifiedBadge(verified: Boolean) {
-    val colors = MaterialTheme.colorScheme
-    Surface(
-        color = if (verified) colors.primaryContainer else colors.errorContainer,
-        shape = RoundedCornerShape(10.dp),
-    ) {
-        Row(Modifier.padding(horizontal = 8.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-            if (verified) {
-                CheckGlyph(colors.primary)
-                Spacer(Modifier.width(4.dp))
-            }
-            Text(
-                if (verified) "verified" else "not verified",
-                style = MaterialTheme.typography.labelSmall,
-                color = if (verified) colors.onPrimaryContainer else colors.onErrorContainer,
-            )
         }
     }
 }

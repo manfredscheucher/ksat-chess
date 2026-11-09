@@ -183,7 +183,7 @@ Timeline: (A)--1--2--...--(B)
 |                      |  | [Initial][Clear][All ?]  |
 +----------------------+  | FEN: [..............]    |
                           +--------------------------+
-[ Solve ]  vars/clauses - time - found 2   [Cancel]       [Advanced v]
+[ Solve ]  time - found 2   [Cancel]       [Advanced v]
 Results: answer summary / solution list (SAN) -> replay board
 ```
 
@@ -193,8 +193,8 @@ results as their own view.
 
 - **Results**: for non-path projections show the answer first ("h4: Rook (3 lines),
   Queen (1)"), expandable to lines. Replay with slider, clickable SAN list, arrow keys,
-  from/to highlight. Each solution carries a "verified by move generator" badge;
-  "unique" / "N solutions, expected M".
+  from/to highlight. "unique" / "N solutions, expected M"; every solution is replayed with
+  the move generator, and the count line says "(k NOT verified)" in red if one fails.
 - **Square options** (Manfred, 2026-10-21, on chess.com #2 "only the king is missing"):
   instead of a bare '?', a square can hold a list of options (pieces and/or "empty"),
   edited via checkboxes (dialog or next to the board); it must be VISIBLE whether a piece
@@ -415,6 +415,14 @@ Also fixed from the reviewer's list (section 7 above, items the reviewer called 
 stale): the View menu check mark is drawn (the "✓" glyph rendered as a box on the web), the hint
 under the palette and Help > Board input no longer claim "nothing picked, nothing happens", the
 Welcome sentence covers forward puzzles too, Help no longer talks about "N".
+
+### Solve bar without vars/clauses, no verified badge (Manfred, 2026-11-09)
+
+Manfred on the reviewer's list: "vars und clauses sind mir wurst; verified badge auch weg; du
+sollst die GUI ja minimal halten ... die arrows sind schon cool, bitte drin lassen". The solve
+bar shows only "encoding ..." / elapsed / found / state; the per-solution "verified" chip is
+gone (the count line still turns red with "(k NOT verified)" if a replay ever fails, which is
+a solver bug, not information for the user). The "(arrow keys to step)" hint stays.
 
 ## 8. Open points / follow-ups
 

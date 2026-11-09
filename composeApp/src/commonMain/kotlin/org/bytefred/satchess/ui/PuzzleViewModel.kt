@@ -68,8 +68,8 @@ sealed interface OptionsTarget {
 /** State of the current / last solver run; its solutions are [PuzzleViewModel.solutions]. */
 data class SolveRun(
     val running: Boolean = false,
-    val variables: Int? = null,
-    val clauses: Int? = null,
+    /** The encoding is built; the solver is searching. */
+    val encoded: Boolean = false,
     /** Set when the run finished normally. */
     val done: SolveEvent.Done? = null,
     val error: String? = null,
@@ -431,7 +431,7 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
 
     private fun onSolveEvent(event: SolveEvent) {
         when (event) {
-            is SolveEvent.Encoded -> run = run.copy(variables = event.variables, clauses = event.clauses)
+            is SolveEvent.Encoded -> run = run.copy(encoded = true)
             is SolveEvent.Found -> foundSolutions += event.solution
             is SolveEvent.Info -> run = run.copy(infos = run.infos + event.message)
             is SolveEvent.Done -> run = run.copy(running = false, done = event)
