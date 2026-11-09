@@ -49,6 +49,7 @@ import org.bytefred.satchess.puzzle.UNKNOWN_SQUARES
 import org.bytefred.satchess.sat.Solution
 import org.bytefred.satchess.ui.board.BoardView
 import org.bytefred.satchess.ui.model.answerSummary
+import org.bytefred.satchess.ui.model.boardName
 import org.bytefred.satchess.ui.model.countSummary
 import org.bytefred.satchess.ui.model.groupByProjection
 import org.bytefred.satchess.ui.model.isPathProjection
@@ -379,7 +380,7 @@ private fun StaticBoards(vm: PuzzleViewModel, solution: Solution) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 for (t in row) {
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text(plyName(t, plies), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(boardName(t, plies), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         val cells = remember(solution, t) { replayCells(solution, t) }
                         if (cells != null) {
                             val lastMove = solution.moves.getOrNull(t - 1)

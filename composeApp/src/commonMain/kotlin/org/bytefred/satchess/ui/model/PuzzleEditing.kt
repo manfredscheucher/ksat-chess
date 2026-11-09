@@ -31,6 +31,17 @@ fun Puzzle.withBoardAt(t: Int, cells: List<Char>): Puzzle = if (t == 0) {
 /** Plies that carry a move pattern for the move from t to t+1. */
 fun Puzzle.movePatternPlies(): Set<Int> = moves.keys.mapNotNull { it.toIntOrNull() }.toSet()
 
+/** Display name of board [t] in a window of [plies]: "Board 0 (start)", "Board 2", "Board 4 (end)". */
+fun boardName(t: Int, plies: Int): String = when {
+    plies == 0 -> "Board 0 (start = end)"
+    t == 0 -> "Board 0 (start)"
+    t == plies -> "Board $t (end)"
+    else -> "Board $t"
+}
+
+/** Display name of the ply from board [t] to board t+1 (pattern key [t]): "Ply 1", "Ply 2", ... */
+fun plyName(t: Int): String = "Ply ${t + 1}"
+
 /**
  * Changes the window length. The target board B (its square domains and projection items like
  * `board@N`) moves along with N, as long as both the old and the new window have a B separate from A;

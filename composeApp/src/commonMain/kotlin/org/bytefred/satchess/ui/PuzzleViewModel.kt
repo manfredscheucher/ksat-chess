@@ -87,8 +87,10 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
 
     var puzzle: Puzzle by mutableStateOf(NEW_PUZZLE); private set
 
-    /** The ply whose board the editor shows (0 = A, plies = B). */
+    /** The board the editor shows (0 = start, plies = end). */
     var selectedPly by mutableIntStateOf(0); private set
+    /** The ply (pattern key t: board t -> t+1) whose move the editor shows instead of a board, or null. */
+    var selectedMove by mutableStateOf<Int?>(null); private set
     /** The palette piece a board click places, or [OPTIONS_TOOL] (the default: a click opens the square's options); null = nothing selected, clicks do nothing. */
     var paletteSelection by mutableStateOf<Char?>(OPTIONS_TOOL)
 
@@ -150,6 +152,7 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
         update(p)
         savedPuzzle = p
         selectedPly = if (p.positions.containsKey(p.plies.toString())) p.plies else 0
+        selectedMove = null
         pliesText = p.plies.toString()
         pliesError = false
         undoStack.clear()
@@ -266,6 +269,7 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
         if (next != puzzle && undoStack.lastOrNull() !== basePuzzle) remember(basePuzzle) // one undo step per run of keystrokes
         puzzle = next
         selectedPly = if (baseSelected == basePuzzle.plies) plies else baseSelected.coerceAtMost(plies)
+        selectedMove = selectedMove?.takeIf { it < plies }
         syncFen()
     }
 
@@ -286,7 +290,14 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
     fun selectPly(t: Int) {
         pliesEditBase = null
         selectedPly = t.coerceIn(0, puzzle.plies)
+        selectedMove = null
         syncFen()
+    }
+
+    /** Shows the move editor for the ply from board [t] to t+1 instead of a board. */
+    fun selectMove(t: Int) {
+        pliesEditBase = null
+        selectedMove = if (puzzle.plies == 0) null else t.coerceIn(0, puzzle.plies - 1)
     }
 
     /** Hybrid input: place the palette selection, or with the options tool open the square's options. */
@@ -387,6 +398,7 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
         puzzle = p
         pliesEditBase = null
         selectedPly = selectedPly.coerceAtMost(p.plies)
+        selectedMove = selectedMove?.takeIf { it < p.plies }
         pliesText = p.plies.toString()
         pliesError = false
         optionsTarget = null

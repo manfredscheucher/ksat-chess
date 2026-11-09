@@ -3,6 +3,7 @@ package org.bytefred.satchess.ui
 import androidx.compose.ui.input.key.Key
 import org.bytefred.ksat.facade.Solver
 import org.bytefred.satchess.chess.Sq
+import org.bytefred.satchess.puzzle.MovePattern
 import org.bytefred.satchess.puzzle.Puzzle
 import org.bytefred.satchess.puzzle.Start
 import org.bytefred.satchess.sat.Solution
@@ -91,6 +92,22 @@ class PuzzleViewModelTest {
         vm.setFenInput("8/8/8/8/8/8/8/4K3")
         assertNull(vm.fenError)
         assertEquals('K', vm.board[60])
+    }
+
+    @Test
+    fun selectingAPlyShowsTheMoveEditorUntilABoardIsSelected() {
+        vm.selectMove(2)
+        assertEquals(2, vm.selectedMove)
+        vm.setMovePattern(2, MovePattern(san = "Kf2"))
+        assertEquals("Kf2", vm.puzzle.moves["2"]?.san)
+        vm.setPliesInput("2") // the ply no longer exists: back to the board
+        assertNull(vm.selectedMove)
+        vm.selectMove(1)
+        vm.selectPly(0)
+        assertNull(vm.selectedMove)
+        vm.setPliesInput("0")
+        vm.selectMove(0) // no plies, no move to edit
+        assertNull(vm.selectedMove)
     }
 
     @Test

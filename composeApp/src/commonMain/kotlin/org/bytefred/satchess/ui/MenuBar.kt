@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -222,7 +223,8 @@ private val MENU_BAR_COLOR = Color(0xFFE6E8EB)
 @Composable
 private fun CheckItem(label: String, checked: Boolean, onToggle: () -> Unit) {
     DropdownMenuItem(
-        text = { Text((if (checked) "✓ " else "    ") + label) },
+        text = { Text(label) },
+        leadingIcon = { if (checked) CheckGlyph(MaterialTheme.colorScheme.onSurface, 16.dp) else Spacer(Modifier.size(16.dp)) },
         onClick = onToggle,
     )
 }
@@ -346,7 +348,7 @@ private fun WelcomeDialog(close: () -> Unit) {
         title = { Text("Welcome to ksat-chess") },
         text = {
             Column {
-                Text("Set up a position, and a SAT solver finds every legal way the game can have reached it.")
+                Text("Set up a position, and a SAT solver finds every legal move sequence that fits.")
                 Spacer(Modifier.height(6.dp))
                 Row { Text("Code and puzzles: "); LinkText("github.com/manfredscheucher/ksat-chess", REPO_URL) }
                 Spacer(Modifier.height(10.dp))
@@ -405,24 +407,21 @@ private const val EMAIL = "manfred.scheucher@proton.me"
 private const val FEEDBACK_MAILTO =
     "mailto:$EMAIL?subject=ksat-chess%20feedback&body=hi%20manfred%2C%0A%0A"
 
-private const val PUZZLE_HELP = """A puzzle is N plies of play: board A at the start, board B at the end.
+private const val PUZZLE_HELP = """A puzzle is a number of plies (half-moves) of play: Board 0 at the start, one board after every ply, the last one at the end. The timeline lists them; click a board to edit it, click a ply to say what that move must be.
 
 A board can be given completely, have '?' squares (unknown), or be all '?'. A square can also be one of a few things, for example white king or empty.
 
 Goal at the end: check, checkmate or stalemate. Both sides cooperate, as in a helpmate. The solver does not look for forced mates.
 
-N counts plies (half-moves).
-
 File -> Save writes the puzzle as JSON, Load reads it back, Share link puts it into the address bar."""
 
 private const val INPUT_HELP = """Palette + drag
-Pick a piece, click a square to put it there. Click again with the same piece to empty the square. Nothing picked, nothing happens. Drag a piece to move it, drag it off the board to remove it.
+Pick a piece, click a square to put it there. Click again with the same piece to empty the square. Drag a piece to move it, drag it off the board to remove it. "One of several ..." lets a square hold one of a few pieces (a long press or right click does the same).
 
 Click opens a dialog
 Click a square and pick what stands there.
 
-Both modes
-Long press or right click: allow several pieces on one square. Such squares are hatched amber.
+Squares that may hold one of several pieces are hatched amber.
 
 View -> Board input switches the mode.
 

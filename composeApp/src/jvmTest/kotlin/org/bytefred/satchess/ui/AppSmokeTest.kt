@@ -42,7 +42,7 @@ class AppSmokeTest {
         onNodeWithTag("puzzleTitle").assertTextContains("Black moves first")
 
         // Select ply 2 (open), place a white king on e1 via the palette.
-        onNodeWithTag("ply-2").performClick()
+        onNodeWithTag("board-2").performClick()
         onNodeWithTag("palette-K").performScrollTo().performClick()
         onNodeWithTag("editorBoard").performTouchInput {
             val square = width / 8f

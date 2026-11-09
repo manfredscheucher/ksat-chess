@@ -85,6 +85,15 @@ class PuzzleEditingTest {
     // ── plies ──
 
     @Test
+    fun boardAndPlyNames() {
+        assertEquals("Board 0 (start)", boardName(0, 4))
+        assertEquals("Board 2", boardName(2, 4))
+        assertEquals("Board 4 (end)", boardName(4, 4))
+        assertEquals("Board 0 (start = end)", boardName(0, 0))
+        assertEquals("Ply 1", plyName(0))
+    }
+
+    @Test
     fun pliesInput() {
         assertEquals(13, parsePliesInput("13"))
         assertEquals(0, parsePliesInput(" 0 "))

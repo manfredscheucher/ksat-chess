@@ -138,7 +138,7 @@ private fun SideBySideLayout(vm: PuzzleViewModel, threeColumns: Boolean, modifie
         })
         add(SplitPanel("board") { m ->
             ScrollPanel(m) {
-                BoardEditorSection(vm)
+                vm.selectedMove?.let { MoveEditorSection(vm, it) } ?: BoardEditorSection(vm)
                 if (!threeColumns) {
                     SolveBar(vm)
                     ResultsSection(vm)
@@ -198,7 +198,7 @@ private fun StackedLayout(vm: PuzzleViewModel, modifier: Modifier) {
             PuzzleHeader(vm, compact = true)
             SetupSection(vm, collapsible = true)
             TimelineSection(vm)
-            BoardEditorSection(vm)
+            vm.selectedMove?.let { MoveEditorSection(vm, it) } ?: BoardEditorSection(vm)
             Box(Modifier.onGloballyPositioned { resultsTop = it.positionInParent().y.toInt() }) { ResultsSection(vm) }
         }
     }

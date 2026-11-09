@@ -4,16 +4,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.click
-import androidx.compose.ui.test.hasAnyAncestor
-import androidx.compose.ui.test.hasSetTextAction
-import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.v2.runComposeUiTest
 import org.bytefred.satchess.chess.Sq
 import org.bytefred.satchess.puzzle.Puzzle
@@ -74,16 +70,8 @@ class GuiBuildChessComTest {
         onNodeWithTag("plies").performScrollTo().performTextReplacement(n.toString()); s.step("type N = $n")
     }
 
-    private fun ComposeUiTest.ply(s: Steps, label: String) {
-        val chip = onNodeWithTag("ply-$label")
-        chip.performScrollTo()
-        if (chip.fetchSemanticsNode().boundsInRoot.isEmpty) {
-            // scrolled away above the board (performScrollTo does not reach into the sideways-scrolling
-            // timeline): swipe the panel down, like a human
-            onNodeWithTag("boardLegend").performTouchInput { swipeDown(startY = top, endY = top + 2000f) }
-            s.step("scroll up to the timeline")
-        }
-        chip.performClick(); s.step("timeline chip $label")
+    private fun ComposeUiTest.board(s: Steps, t: Int) {
+        onNodeWithTag("board-$t").performScrollTo().performClick(); s.step("timeline row 'Board $t'")
     }
 
     private fun ComposeUiTest.button(s: Steps, label: String) {
@@ -113,12 +101,10 @@ class GuiBuildChessComTest {
         squares(s, *squares)
     }
 
-    private fun ComposeUiTest.movePattern(s: Steps, plyChip: String, san: String) {
-        ply(s, plyChip)
-        onNodeWithTag("timelineMovePattern").performScrollTo().performClick(); s.step("button 'Add move pattern ...'")
-        // fields of the dialog: ply t (prefilled with the selected ply), SAN, piece, from, to, promo
-        onAllNodes(hasSetTextAction() and hasAnyAncestor(isDialog()))[1].performTextReplacement(san); s.step("type SAN $san")
-        onNodeWithText("Save").performClick(); s.step("Save")
+    /** Selects the ply from board [t] to t+1 and types the move. */
+    private fun ComposeUiTest.movePattern(s: Steps, t: Int, san: String) {
+        onNodeWithTag("move-$t").performScrollTo().performClick(); s.step("timeline row 'Ply ${t + 1}'")
+        onNodeWithTag("moveSan").performTextReplacement(san); s.step("type move $san")
     }
 
     private fun ComposeUiTest.build(n: Int, steps: ComposeUiTest.(Steps) -> Unit): Puzzle {
@@ -138,7 +124,7 @@ class GuiBuildChessComTest {
     private fun ComposeUiTest.build1() = build(1) { s ->
         // New starts from the initial position, White to move
         plies(s, 8)
-        ply(s, "B")
+        board(s, 8)
         button(s, "Initial")
         place(s, 'N', "g1")
         place(s, 'n', "g8")
@@ -161,7 +147,7 @@ class GuiBuildChessComTest {
         button(s, "All ?")
         button(s, "either")
         // B: the four known pieces; every other square is the white king or empty
-        ply(s, "B")
+        board(s, 3)
         place(s, 'r', "b5")
         place(s, 'b', "d5")
         place(s, 'B', "a4")
@@ -192,10 +178,10 @@ class GuiBuildChessComTest {
     private fun ComposeUiTest.build3() = build(3) { s ->
         goal(s, "checkmate")
         plies(s, 8)
-        movePattern(s, "A", "f3")
-        movePattern(s, "2", "Kf2")
-        movePattern(s, "4", "Kg3")
-        movePattern(s, "6", "Kh4")
+        movePattern(s, 0, "f3")
+        movePattern(s, 2, "Kf2")
+        movePattern(s, 4, "Kg3")
+        movePattern(s, 6, "Kh4")
     }
 
     @Test
@@ -210,7 +196,7 @@ class GuiBuildChessComTest {
 
     private fun ComposeUiTest.build4() = build(4) { s ->
         plies(s, 8)
-        ply(s, "B")
+        board(s, 8)
         button(s, "Initial")
         place(s, 'p', "c7", "c6", "d7", "e7", "e6")
         place(s, 'P', "e2", "e4")
@@ -233,7 +219,7 @@ class GuiBuildChessComTest {
         button(s, "All ?")
         button(s, "either")
         // B: the diagram; h4 holds some piece of either colour
-        ply(s, "B")
+        board(s, 2)
         button(s, "Clear")
         place(s, 'K', "h8")
         place(s, 'k', "b7")

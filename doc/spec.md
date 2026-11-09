@@ -382,6 +382,40 @@ The sentence "4 plies · White starts · ..." only repeated the inputs and the h
 ("Both sides cooperate ...") is covered by Help; both are gone. Only the error text for an
 invalid plies number remains.
 
+### Timeline as a list of boards and plies, move editor in the middle column (Manfred, 2026-11-09)
+
+Manfred's redesign, implemented as described: the timeline is a vertical list
+
+    Board 0 (start)
+      Ply 1
+    Board 1
+      Ply 2
+    ...
+      Ply k
+    Board k (end)
+
+A board row shows that board in the middle column (as before), a ply row shows a **move editor**
+there instead of the board: what the move from board t to t+1 must be. Fields, all optional,
+written to the puzzle as you type: the move in notation ("Kf2", "exd5"), piece (chips with the
+pieces of the side to move, both colours if either side may start), from / to square, capture
+(any / yes / no), promotion, castling (no / yes / O-O / O-O-O), and "After this move": for the
+last ply this is the goal at the end (the same value as the Setup dropdown, kept in sync because
+it is one field), for the other plies "any / check" (pattern `check`). A "Clear" button drops the
+pattern. The two timeline buttons, the "+" menu, the ply-picker dialog, the move-pattern dialog
+and the chip legend are gone. Rows that constrain the puzzle (a board with known squares, a ply
+with a pattern or the goal) are bold on a tinted background with a short detail ("given",
+"partly given", "Kf2", "checkmate"); the selected row is filled.
+
+Names: "Board t" with "(start)" / "(end)", "Ply n" with n = t + 1 for the move from board t to
+t+1 (the file keeps the 0-based pattern key t). Manfred offered "action" as an alternative to
+"ply"; "ply" was kept because the Setup field already counts plies. The letters A and B are gone
+from the UI (titles, options dialogs, static solution grid, Help).
+
+Also fixed from the reviewer's list (section 7 above, items the reviewer called plain bugs or
+stale): the View menu check mark is drawn (the "✓" glyph rendered as a box on the web), the hint
+under the palette and Help > Board input no longer claim "nothing picked, nothing happens", the
+Welcome sentence covers forward puzzles too, Help no longer talks about "N".
+
 ## 8. Open points / follow-ups
 
 - Idea (Manfred, 2026-11-09): the goal belongs to the board, not the Question row, so a goal

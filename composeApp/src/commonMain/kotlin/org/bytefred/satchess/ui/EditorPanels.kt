@@ -3,7 +3,6 @@ package org.bytefred.satchess.ui
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,7 +12,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -23,7 +21,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -42,7 +39,9 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.bytefred.satchess.chess.Sq
 import org.bytefred.satchess.puzzle.Goal
@@ -62,25 +61,19 @@ import org.bytefred.satchess.ui.model.PALETTE
 import org.bytefred.satchess.ui.model.SquareState
 import org.bytefred.satchess.ui.model.UNKNOWN
 import org.bytefred.satchess.ui.model.boardAt
+import org.bytefred.satchess.ui.model.boardName
 import org.bytefred.satchess.ui.model.castlingAfterToggle
 import org.bytefred.satchess.ui.model.constraintLevel
 import org.bytefred.satchess.ui.model.defaultOptionsAt
 import org.bytefred.satchess.ui.model.label
-import org.bytefred.satchess.ui.model.movePatternPlies
 import org.bytefred.satchess.ui.model.optionsLabel
+import org.bytefred.satchess.ui.model.plyName
 import org.bytefred.satchess.ui.model.shownCastling
 import org.bytefred.satchess.ui.model.sideToMoveAt
 import org.bytefred.satchess.ui.model.squareStateAt
 
 /** The editor board and the replay board share this width, so both look the same. */
 val BOARD_MAX_WIDTH = 420.dp
-
-/** Display name of ply [t] in a window of [plies]: A, 1, 2, ..., B. */
-fun plyName(t: Int, plies: Int): String = when (t) {
-    0 -> if (plies == 0) "A = B" else "A"
-    plies -> "B"
-    else -> t.toString()
-}
 
 // ── setup ────────────────────────────────────────────────────────────────────
 
@@ -147,197 +140,164 @@ fun SetupSection(vm: PuzzleViewModel, modifier: Modifier = Modifier, collapsible
 
 // ── timeline ────────────────────────────────────────────────────────────────
 
-/** The (A)-1-2-...-(B) chips with constraint icons, the two buttons and the list of move patterns. */
-@OptIn(ExperimentalLayoutApi::class)
+/**
+ * The boards and the plies between them, one row each: "Board 0 (start)", "Ply 1", "Board 1", ...
+ * A board row opens that board in the editor, a ply row the move editor. Rows that constrain the
+ * puzzle (a board with known squares, a ply with a move pattern or the goal) are marked.
+ */
 @Composable
 fun TimelineSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
     val p = vm.puzzle
-    var pickPly by remember { mutableStateOf(false) }
-    var editPattern by remember { mutableStateOf<Int?>(null) }
-    val patternPlies = p.movePatternPlies()
-
     Section("Timeline", modifier) {
-        Row(
-            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             for (t in 0..p.plies) {
-                if (t > 0) Connector(hasPattern = (t - 1) in patternPlies)
-                PlyChip(
-                    label = plyName(t, p.plies),
-                    level = constraintLevel(p.boardAt(t), restricted = !p.squares[t.toString()].isNullOrEmpty()),
-                    selected = t == vm.selectedPly,
+                val level = constraintLevel(p.boardAt(t), restricted = !p.squares[t.toString()].isNullOrEmpty())
+                TimelineRow(
+                    label = boardName(t, p.plies),
+                    detail = when (level) {
+                        ConstraintLevel.FIXED -> "given"
+                        ConstraintLevel.PARTIAL -> "partly given"
+                        ConstraintLevel.OPEN -> null
+                    },
+                    constrains = level != ConstraintLevel.OPEN,
+                    selected = vm.selectedMove == null && t == vm.selectedPly,
+                    indent = false,
                     onClick = { vm.selectPly(t) },
+                    tag = "board-$t",
                 )
-            }
-        }
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            OutlinedButton(onClick = { pickPly = true }, modifier = Modifier.testTag("timelineBoardAt")) { Text("Edit board at ply ...") }
-            OutlinedButton(
-                onClick = { editPattern = vm.selectedPly.coerceAtMost(p.plies - 1) },
-                enabled = p.plies > 0,
-                modifier = Modifier.testTag("timelineMovePattern"),
-            ) { Text("Add move pattern ...") }
-        }
-        if (p.moves.isNotEmpty()) {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                for ((key, pattern) in p.moves.entries.sortedBy { it.key.toIntOrNull() ?: 0 }) {
-                    val t = key.toIntOrNull() ?: continue
-                    InputChip(
-                        selected = false,
-                        onClick = { editPattern = t },
-                        label = { Text("Move ${plyName(t, p.plies)} → ${plyName(t + 1, p.plies)}: ${pattern.label()}") },
-                        trailingIcon = {
-                            Box(Modifier.clickable { vm.setMovePattern(t, null) }.semantics { contentDescription = "Remove" }) {
-                                CloseGlyph(MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                        },
+                if (t < p.plies) {
+                    val pattern = p.moves[t.toString()]
+                    val goal = p.goal.takeIf { t == p.plies - 1 && it != Goal.NONE }
+                    TimelineRow(
+                        label = plyName(t),
+                        detail = listOfNotNull(pattern?.label(), goal?.label).joinToString(", ").ifEmpty { null },
+                        constrains = pattern != null || goal != null,
+                        selected = vm.selectedMove == t,
+                        indent = true,
+                        onClick = { vm.selectMove(t) },
+                        tag = "move-$t",
                     )
                 }
             }
         }
-        Text(
-            "Chip icon: full = board known · half = some squares unknown · empty = board unknown · thick line between chips = move pattern",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-
-    if (pickPly) {
-        PlyPickerDialog(p.plies, onPick = { vm.selectPly(it); pickPly = false }, onDismiss = { pickPly = false })
-    }
-    editPattern?.let { t ->
-        MovePatternDialog(
-            initialPly = t,
-            initial = p.moves[t.toString()],
-            plies = p.plies,
-            onSave = { ply, pattern ->
-                if (ply != t) vm.setMovePattern(t, null)
-                vm.setMovePattern(ply, pattern)
-                editPattern = null
-            },
-            onDismiss = { editPattern = null },
-        )
     }
 }
 
 @Composable
-private fun PlyChip(label: String, level: ConstraintLevel, selected: Boolean, onClick: () -> Unit) {
+private fun TimelineRow(
+    label: String,
+    detail: String?,
+    constrains: Boolean,
+    selected: Boolean,
+    indent: Boolean,
+    onClick: () -> Unit,
+    tag: String,
+) {
     val colors = MaterialTheme.colorScheme
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(16.dp),
-        color = if (selected) colors.primary else colors.surfaceContainer,
-        contentColor = if (selected) colors.onPrimary else colors.onSurface,
-        modifier = Modifier.testTag("ply-$label"),
+        shape = RoundedCornerShape(8.dp),
+        color = if (selected) colors.primary else if (constrains) colors.tertiaryContainer else colors.surfaceContainer,
+        contentColor = if (selected) colors.onPrimary else if (constrains) colors.onTertiaryContainer else colors.onSurface,
+        modifier = Modifier.fillMaxWidth().padding(start = if (indent) 24.dp else 0.dp).testTag(tag),
     ) {
         Row(Modifier.padding(horizontal = 10.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-            ConstraintGlyph(level, if (selected) colors.onPrimary else colors.primary)
-            Spacer(Modifier.width(6.dp))
-            Text(label, style = MaterialTheme.typography.labelLarge)
+            Text(
+                label,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = if (constrains) FontWeight.Bold else FontWeight.Normal,
+            )
+            if (detail != null) {
+                Spacer(Modifier.width(8.dp))
+                Text(detail, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
         }
     }
 }
 
-@Composable
-private fun Connector(hasPattern: Boolean) {
-    val color = if (hasPattern) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.outlineVariant
-    Canvas(Modifier.width(14.dp).height(10.dp)) {
-        val stroke = if (hasPattern) size.height * 0.6f else size.height * 0.2f
-        drawLine(color, Offset(0f, size.height / 2), Offset(size.width, size.height / 2), stroke)
-    }
-}
+// ── move editor ─────────────────────────────────────────────────────────────
 
+/**
+ * The middle column while a ply is selected: what the move from board t to t+1 must be. Every
+ * field is optional; an empty field means "anything". The last ply also carries the goal.
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun PlyPickerDialog(plies: Int, onPick: (Int) -> Unit, onDismiss: () -> Unit) {
-    var text by remember { mutableStateOf("") }
-    val t = text.trim().toIntOrNull()?.takeIf { it in 0..plies }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Which ply?") },
-        text = {
+fun MoveEditorSection(vm: PuzzleViewModel, t: Int, modifier: Modifier = Modifier) {
+    val p = vm.puzzle
+    val pattern = p.moves[t.toString()] ?: MovePattern()
+    val side = sideToMoveAt(p.start.sideToMove, t)
+    val mover = side?.let { if (it == 'w') "White" else "Black" }
+    val title = "${plyName(t)} · ${boardName(t, p.plies)} to ${boardName(t + 1, p.plies)}" +
+        " · " + (mover?.let { "$it moves" } ?: "either side moves")
+    fun set(next: MovePattern) = vm.setMovePattern(t, next.takeIf { it != MovePattern() })
+    fun letter(upper: Char) = if (side == 'b') upper.lowercaseChar() else upper
+
+    var san by remember(t, pattern.san) { mutableStateOf(pattern.san ?: "") }
+    var from by remember(t, pattern.from) { mutableStateOf(pattern.from ?: "") }
+    var to by remember(t, pattern.to) { mutableStateOf(pattern.to ?: "") }
+    val fromOk = from.isEmpty() || Sq.parse(from) != null
+    val toOk = to.isEmpty() || Sq.parse(to) != null
+
+    Section(title, modifier) {
+        CompactField(
+            value = san,
+            onValueChange = { san = it; set(pattern.copy(san = it.trim().ifEmpty { null })) },
+            modifier = Modifier.width(180.dp).testTag("moveSan"),
+            label = "The move, e.g. Kf2 or exd5",
+        )
+        FieldLabel("or any of these")
+        // the pieces of the side to move; both colours when either side may start
+        val pieces = buildList {
+            if (side != 'b') addAll("KQRBNP".toList())
+            if (side != 'w') addAll("kqrbnp".toList())
+        }
+        ChoiceChips("Piece", pattern.piece, listOf<String?>(null) + pieces.map { it.toString() }, { it?.let(::pieceName) ?: "any" }) {
+            set(pattern.copy(piece = it))
+        }
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             CompactField(
-                value = text,
-                onValueChange = { text = it },
-                label = "Ply (0 = A ... $plies = B)",
-                isError = text.isNotBlank() && t == null,
+                value = from,
+                onValueChange = { v -> from = v.trim(); if (from.isEmpty() || Sq.parse(from) != null) set(pattern.copy(from = from.ifEmpty { null })) },
+                modifier = Modifier.width(110.dp).testTag("moveFrom"),
+                label = "From square",
+                isError = !fromOk,
             )
-        },
-        confirmButton = { TextButton(onClick = { t?.let(onPick) }, enabled = t != null) { Text("Edit board") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
-    )
-}
-
-/** Edits the move pattern for the move from ply t to t+1 (SAN and/or individual fields). */
-@Composable
-private fun MovePatternDialog(
-    initialPly: Int,
-    initial: MovePattern?,
-    plies: Int,
-    onSave: (Int, MovePattern) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    var ply by remember { mutableStateOf(initialPly.toString()) }
-    var san by remember { mutableStateOf(initial?.san ?: "") }
-    var piece by remember { mutableStateOf(initial?.piece ?: "") }
-    var from by remember { mutableStateOf(initial?.from ?: "") }
-    var to by remember { mutableStateOf(initial?.to ?: "") }
-    var promo by remember { mutableStateOf(initial?.promo ?: "") }
-    var capture by remember { mutableStateOf(initial?.capture) }
-    var check by remember { mutableStateOf(initial?.check) }
-    var castle by remember { mutableStateOf(initial?.castle) }
-
-    val t = ply.trim().toIntOrNull()?.takeIf { it in 0 until plies }
-    val error = when {
-        t == null -> "Ply must be between 0 and ${plies - 1}"
-        piece.isNotEmpty() && (piece.length != 1 || piece[0] !in "KQRBNPkqrbnp") -> "Piece: one FEN letter"
-        from.isNotEmpty() && Sq.parse(from) == null -> "From: a square like e2"
-        to.isNotEmpty() && Sq.parse(to) == null -> "To: a square like e4"
-        promo.isNotEmpty() && (promo.length != 1 || promo[0] !in "QRBNqrbn") -> "Promotion: Q, R, B or N"
-        else -> null
+            CompactField(
+                value = to,
+                onValueChange = { v -> to = v.trim(); if (to.isEmpty() || Sq.parse(to) != null) set(pattern.copy(to = to.ifEmpty { null })) },
+                modifier = Modifier.width(110.dp).testTag("moveTo"),
+                label = "To square",
+                isError = !toOk,
+            )
+        }
+        if (!fromOk || !toOk) Text("A square is a letter and a digit, like e4", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+        ChoiceChips("Capture", pattern.capture, listOf(null, true, false), { if (it == null) "any" else if (it) "yes" else "no" }) {
+            set(pattern.copy(capture = it))
+        }
+        ChoiceChips("Promotion", pattern.promo, listOf<String?>(null) + "QRBN".map { letter(it).toString() }, { it?.let(::pieceName) ?: "none" }) {
+            set(pattern.copy(promo = it))
+        }
+        val castles = listOf<String?>(null, "any") + if (side != null) listOf(letter('K').toString(), letter('Q').toString()) else emptyList()
+        ChoiceChips("Castling", pattern.castle, castles, {
+            when (it) { null -> "no"; "any" -> "yes"; "K", "k" -> "O-O"; else -> "O-O-O" }
+        }) { set(pattern.copy(castle = it)) }
+        if (t == p.plies - 1) {
+            ChoiceChips("After this move (goal at the end)", p.goal, Goal.entries, { it.label }, vm::setGoal)
+        } else {
+            ChoiceChips("After this move", pattern.check, listOf(null, true), { if (it == true) "check" else "any" }) {
+                set(pattern.copy(check = it))
+            }
+        }
+        OutlinedButton(onClick = { set(MovePattern()) }, enabled = pattern != MovePattern(), modifier = Modifier.testTag("moveClear")) { Text("Clear") }
     }
-    val pattern = MovePattern(
-        san = san.trim().ifEmpty { null },
-        piece = piece.ifEmpty { null },
-        from = from.ifEmpty { null },
-        to = to.ifEmpty { null },
-        capture = capture,
-        promo = promo.ifEmpty { null },
-        castle = castle,
-        check = check,
-    )
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Move pattern") },
-        text = {
-            val vScroll = rememberScrollState()
-            ScrollbarBox(vScroll) { Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.verticalScroll(vScroll)) {
-                CompactField(ply, { ply = it }, label = "Ply t (the move from t to t+1)", isError = t == null)
-                CompactField(san, { san = it }, label = "SAN, e.g. Kf2 (optional)")
-                FieldLabel("or any of these fields")
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Box(Modifier.weight(1f)) { CompactField(piece, { piece = it.trim() }, Modifier.fillMaxWidth(), label = "Piece") }
-                    Box(Modifier.weight(1f)) { CompactField(from, { from = it.trim() }, Modifier.fillMaxWidth(), label = "From") }
-                    Box(Modifier.weight(1f)) { CompactField(to, { to = it.trim() }, Modifier.fillMaxWidth(), label = "To") }
-                    Box(Modifier.weight(1f)) { CompactField(promo, { promo = it.trim() }, Modifier.fillMaxWidth(), label = "Promo") }
-                }
-                TriStateChips("Capture", capture) { capture = it }
-                TriStateChips("Check", check) { check = it }
-                ChoiceChips("Castling", castle ?: "", listOf("", "any", "K", "Q", "k", "q"), { it.ifEmpty { "-" } }) {
-                    castle = it.ifEmpty { null }
-                }
-                error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
-            } }
-        },
-        confirmButton = { TextButton(onClick = { t?.let { onSave(it, pattern) } }, enabled = error == null) { Text("Save") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
-    )
 }
 
-/** any / yes / no chips for an optional Boolean. */
-@Composable
-fun TriStateChips(title: String, value: Boolean?, onChange: (Boolean?) -> Unit) {
-    ChoiceChips(title, value, listOf(null, true, false), { if (it == null) "any" else if (it) "yes" else "no" }, onChange)
+private fun pieceName(letter: String): String {
+    val name = when (letter.single().uppercaseChar()) {
+        'K' -> "King"; 'Q' -> "Queen"; 'R' -> "Rook"; 'B' -> "Bishop"; 'N' -> "Knight"; else -> "Pawn"
+    }
+    return if (letter.single().isLowerCase()) "black $name" else "white $name"
 }
 
 // ── board editor ────────────────────────────────────────────────────────────
@@ -352,8 +312,7 @@ fun BoardEditorSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
     val t = vm.selectedPly
     var dialogSquare by remember { mutableStateOf<Int?>(null) }
     val side = sideToMoveAt(p.start.sideToMove, t)
-    val title = "Board at ${plyName(t, p.plies)} (${if (t == 0) "start" else "after ply $t"})" +
-        " · " + (side?.let { if (it == 'w') "White to move" else "Black to move" } ?: "side to move free")
+    val title = boardName(t, p.plies) + " · " + (side?.let { if (it == 'w') "White to move" else "Black to move" } ?: "side to move free")
     val openOptions = { sq: Int -> vm.openOptions(OptionsTarget.Square(sq)) }
 
     Section(title, modifier) {
@@ -372,12 +331,9 @@ fun BoardEditorSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
         if (hybrid) Palette(vm.paletteSelection, withOptionsTool = true, onSelect = vm::selectPalette)
         Text(
             if (hybrid) {
-                "Pick a piece below, then click a square to put it there; click again to empty it. Without a pick, " +
-                    "clicks do nothing. Long press or right-click a square to allow several pieces on it. Drag a piece " +
-                    "to move it, drag it off the board to remove it."
+                "Pick a piece, then click squares. Drag to move, drag off the board to remove."
             } else {
-                "Click a square and pick what stands there. Long press or right-click to allow several. " +
-                    "Drag a piece to move it, drag it off the board to remove it."
+                "Click a square and pick what stands there. Drag to move, drag off the board to remove."
             },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -426,12 +382,12 @@ fun BoardEditorSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
     }
     vm.optionsTarget?.let { target ->
         val (heading, initial) = when (target) {
-            is OptionsTarget.Square -> "Square ${Sq.name(target.sq)} at ${plyName(t, p.plies)}" to
+            is OptionsTarget.Square -> "Square ${Sq.name(target.sq)}, ${boardName(t, p.plies)}" to
                 when (val state = p.squareStateAt(t, target.sq)) {
                     is SquareState.Fixed -> setOf(state.cell)
                     is SquareState.Options -> state.allowed
                 }
-            OptionsTarget.UnknownSquares -> "Every '?' square at ${plyName(t, p.plies)}" to p.defaultOptionsAt(t)
+            OptionsTarget.UnknownSquares -> "Every '?' square, ${boardName(t, p.plies)}" to p.defaultOptionsAt(t)
         }
         OptionsDialog(heading, initial, onApply = vm::applyOptions, onDismiss = vm::closeOptions)
     }
