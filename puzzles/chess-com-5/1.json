@@ -1,13 +1,13 @@
 {
   "id": "chess-com-5/1",
-  "title": "Knight round trip",
+  "title": "Four moves each",
   "composer": null,
   "source": {
     "name": "chess.com article by FM Mike Klein",
     "url": "https://www.chess.com/article/view/can-you-solve-these-5-easy-retrograde-puzzles",
     "year": 2017
   },
-  "description": "From the initial position, reach this diagram in exactly 4.0 moves (8 plies). Both kingside knights have disappeared and Black's d-pawn stands on d5. Several move orders work.",
+  "description": "From the initial position, how can this position be reached after exactly four moves by each side? The moves need not be good, only legal.",
   "question": "proofGame",
   "plies": 8,
   "start": {

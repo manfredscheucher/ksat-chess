@@ -279,6 +279,9 @@ results as their own view.
     11), #5 as a 2-ply window with the diagram at ply 2 and h4 = any piece, answer h4 = B, unique.
     The rule switches "Check rules" / "Exactly one king" / "Material sanity" are gone from the UI
     and the format: no real puzzle needs illegal moves, and the history subsumes the other two.
+  - **No spoilers** (Manfred, 2026-11-09: the descriptions gave away knight tours and the en
+    passant capture; "richt dich nach chess.com"): titles and descriptions of the chess.com
+    puzzles now restate the article's questions in our own words and nothing more.
   - About like ktoy: one line per part with link and license (app, ksat, cburnett pieces, DejaVu
     font, chess.com article); the full license texts only behind "License texts". Developer notes
     on the piece graphics moved from `composeApp/NOTICE-pieces.md` to `doc/pieces.md`; the app

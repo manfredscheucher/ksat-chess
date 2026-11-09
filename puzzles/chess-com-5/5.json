@@ -7,7 +7,7 @@
     "url": "https://www.chess.com/article/view/can-you-solve-these-5-easy-retrograde-puzzles",
     "year": 1979
   },
-  "description": "Exactly one piece stands on h4, and Smullyan does not even tell its colour. Which piece is it, and from which army? The window has two plies, so the last move of each side counts; the rest is the history of the pawns.",
+  "description": "Exactly one piece stands on h4, and Smullyan does not even tell its colour. Which piece is it, and from which army does it come?",
   "question": "unknownPiece",
   "plies": 2,
   "start": {

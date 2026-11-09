@@ -43,20 +43,21 @@ CHESS_COM_NAME = "chess.com article by FM Mike Klein"
 
 # ── chess.com selection ──────────────────────────────────────────────────────
 # file -> overrides on top of the plain conversion. Composer of #1-#3 is not
-# named in our sources, so it stays null.
+# named in our sources, so it stays null. Titles and descriptions follow the
+# article's questions in our own words and never give away the solution.
 CHESS_COM = [
     ("puzzle1.puzzle", "1", {
-        "title": "Knight round trip",
+        "title": "Four moves each",
         "question": "proofGame",
         "description": (
-            "From the initial position, reach this diagram in exactly 4.0 moves "
-            "(8 plies). Both kingside knights have disappeared and Black's d-pawn "
-            "stands on d5. Several move orders work."),
+            "From the initial position, how can this position be reached after "
+            "exactly four moves by each side? The moves need not be good, only "
+            "legal."),
         "source": {"name": CHESS_COM_NAME, "url": CHESS_COM_URL, "year": 2017},
     }),
     # chess-com-5/2.json (3-ply window, "white king or empty" squares) is hand-written: not converted.
     ("puzzle3.puzzle", "3", {
-        "title": "King walk into mate",
+        "title": "Mate after a king walk",
         "question": "helpmate",
         "goal": "checkmate",
         "moves": {"0": "f3", "2": "Kf2", "4": "Kg3", "6": "Kh4"},
@@ -64,23 +65,24 @@ CHESS_COM = [
         # which contradicts a mate; White's moves + the goal define the task.
         "drop_positions": True,
         "description": (
-            "White plays f3, Kf2, Kg3 and Kh4. Find four black moves that end with "
-            "the white king checkmated on h4. White may never step into check, so "
-            "Black has to time the checks carefully."),
+            "White opened with 1. f3, 2. Kf2, 3. Kg3 and 4. Kh4. Which four black "
+            "moves, alternating with White's as in a real game, checkmate the white "
+            "king on Black's fourth move? Black may not play anything that would "
+            "make one of White's moves illegal."),
         "source": {"name": CHESS_COM_NAME, "url": CHESS_COM_URL, "year": 2017},
     }),
     ("puzzle4.puzzle", "4", {
-        "title": "Where did the bishop go?",
+        "title": "Four moves each, harder",
         "question": "proofGame",
         "composer": "Tibor Orban",
         "description": (
-            "Proof game in 4.0 moves (8 plies). White's light-squared bishop and "
-            "Black's d-pawn are gone, and Black's c- and e-pawns have each moved one "
-            "square. One solution."),
+            "It looks like a copy of puzzle 1 but is much harder: from the initial "
+            "position, both sides play exactly four moves to reach this position. "
+            "Four for each side, not four for White and three for Black."),
         "source": {"name": "Die Schwalbe; reprinted in the " + CHESS_COM_NAME,
                    "url": CHESS_COM_URL, "year": 1976},
     }),
-    # chess-com-5/5.json (1-ply window, retro accounting) is hand-written: not converted.
+    # chess-com-5/5.json (2-ply window, retro history) is hand-written: not converted.
 ]
 
 

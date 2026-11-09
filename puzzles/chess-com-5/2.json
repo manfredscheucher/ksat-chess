@@ -7,7 +7,7 @@
     "url": "https://www.chess.com/article/view/can-you-solve-these-5-easy-retrograde-puzzles",
     "year": 2017
   },
-  "description": "Black king d1, black rook b5, black bishop d5, white bishop a4. Every other square is the white king or empty. Where is the white king? The answer needs 3 plies of history, with an en passant capture.",
+  "description": "Only one square is possible for the white king, and every square not shown is either the white king or empty. Which square is it, and what were the last few moves that brought him there?",
   "question": "unknownPiece",
   "plies": 3,
   "start": {

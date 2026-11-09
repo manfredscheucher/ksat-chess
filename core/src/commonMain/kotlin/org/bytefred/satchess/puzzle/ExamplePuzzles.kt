@@ -174,14 +174,14 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
 }"""),
     ExampleSource("chess.com: 5 easy retrograde puzzles", """{
   "id": "chess-com-5/1",
-  "title": "Knight round trip",
+  "title": "Four moves each",
   "composer": null,
   "source": {
     "name": "chess.com article by FM Mike Klein",
     "url": "https://www.chess.com/article/view/can-you-solve-these-5-easy-retrograde-puzzles",
     "year": 2017
   },
-  "description": "From the initial position, reach this diagram in exactly 4.0 moves (8 plies). Both kingside knights have disappeared and Black's d-pawn stands on d5. Several move orders work.",
+  "description": "From the initial position, how can this position be reached after exactly four moves by each side? The moves need not be good, only legal.",
   "question": "proofGame",
   "plies": 8,
   "start": {
@@ -201,7 +201,7 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
     "url": "https://www.chess.com/article/view/can-you-solve-these-5-easy-retrograde-puzzles",
     "year": 2017
   },
-  "description": "Black king d1, black rook b5, black bishop d5, white bishop a4. Every other square is the white king or empty. Where is the white king? The answer needs 3 plies of history, with an en passant capture.",
+  "description": "Only one square is possible for the white king, and every square not shown is either the white king or empty. Which square is it, and what were the last few moves that brought him there?",
   "question": "unknownPiece",
   "plies": 3,
   "start": {
@@ -224,14 +224,14 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
 }"""),
     ExampleSource("chess.com: 5 easy retrograde puzzles", """{
   "id": "chess-com-5/3",
-  "title": "King walk into mate",
+  "title": "Mate after a king walk",
   "composer": null,
   "source": {
     "name": "chess.com article by FM Mike Klein",
     "url": "https://www.chess.com/article/view/can-you-solve-these-5-easy-retrograde-puzzles",
     "year": 2017
   },
-  "description": "White plays f3, Kf2, Kg3 and Kh4. Find four black moves that end with the white king checkmated on h4. White may never step into check, so Black has to time the checks carefully.",
+  "description": "White opened with 1. f3, 2. Kf2, 3. Kg3 and 4. Kh4. Which four black moves, alternating with White's as in a real game, checkmate the white king on Black's fourth move? Black may not play anything that would make one of White's moves illegal.",
   "question": "helpmate",
   "plies": 8,
   "start": {
@@ -248,14 +248,14 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
 }"""),
     ExampleSource("chess.com: 5 easy retrograde puzzles", """{
   "id": "chess-com-5/4",
-  "title": "Where did the bishop go?",
+  "title": "Four moves each, harder",
   "composer": "Tibor Orban",
   "source": {
     "name": "Die Schwalbe; reprinted in the chess.com article by FM Mike Klein",
     "url": "https://www.chess.com/article/view/can-you-solve-these-5-easy-retrograde-puzzles",
     "year": 1976
   },
-  "description": "Proof game in 4.0 moves (8 plies). White's light-squared bishop and Black's d-pawn are gone, and Black's c- and e-pawns have each moved one square. One solution.",
+  "description": "It looks like a copy of puzzle 1 but is much harder: from the initial position, both sides play exactly four moves to reach this position. Four for each side, not four for White and three for Black.",
   "question": "proofGame",
   "plies": 8,
   "start": {
@@ -275,7 +275,7 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
     "url": "https://www.chess.com/article/view/can-you-solve-these-5-easy-retrograde-puzzles",
     "year": 1979
   },
-  "description": "Exactly one piece stands on h4, and Smullyan does not even tell its colour. Which piece is it, and from which army? The window has two plies, so the last move of each side counts; the rest is the history of the pawns.",
+  "description": "Exactly one piece stands on h4, and Smullyan does not even tell its colour. Which piece is it, and from which army does it come?",
   "question": "unknownPiece",
   "plies": 2,
   "start": {
