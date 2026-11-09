@@ -6,14 +6,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
@@ -74,40 +73,40 @@ fun ExamplesDialog(
     onDismiss: () -> Unit,
 ) {
     val byCategory = remember(examples) { examples.groupBy { it.category } }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Examples") },
-        text = {
-            ScrollbarBox(state.scroll, Modifier.heightIn(max = 560.dp)) {
-                Column(Modifier.verticalScroll(state.scroll).testTag("examples-tree")) {
-                    for ((category, list) in byCategory) {
-                        val open = state.expanded[category] == true
-                        Row(
-                            Modifier.fillMaxWidth().clickable { state.expanded[category] = !open }.padding(vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            ChevronGlyph(open, MaterialTheme.colorScheme.onSurface)
-                            Text(category, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = 8.dp))
-                        }
-                        HorizontalDivider()
-                        if (open) {
-                            for (example in list) {
-                                ExampleLeaf(example.puzzle, example == state.selected) { state.selected = example }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
+    BigDialog(
+        "Examples",
+        onDismiss,
+        buttons = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
             TextButton(
                 onClick = { state.selected?.let { onLoad(it.puzzle) } },
                 enabled = state.selected != null,
                 modifier = Modifier.testTag("loadExample"),
             ) { Text("Load") }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
-    )
+    ) {
+        ScrollbarBox(state.scroll, Modifier.fillMaxSize()) {
+            // end padding: room for the scrollbar
+            Column(Modifier.verticalScroll(state.scroll).padding(end = 12.dp).testTag("examples-tree")) {
+                for ((category, list) in byCategory) {
+                    val open = state.expanded[category] == true
+                    Row(
+                        Modifier.fillMaxWidth().clickable { state.expanded[category] = !open }.padding(vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        ChevronGlyph(open, MaterialTheme.colorScheme.onSurface)
+                        Text(category, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = 8.dp))
+                    }
+                    HorizontalDivider()
+                    if (open) {
+                        for (example in list) {
+                            ExampleLeaf(example.puzzle, example == state.selected) { state.selected = example }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 /** An example: a radio button with the title; the selected one also shows its board and credits. */

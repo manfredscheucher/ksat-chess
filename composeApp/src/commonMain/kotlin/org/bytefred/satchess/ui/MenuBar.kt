@@ -10,9 +10,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -46,7 +46,11 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import org.bytefred.satchess.GeneratedLicenses
@@ -244,68 +248,70 @@ private fun UnsavedEditsDialog(onSave: () -> Unit, onDiscard: () -> Unit, onCanc
     )
 }
 
-/** A read-only, monospaced, scrollable text dialog (Help). */
+/** A read-only, scrollable text dialog (Help), as big as the window. */
 @Composable
 private fun TextDialog(title: String, body: String, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = {
-            val vScroll = rememberScrollState()
-            val hScroll = rememberScrollState()
-            ScrollbarBox(vScroll, Modifier.heightIn(max = 480.dp), hScroll) {
-                Text(
-                    body,
-                    style = MaterialTheme.typography.bodyMedium,
-                    softWrap = false,
-                    modifier = Modifier.verticalScroll(vScroll).horizontalScroll(hScroll),
-                )
-            }
-        },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("OK") } },
-    )
+    BigDialog(title, onDismiss, buttons = { TextButton(onClick = onDismiss) { Text("OK") } }) {
+        val vScroll = rememberScrollState()
+        ScrollbarBox(vScroll, Modifier.fillMaxSize()) {
+            // flowing paragraphs: they wrap to the dialog width
+            Text(
+                helpText(body),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.fillMaxWidth().verticalScroll(vScroll).padding(end = 12.dp).testTag("helpText"),
+            )
+        }
+    }
+}
+
+/** [body] with each subheading in bold: the first line of a paragraph that has more lines. */
+internal fun helpText(body: String) = buildAnnotatedString {
+    body.split("\n\n").forEachIndexed { i, para ->
+        if (i > 0) append("\n\n")
+        val head = para.substringBefore('\n', missingDelimiterValue = "")
+        if (head.isEmpty()) append(para)
+        else {
+            withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) { append(head) }
+            append(para.substring(head.length))
+        }
+    }
 }
 
 /** About: description, feedback box, the projects with their licenses, build identity, license texts. */
 @Composable
 private fun AboutDialog(onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("ksat-chess") },
-        text = {
-            val vScroll = rememberScrollState()
-            ScrollbarBox(vScroll, Modifier.heightIn(max = 520.dp)) {
-                Column(Modifier.verticalScroll(vScroll).testTag("about")) {
-                    Text("Retro chess puzzles solved with SAT.")
-                    Spacer(Modifier.height(8.dp))
-                    FeedbackBox()
-                    Spacer(Modifier.height(8.dp))
-                    ProjectLine("ksat-chess", REPO_URL, "this app")
-                    ProjectLine("ksat", "https://github.com/manfredscheucher/ksat", "the SAT solvers")
-                    ProjectLine("cburnett", CBURNETT_URL, "chess pieces by Colin M.L. Burnett", license = "BSD 3-clause")
-                    ProjectLine("chess.com article", CHESS_COM_ARTICLE_URL, "example puzzles, by FM Mike Klein", license = null)
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        buildLine(),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    var showLicenses by remember { mutableStateOf(false) }
-                    TextButton(onClick = { showLicenses = !showLicenses }) {
-                        Text(if (showLicenses) "Hide license texts" else "License texts")
-                    }
-                    if (showLicenses) {
-                        for (notice in GeneratedLicenses.NOTICES) {
-                            HorizontalDivider(Modifier.padding(vertical = 8.dp))
-                            Text(notice.title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
-                            Text(notice.text, style = MaterialTheme.typography.bodySmall)
-                        }
+    BigDialog("ksat-chess", onDismiss, buttons = { TextButton(onClick = onDismiss) { Text("OK") } }) {
+        val vScroll = rememberScrollState()
+        ScrollbarBox(vScroll, Modifier.fillMaxSize()) {
+            Column(Modifier.verticalScroll(vScroll).padding(end = 12.dp).testTag("about")) {
+                Text("Retro chess puzzles solved with SAT.")
+                Spacer(Modifier.height(8.dp))
+                FeedbackBox()
+                Spacer(Modifier.height(8.dp))
+                ProjectLine("ksat-chess", REPO_URL, "this app")
+                ProjectLine("ksat", "https://github.com/manfredscheucher/ksat", "the SAT solvers")
+                ProjectLine("cburnett", CBURNETT_URL, "chess pieces by Colin M.L. Burnett", license = "BSD 3-clause")
+                ProjectLine("chess.com article", CHESS_COM_ARTICLE_URL, "example puzzles, by FM Mike Klein", license = null)
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    buildLine(),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                var showLicenses by remember { mutableStateOf(false) }
+                TextButton(onClick = { showLicenses = !showLicenses }) {
+                    Text(if (showLicenses) "Hide license texts" else "License texts")
+                }
+                if (showLicenses) {
+                    for (notice in GeneratedLicenses.NOTICES) {
+                        HorizontalDivider(Modifier.padding(vertical = 8.dp))
+                        Text(notice.title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                        Text(notice.text, style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }
-        },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("OK") } },
-    )
+        }
+    }
 }
 
 /** One About line "[name] (license): note" (no bracket without a license); only the name is a link. */
@@ -399,54 +405,31 @@ private const val EMAIL = "manfred.scheucher@proton.me"
 private const val FEEDBACK_MAILTO =
     "mailto:$EMAIL?subject=ksat-chess%20feedback&body=hi%20manfred%2C%0A%0A"
 
-private const val PUZZLE_HELP = """A puzzle is N plies of play: board A
-at the start, board B at the end.
+private const val PUZZLE_HELP = """A puzzle is N plies of play: board A at the start, board B at the end.
 
-A board can be given completely, have
-'?' squares (unknown), or be all '?'.
-A square can also be one of a few
-things, e.g. white king or empty.
+A board can be given completely, have '?' squares (unknown), or be all '?'. A square can also be one of a few things, for example white king or empty.
 
-Goal at B: check, checkmate or stalemate.
-Both sides cooperate, as in a helpmate.
-The solver does not look for forced mates.
+Goal at the end: check, checkmate or stalemate. Both sides cooperate, as in a helpmate. The solver does not look for forced mates.
 
-N counts plies; moves like 6.5 work too.
+N counts plies (half-moves).
 
-File -> Save writes the puzzle as JSON,
-Load reads it back, Share link puts it
-into the address bar."""
+File -> Save writes the puzzle as JSON, Load reads it back, Share link puts it into the address bar."""
 
 private const val INPUT_HELP = """Palette + drag
-  Pick a piece, click a square to put it
-  there. Click again with the same piece
-  to empty the square. Drag a piece to
-  move it, drag it off the board to
-  remove it.
+Pick a piece, click a square to put it there. Click again with the same piece to empty the square. Nothing picked, nothing happens. Drag a piece to move it, drag it off the board to remove it.
 
 Click opens a dialog
-  Click a square and pick what stands
-  there.
+Click a square and pick what stands there.
 
 Both modes
-  Long press or right click: allow several
-  pieces on one square. Such squares are
-  hatched amber.
+Long press or right click: allow several pieces on one square. Such squares are hatched amber.
 
 View -> Board input switches the mode.
 
-Edit -> Undo / Redo (Ctrl+Z, Ctrl+Shift+Z)
-take puzzle and board changes back."""
+Edit -> Undo / Redo (Ctrl+Z, Ctrl+Shift+Z) take puzzle and board changes back."""
 
-private const val RESULTS_HELP = """Solve lists every solution; each one is
-checked by playing the moves through.
+private const val RESULTS_HELP = """Solve lists every solution; each one is checked by playing the moves through.
 
-Replay: Reset, Back, Step, Run, the
-slider, a click on a move, or the arrow
-keys and Home / End. "Show static" (or
-View -> Solutions) shows all boards of
-the solution at once instead.
+Replay: Reset, Back, Step, Run, the slider, a click on a move, or the arrow keys and Home / End. "Show static" (or View -> Solutions) shows all boards of the solution at once instead.
 
-Group similar solutions puts solutions
-with the same moves in a different order
-together."""
+Group similar solutions puts solutions with the same moves in a different order together."""
