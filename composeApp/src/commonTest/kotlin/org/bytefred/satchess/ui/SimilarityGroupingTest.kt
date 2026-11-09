@@ -1,5 +1,6 @@
 package org.bytefred.satchess.ui
 
+import org.bytefred.satchess.chess.Fen
 import org.bytefred.satchess.sat.Solution
 import org.bytefred.satchess.sat.SolvedMove
 import org.bytefred.satchess.ui.model.SimilarGroup
@@ -21,6 +22,7 @@ class SimilarityGroupingTest {
         val key = similarityKey(sampleSolution("e4", "d5", "exd5"))
         assertEquals(
             SimilarityKey(
+                start = Fen.START,
                 white = listOf("white pawn to d5 x black pawn", "white pawn to e4"),
                 black = listOf("black pawn to d5"),
             ),
@@ -100,6 +102,21 @@ class SimilarityGroupingTest {
         lines.drop(1).forEach(grouper::add)
         assertEquals(3, grouper.size)
         assertEquals(listOf(listOf(0, 2), listOf(1)), grouper.groups().map { it.indices })
+    }
+
+    @Test
+    fun differentStartPositionsNeverGroup() {
+        // the same event "white knight to f3", once from g1 and once from h4 (an open A, "what was the last move?")
+        val fromG1 = Solution(
+            listOf("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", "rnbqkbnr/pppppppp/8/8/8/5N2/PPPPPPPP/RNBQKB1R b KQkq - 1 1"),
+            listOf(SolvedMove("g1f3", "Nf3", 62, 45)), "Nf3", verified = true,
+        )
+        val fromH4 = Solution(
+            listOf("rnbqkbnr/pppppppp/8/8/7N/8/PPPPPPPP/RNBQKB1R w KQkq - 0 1", "rnbqkbnr/pppppppp/8/8/8/5N2/PPPPPPPP/RNBQKB1R b KQkq - 1 1"),
+            listOf(SolvedMove("h4f3", "Nf3", 39, 45)), "Nf3", verified = true,
+        )
+        assertEquals(similarityKey(fromG1)!!.white, similarityKey(fromH4)!!.white)
+        assertEquals(2, groupSimilar(listOf(fromG1, fromH4)).size)
     }
 
     private fun groupSimilar(solutions: List<Solution>): List<SimilarGroup> =

@@ -215,7 +215,8 @@ results as their own view.
   with full piece identity (colour + type), not bare SAN like "Nxf5". White events and
   black events are collected separately and each sorted; key = (sorted white, sorted
   black). Identical keys = same events in another move order = one group. White and black
-  are never mixed. Implemented literally; open question to Manfred: should a promotion
+  are never mixed. Since 2026-11-09 the start position (full FEN at ply 0) is part of the key (Manfred: with an open
+  A, as in "what was the last move?", lines from different start boards must not be grouped). Implemented literally; open question to Manfred: should a promotion
   piece be part of the event? (not included unless he says so)
 - **As built (UI agent, 2026-10-21)**: >=1200 dp three columns (timeline + board + palette
   below the board | question, start, advanced, solve | results); 900-1200 dp two columns;

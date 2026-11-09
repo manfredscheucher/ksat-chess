@@ -65,12 +65,13 @@ fun sanLine(sans: List<String>, whiteStarts: Boolean): String = buildString {
 // ── "Group similar solutions" ────────────────────────────────────────────────
 
 /**
- * Grouping key of a line: every move as the event "<moving piece> to <target square>", plus
- * " x <captured piece>" if it captures, with full piece identity (colour + type). White's and Black's
- * events are collected separately and each list is sorted, so lines that differ only in move order
- * share the key. White and Black events are never mixed.
+ * Grouping key of a solution: the start position (full FEN), plus every move as the event "<moving piece> to
+ * <target square>" (" x <captured piece>" if it captures) with full piece identity (colour + type).
+ * White's and Black's events are collected separately and each list is sorted, so solutions that
+ * differ only in move order share the key. White and Black events are never mixed, and solutions
+ * from different start positions (an open A, as in "what was the last move?") never share a group.
  */
-data class SimilarityKey(val white: List<String>, val black: List<String>)
+data class SimilarityKey(val start: String, val white: List<String>, val black: List<String>)
 
 /** The solution indices of one group of similar solutions (in found order). */
 data class SimilarGroup(val key: SimilarityKey?, val indices: List<Int>)
@@ -92,7 +93,8 @@ fun similarityKey(solution: Solution): SimilarityKey? {
         val event = "${pieceName(piece)} to ${Sq.name(move.to)}" + (captured?.let { " x ${pieceName(it)}" } ?: "")
         if (piece.color == Color.WHITE) white += event else black += event
     }
-    return SimilarityKey(white.sorted(), black.sorted())
+    val start = solution.fens.firstOrNull() ?: return null // full FEN: board, side to move, castling, e.p.
+    return SimilarityKey(start, white.sorted(), black.sorted())
 }
 
 /** A pawn moving diagonally onto an empty square captures en passant: the victim is the enemy pawn. */
