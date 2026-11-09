@@ -2,7 +2,6 @@
   "id": "demos/which-piece",
   "title": "Which piece on a1?",
   "description": "Black is in check. On a1 stands a white queen, rook, bishop or knight: which of them fit?",
-  "question": "unknownPiece",
   "plies": 0,
   "start": {
     "board": "7k/8/8/8/8/8/8/?3K3",

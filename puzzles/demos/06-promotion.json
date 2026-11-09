@@ -2,7 +2,6 @@
   "id": "demos/promotion",
   "title": "Promotion choices",
   "description": "The pawn on b7 moves to b8. What can stand on b8 afterwards?",
-  "question": "custom",
   "plies": 1,
   "start": {
     "board": "4k3/1P6/8/8/8/8/8/4K3"

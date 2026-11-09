@@ -8,7 +8,6 @@
     "year": 2017
   },
   "description": "From the starting position, how can this position be reached in exactly four moves for each side? The moves don't need to be good, just legal.",
-  "question": "proofGame",
   "plies": 8,
   "start": {
     "board": "startpos"

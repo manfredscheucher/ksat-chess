@@ -62,7 +62,6 @@ means *both sides cooperate* (helpmate / proof game style). A real **directmate*
               "url": "https://www.chess.com/article/view/can-you-solve-these-5-easy-retrograde-puzzles",
               "year": 2017 },
   "description": "Own short text.",
-  "question": "proofGame",
   "plies": 8,
   "start": { "board": "startpos", "sideToMove": "w", "castling": "auto", "enPassant": "-" },
   "positions": { "8": "rnbqkbnr/pp3ppp/2p1p3/8/4P3/8/PPPP1PPP/RNBQK1NR" },
@@ -106,8 +105,8 @@ means *both sides cooperate* (helpmate / proof game style). A real **directmate*
   key still load). Legal moves, exactly one king per side and the retro **history** of the
   position at ply 0 (pawn paths, captures, promotions, bishop colours; `doc/encoding.md`
   section 11) always hold.
-- `question`: UI preset that filled the fields (`proofGame`, `lastMoves`, `helpmate`,
-  `unknownPiece`, `custom`). Informational for the solver.
+- No `question` key (removed 2026-11-09, old files with it still load): the question is given
+  by the boards, `plies`, `start` and `goal` alone.
 - `expected`: known solution count under `project`, or null. Used by tests and shown in
   the results ("unique", "3 solutions, expected 3").
 - UI shows plies and moves together ("13 plies = 6.5 moves"); the file always stores plies.
@@ -170,7 +169,7 @@ Reviewed by a fresh UX reviewer; decisions:
   solver choice, projection, rule switches, max solutions, Shortest and the square-domain editor
   was removed step by step on 2026-11-09.)
 - **Plies vs moves**: one number with a unit toggle plus a live sentence, e.g.
-  "13 plies = 6.5 moves · White starts · White moves last · Black to move at B".
+  "13 plies · White starts · White moves last · Black to move at the end (B)" (until 2026-11-09 also "= 6.5 moves").
 - **Timeline**: `(A)─1─2─…─(B)` chips; the icon shows fixed / partial / open (derived from
   the number of `?`, not a mode switch). Clicking a ply opens its board; "+" adds an
   intermediate board constraint or a move pattern.
@@ -321,7 +320,65 @@ results as their own view.
     ships only the plain license text (`doc/licenses/LICENSE_CBURNETT.txt`). `puzzles/NOTICE.md`
     is no longer shown in the app.
 
+### Big dialogs like ktoy (Manfred, 2026-11-09)
+
+From the comparison of ktoy, ksat-chess and the ksat playground, Manfred chose "alles"; for
+ksat-chess that is ktoy's big dialogs. Help (Puzzles, Board input, Results), About and Examples
+now fill the window but a 16dp margin (`BigDialog.kt`, ported from ktoy): title on top, content
+in between with its scrollbar, buttons at the bottom right. The help texts are unchanged. The
+small dialogs (Save changes?, Welcome, square/options dialogs) stay AlertDialogs. Tested by
+`BigDialogTest` at 1280x800 and 360x640.
+
+### Help texts as flowing text (Manfred, 2026-11-09)
+The Help pages are flowing paragraphs that wrap at the dialog width (no fixed line breaks, no
+horizontal scroll). Wording unchanged. A subheading (first line of a paragraph with more lines,
+e.g. "Palette + drag") is bold instead of indenting its body. Tests: `helpTextUsesTheFullWidth`,
+`subheadingsAreBold` in `BigDialogTest`.
+
+### Question dropdown removed (Manfred, 2026-11-09)
+
+Manfred did not understand what the "Question" type (Proof game, Last moves, Helpmate, Unknown
+piece, Custom) was. It was a preset that filled a few fields once and had no meaning afterwards;
+the solver never read it. Decision: remove it entirely (dropdown, `applyPreset`, the `question` key
+of the format; old files with the key still load). The question is given by the boards, N, the
+start and the goal alone. `GuiBuildChessComTest` now sets the goal through the Goal dropdown
+(testTag `goal`) instead of the helpmate preset.
+
+### Goal "none" is "any" (Manfred, 2026-11-09)
+"none" read as "neither check nor mate allowed"; the label is now "any". Manfred's further idea,
+to put the goal next to the board so a goal can be set at intermediate plies too, is left for later
+on his say-so (section 8).
+
+### A board click without a pick does nothing (Manfred, 2026-11-09)
+Manfred: clicking the board in the middle column edited it right away (a white pawn was
+preselected). Now nothing is selected in the palette by default and a click does nothing until a
+piece, empty, `?` or the options tool is picked; clicking the picked one again deselects it. Drag
+and drop, long press / right click and the dialog input mode are unchanged.
+
+### One Setup group, plies only, two timeline buttons (Manfred, 2026-11-09)
+
+Manfred's layout for the left column, implemented literally:
+- One group "Setup" with: side to start (White / Black / either), the four castling checkboxes,
+  the number of plies (plies only; the plies/moves unit toggle is gone from the UI, the format
+  never had it) and the goal at the end (dropdown "any / check / checkmate / stalemate"). The
+  former "Question" and "Start (A)" sections are merged into it.
+- The "Timeline" group keeps the chips and its two actions, but as two real buttons instead of
+  the "+" menu: "Edit board at ply ..." and "Add move pattern ...". Manfred suggested "Fix board
+  at ply .." / "Fix move pattern"; a fresh reviewer said "Fix" reads as "repair" to a native
+  speaker, so the verbs are "Edit" and "Add".
+- Default pick in the palette is "One of several ..." (a click on a square opens its options);
+  the earlier "nothing picked" default from the same day is superseded.
+- From the reviewer, also taken: field label "Plies (half-moves)", sentence "... to move at the
+  end (B)", a clearer chip legend, move pattern chips "Move A → 1: f3", helpmate note in body
+  size. Not taken (Manfred's words stand): "any" for the goal, "Available castling options",
+  "Goal at the end".
+
 ## 8. Open points / follow-ups
+
+- Idea (Manfred, 2026-11-09): the goal belongs to the board, not the Question row, so a goal
+  (check, mate, stalemate) could be set at intermediate plies too. That is a format change
+  (`goal` per ply) and an encoder/refinement change; deferred by Manfred ("erstmal so lassen").
+
 
 - Repo renamed to `ksat-chess` on GitHub (Manfred, 2026-11-09); Pages URL
   https://manfredscheucher.github.io/ksat-chess/. The app is called ksat-chess too (Welcome, About,

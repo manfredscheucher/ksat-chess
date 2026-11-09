@@ -2,7 +2,6 @@
   "id": "demos/black-to-move",
   "title": "Black moves first",
   "description": "The game starts after 1. e4, Black to move. Reach the Ruy Lopez in 4 plies.",
-  "question": "proofGame",
   "plies": 4,
   "start": {
     "board": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR",

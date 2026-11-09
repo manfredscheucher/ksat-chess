@@ -2,7 +2,6 @@
   "id": "demos/castling",
   "title": "Castling both ways",
   "description": "Kings and rooks only, all castling rights. One move each: White ends up castled short, Black castled long.",
-  "question": "custom",
   "plies": 2,
   "start": {
     "board": "r3k2r/8/8/8/8/8/8/R3K2R",

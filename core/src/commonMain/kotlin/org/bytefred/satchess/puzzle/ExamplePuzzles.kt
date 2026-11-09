@@ -10,7 +10,6 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
   "id": "demos/fools-mate",
   "title": "Fool's mate",
   "description": "The quickest mate: Black mates on move 2. Find every move order.",
-  "question": "helpmate",
   "plies": 4,
   "start": {
     "board": "startpos"
@@ -25,7 +24,6 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
   "id": "demos/last-move",
   "title": "What was the last move?",
   "description": "Black is in check from the knight on f7. Where did it come from?",
-  "question": "lastMoves",
   "plies": 1,
   "start": {
     "board": "????????/????????/????????/????????/????????/????????/????????/????????"
@@ -42,7 +40,6 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
   "id": "demos/black-to-move",
   "title": "Black moves first",
   "description": "The game starts after 1. e4, Black to move. Reach the Ruy Lopez in 4 plies.",
-  "question": "proofGame",
   "plies": 4,
   "start": {
     "board": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR",
@@ -60,7 +57,6 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
   "id": "demos/en-passant",
   "title": "En passant",
   "description": "Black to move, a white pawn on e5. Two plies later a white pawn stands on d6 and d5 is empty. Which two moves?",
-  "question": "custom",
   "plies": 2,
   "start": {
     "board": "rnbqkbnr/pppppppp/8/4P3/8/8/PPPP1PPP/RNBQKBNR",
@@ -79,7 +75,6 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
   "id": "demos/castling",
   "title": "Castling both ways",
   "description": "Kings and rooks only, all castling rights. One move each: White ends up castled short, Black castled long.",
-  "question": "custom",
   "plies": 2,
   "start": {
     "board": "r3k2r/8/8/8/8/8/8/R3K2R",
@@ -97,7 +92,6 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
   "id": "demos/no-castling",
   "title": "Castling not allowed",
   "description": "Same kings and rooks, but both kings have already moved, so castling is off for good. The two castled positions cannot be reached in one move each: no solution.",
-  "question": "custom",
   "plies": 2,
   "start": {
     "board": "r3k2r/8/8/8/8/8/8/R3K2R",
@@ -115,7 +109,6 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
   "id": "demos/promotion",
   "title": "Promotion choices",
   "description": "The pawn on b7 moves to b8. What can stand on b8 afterwards?",
-  "question": "custom",
   "plies": 1,
   "start": {
     "board": "4k3/1P6/8/8/8/8/8/4K3"
@@ -132,7 +125,6 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
   "id": "demos/which-piece",
   "title": "Which piece on a1?",
   "description": "Black is in check. On a1 stands a white queen, rook, bishop or knight: which of them fit?",
-  "question": "unknownPiece",
   "plies": 0,
   "start": {
     "board": "7k/8/8/8/8/8/8/?3K3",
@@ -159,7 +151,6 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
     "year": 2017
   },
   "description": "From the starting position, how can this position be reached in exactly four moves for each side? The moves don't need to be good, just legal.",
-  "question": "proofGame",
   "plies": 8,
   "start": {
     "board": "startpos"
@@ -179,7 +170,6 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
     "year": 2017
   },
   "description": "The white king is missing; every '?' square is either the king or empty. Where is he, and what were the last moves that got him there?",
-  "question": "unknownPiece",
   "plies": 3,
   "start": {
     "board": "????????/????????/????????/????????/????????/????????/????????/????????",
@@ -208,7 +198,6 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
     "year": 2017
   },
   "description": "White plays 1. f3, 2. Kf2, 3. Kg3 and 4. Kh4, no matter what. Which four black moves mate on move 4?",
-  "question": "helpmate",
   "plies": 8,
   "start": {
     "board": "startpos"
@@ -232,7 +221,6 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
     "year": 1976
   },
   "description": "Same question as puzzle 1, different position: reach it from the starting position in exactly four moves for each side.",
-  "question": "proofGame",
   "plies": 8,
   "start": {
     "board": "startpos"
@@ -252,7 +240,6 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
     "year": 1979
   },
   "description": "One piece stands on h4, colour unknown. Which piece is it, and whose?",
-  "question": "unknownPiece",
   "plies": 2,
   "start": {
     "board": "????????/????????/????????/????????/????????/????????/????????/????????",

@@ -4,7 +4,6 @@ import androidx.compose.ui.input.key.Key
 import org.bytefred.ksat.facade.Solver
 import org.bytefred.satchess.chess.Sq
 import org.bytefred.satchess.puzzle.Puzzle
-import org.bytefred.satchess.puzzle.Question
 import org.bytefred.satchess.puzzle.Start
 import org.bytefred.satchess.sat.Solution
 import org.bytefred.satchess.sat.SolveEvent
@@ -12,7 +11,6 @@ import org.bytefred.satchess.sat.SolveOptions
 import org.bytefred.satchess.ui.model.INITIAL_BOARD
 import org.bytefred.satchess.ui.model.OPEN_BOARD
 import org.bytefred.satchess.ui.model.OPTIONS_TOOL
-import org.bytefred.satchess.ui.model.PliesUnit
 import org.bytefred.satchess.ui.solver.SolverService
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -68,7 +66,12 @@ class PuzzleViewModelTest {
     fun boardEditingGoesThroughTheSelectedPly() {
         vm.selectPly(vm.puzzle.plies)
         assertEquals(OPEN_BOARD, vm.board)
-        vm.paletteSelection = 'K'
+        assertEquals(OPTIONS_TOOL, vm.paletteSelection) // the default pick
+        vm.selectPalette(OPTIONS_TOOL) // the picked one again: deselects
+        assertNull(vm.paletteSelection)
+        vm.clickSquare(60) // nothing picked: nothing happens
+        assertEquals(OPEN_BOARD, vm.board)
+        vm.selectPalette('K')
         vm.clickSquare(60)
         assertEquals('K', vm.board[60])
         assertEquals("????????/????????/????????/????????/????????/????????/????????/????K???", vm.fenText)
@@ -91,11 +94,10 @@ class PuzzleViewModelTest {
     }
 
     @Test
-    fun pliesInputInMovesFollowsBAndRejectsGarbage() {
+    fun pliesInputFollowsBAndRejectsGarbage() {
         vm.selectPly(vm.puzzle.plies)
-        vm.changePliesUnit(PliesUnit.MOVES)
-        assertEquals("2", vm.pliesText)
-        vm.setPliesInput("3.5")
+        assertEquals("4", vm.pliesText)
+        vm.setPliesInput("7")
         assertEquals(7, vm.puzzle.plies)
         assertEquals(7, vm.selectedPly)
         vm.setPliesInput("x")
@@ -119,13 +121,6 @@ class PuzzleViewModelTest {
         assertFalse(vm.importJson("""{"plies": 2, "positions": {"2": "not a board"}}"""))
         assertEquals(PuzzleViewModel.NEW_PUZZLE, vm.puzzle)
         assertNotNull(vm.message)
-    }
-
-    @Test
-    fun presetSetsTheProjection() {
-        vm.setQuestion(Question.HELPMATE)
-        assertEquals(listOf("moves"), vm.puzzle.project)
-        assertEquals("b", vm.puzzle.start.sideToMove)
     }
 
     @Test

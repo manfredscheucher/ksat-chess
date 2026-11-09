@@ -22,8 +22,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
@@ -49,7 +47,6 @@ import androidx.compose.ui.unit.dp
 import org.bytefred.satchess.chess.Sq
 import org.bytefred.satchess.puzzle.Goal
 import org.bytefred.satchess.puzzle.MovePattern
-import org.bytefred.satchess.puzzle.Question
 import org.bytefred.satchess.ui.board.BoardColors
 import org.bytefred.satchess.ui.board.BoardView
 import org.bytefred.satchess.ui.board.drawCell
@@ -59,16 +56,15 @@ import org.bytefred.satchess.ui.board.rememberPiecePainters
 import org.bytefred.satchess.ui.model.ALL_OPTIONS
 import org.bytefred.satchess.ui.model.ConstraintLevel
 import org.bytefred.satchess.ui.model.EMPTY
+import org.bytefred.satchess.ui.model.MAX_PLIES
 import org.bytefred.satchess.ui.model.OPTIONS_TOOL
 import org.bytefred.satchess.ui.model.PALETTE
-import org.bytefred.satchess.ui.model.PliesUnit
 import org.bytefred.satchess.ui.model.SquareState
 import org.bytefred.satchess.ui.model.UNKNOWN
 import org.bytefred.satchess.ui.model.boardAt
 import org.bytefred.satchess.ui.model.castlingAfterToggle
 import org.bytefred.satchess.ui.model.constraintLevel
 import org.bytefred.satchess.ui.model.defaultOptionsAt
-import org.bytefred.satchess.ui.model.formatMoves
 import org.bytefred.satchess.ui.model.label
 import org.bytefred.satchess.ui.model.movePatternPlies
 import org.bytefred.satchess.ui.model.optionsLabel
@@ -87,55 +83,68 @@ fun plyName(t: Int, plies: Int): String = when (t) {
     else -> t.toString()
 }
 
-// ── question row ─────────────────────────────────────────────────────────────
+// ── setup ────────────────────────────────────────────────────────────────────
 
 /**
- * Question preset, N with plies|moves toggle, goal, and the live plies sentence. [collapsible] (phone
- * layout) starts folded to a one-line summary so the board is visible without scrolling.
+ * Who starts, the castling rights at A, the number of plies and the goal at the end. [collapsible]
+ * (phone layout) starts folded to a one-line summary so the board is visible without scrolling.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun QuestionSection(vm: PuzzleViewModel, modifier: Modifier = Modifier, collapsible: Boolean = false) {
+fun SetupSection(vm: PuzzleViewModel, modifier: Modifier = Modifier, collapsible: Boolean = false) {
     val p = vm.puzzle
+    val start = p.start
+    val cells = p.boardAt(0)
+    val rights = shownCastling(start.castling, cells)
     var expanded by remember { mutableStateOf(!collapsible) }
     Section(
-        if (expanded) "Question" else "${p.question.label} · ${p.plies} ${if (p.plies == 1) "ply" else "plies"} = ${formatMoves(p.plies)} moves · goal ${p.goal.label}",
+        if (expanded) "Setup" else "${p.plies} ${if (p.plies == 1) "ply" else "plies"} · goal ${p.goal.label}",
         modifier,
         expanded = expanded,
         onToggle = if (collapsible) ({ expanded = !expanded }) else null,
     ) {
+        ChoiceChips("Side to start", start.sideToMove, listOf("w", "b", "?"), {
+            when (it) { "w" -> "White"; "b" -> "Black"; else -> "either" }
+        }, vm::setSideToMove)
+        FieldLabel("Available castling options")
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            for ((right, name) in listOf('K' to "White O-O", 'Q' to "White O-O-O", 'k' to "Black O-O", 'q' to "Black O-O-O")) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(
+                        checked = right in rights,
+                        onCheckedChange = { vm.setCastling(castlingAfterToggle(start.castling, cells, right, it)) },
+                    )
+                    Text(name, style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+        }
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
             itemVerticalAlignment = Alignment.CenterVertically,
         ) {
-            ChoiceDropdown(p.question, Question.entries, { it.label }, vm::setQuestion, Modifier.testTag("question"))
+            CompactField(
+                value = vm.pliesText,
+                onValueChange = vm::setPliesInput,
+                modifier = Modifier.width(150.dp).testTag("plies"),
+                label = "Plies (half-moves)",
+                isError = vm.pliesError,
+            )
             Row(verticalAlignment = Alignment.CenterVertically) {
-                CompactField(
-                    value = vm.pliesText,
-                    onValueChange = vm::setPliesInput,
-                    modifier = Modifier.width(88.dp).testTag("plies"),
-                    label = "N",
-                    isError = vm.pliesError,
-                )
-                Spacer(Modifier.width(6.dp))
-                ChoiceChips(null, vm.pliesUnit, PliesUnit.entries, { it.name.lowercase() }, vm::changePliesUnit)
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                FieldLabel("Goal at B")
+                FieldLabel("Goal at the end")
                 Spacer(Modifier.width(8.dp))
-                ChoiceDropdown(p.goal, Goal.entries, { it.label }, vm::setGoal)
+                ChoiceDropdown(p.goal, Goal.entries, { it.label }, vm::setGoal, Modifier.testTag("goal"))
             }
         }
         Text(
-            if (vm.pliesError) "N must be a number of plies (0-200), or moves like 6.5" else pliesSentence(p.plies, p.start.sideToMove),
+            if (vm.pliesError) "Plies must be a whole number (0-$MAX_PLIES)" else pliesSentence(p.plies, start.sideToMove),
             style = MaterialTheme.typography.bodyMedium,
             color = if (vm.pliesError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
         )
         if (p.goal != Goal.NONE) {
             Text(
                 "Both sides cooperate (helpmate), no forced mates.",
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -144,12 +153,11 @@ fun QuestionSection(vm: PuzzleViewModel, modifier: Modifier = Modifier, collapsi
 
 // ── timeline ────────────────────────────────────────────────────────────────
 
-/** The (A)-1-2-...-(B) chips with constraint icons, "+" and the list of move patterns. */
+/** The (A)-1-2-...-(B) chips with constraint icons, the two buttons and the list of move patterns. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun TimelineSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
     val p = vm.puzzle
-    var addMenu by remember { mutableStateOf(false) }
     var pickPly by remember { mutableStateOf(false) }
     var editPattern by remember { mutableStateOf<Int?>(null) }
     val patternPlies = p.movePatternPlies()
@@ -168,21 +176,14 @@ fun TimelineSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
                     onClick = { vm.selectPly(t) },
                 )
             }
-            Spacer(Modifier.width(12.dp))
-            Box {
-                OutlinedButton(onClick = { addMenu = true }, modifier = Modifier.testTag("timelineAdd")) { Text("+") }
-                DropdownMenu(expanded = addMenu, onDismissRequest = { addMenu = false }) {
-                    DropdownMenuItem(
-                        text = { Text("Board at ply ...") },
-                        onClick = { addMenu = false; pickPly = true },
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Move pattern ...") },
-                        enabled = p.plies > 0,
-                        onClick = { addMenu = false; editPattern = vm.selectedPly.coerceAtMost(p.plies - 1) },
-                    )
-                }
-            }
+        }
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            OutlinedButton(onClick = { pickPly = true }, modifier = Modifier.testTag("timelineBoardAt")) { Text("Edit board at ply ...") }
+            OutlinedButton(
+                onClick = { editPattern = vm.selectedPly.coerceAtMost(p.plies - 1) },
+                enabled = p.plies > 0,
+                modifier = Modifier.testTag("timelineMovePattern"),
+            ) { Text("Add move pattern ...") }
         }
         if (p.moves.isNotEmpty()) {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -191,7 +192,7 @@ fun TimelineSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
                     InputChip(
                         selected = false,
                         onClick = { editPattern = t },
-                        label = { Text("${plyName(t, p.plies)} to ${plyName(t + 1, p.plies)}: ${pattern.label()}") },
+                        label = { Text("Move ${plyName(t, p.plies)} → ${plyName(t + 1, p.plies)}: ${pattern.label()}") },
                         trailingIcon = {
                             Box(Modifier.clickable { vm.setMovePattern(t, null) }.semantics { contentDescription = "Remove" }) {
                                 CloseGlyph(MaterialTheme.colorScheme.onSurfaceVariant)
@@ -202,7 +203,7 @@ fun TimelineSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
             }
         }
         Text(
-            "Filled: board given · half: some squares '?' · empty: all '?' · thick bar: move pattern",
+            "Chip icon: full = board known · half = some squares unknown · empty = board unknown · thick line between chips = move pattern",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -374,11 +375,12 @@ fun BoardEditorSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
             onOptions = openOptions,
         )
         BoardLegend()
-        if (hybrid) Palette(vm.paletteSelection, withOptionsTool = true, onSelect = { vm.paletteSelection = it })
+        if (hybrid) Palette(vm.paletteSelection, withOptionsTool = true, onSelect = vm::selectPalette)
         Text(
             if (hybrid) {
-                "Click a square to put the selected piece there, click again to empty it. Long press or right-click " +
-                    "a square to allow several pieces on it. Drag a piece to move it, drag it off the board to remove it."
+                "Pick a piece below, then click a square to put it there; click again to empty it. Without a pick, " +
+                    "clicks do nothing. Long press or right-click a square to allow several pieces on it. Drag a piece " +
+                    "to move it, drag it off the board to remove it."
             } else {
                 "Click a square and pick what stands there. Long press or right-click to allow several. " +
                     "Drag a piece to move it, drag it off the board to remove it."
@@ -537,7 +539,7 @@ private fun BoardLegend() {
  * (a click on a square then opens its options dialog).
  */
 @Composable
-fun Palette(selected: Char, withOptionsTool: Boolean, onSelect: (Char) -> Unit) {
+fun Palette(selected: Char?, withOptionsTool: Boolean, onSelect: (Char) -> Unit) {
     val painters = rememberPiecePainters()
     val textMeasurer = rememberTextMeasurer()
     val colors = MaterialTheme.colorScheme
@@ -583,34 +585,6 @@ fun Palette(selected: Char, withOptionsTool: Boolean, onSelect: (Char) -> Unit) 
                 },
                 modifier = Modifier.testTag("palette-options"),
             )
-        }
-    }
-}
-
-// ── start parameters ─────────────────────────────────────────────────────────
-
-/** Side to move, castling and en passant at A. */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-fun StartSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
-    val start = vm.puzzle.start
-    val cells = vm.puzzle.boardAt(0)
-    val rights = shownCastling(start.castling, cells)
-    Section("Start (A)", modifier) {
-        ChoiceChips("Side to move", start.sideToMove, listOf("w", "b", "?"), {
-            when (it) { "w" -> "White"; "b" -> "Black"; else -> "either" }
-        }, vm::setSideToMove)
-        FieldLabel("Available castling options")
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            for ((right, name) in listOf('K' to "White O-O", 'Q' to "White O-O-O", 'k' to "Black O-O", 'q' to "Black O-O-O")) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Checkbox(
-                        checked = right in rights,
-                        onCheckedChange = { vm.setCastling(castlingAfterToggle(start.castling, cells, right, it)) },
-                    )
-                    Text(name, style = MaterialTheme.typography.bodyMedium)
-                }
-            }
         }
     }
 }

@@ -2,7 +2,6 @@
   "id": "demos/en-passant",
   "title": "En passant",
   "description": "Black to move, a white pawn on e5. Two plies later a white pawn stands on d6 and d5 is empty. Which two moves?",
-  "question": "custom",
   "plies": 2,
   "start": {
     "board": "rnbqkbnr/pppppppp/8/4P3/8/8/PPPP1PPP/RNBQKBNR",

@@ -123,7 +123,7 @@ fun App(vm: PuzzleViewModel = viewModel { PuzzleViewModel() }) {
 }
 
 /**
- * Left: what is asked (header, question, start, timeline). Middle: the board. Right (from
+ * Left: what is asked (header, setup, timeline). Middle: the board. Right (from
  * [THREE_COLUMNS] on): Solve and the results; with two columns they follow the board.
  */
 @Composable
@@ -132,8 +132,7 @@ private fun SideBySideLayout(vm: PuzzleViewModel, threeColumns: Boolean, modifie
         add(SplitPanel("question") { m ->
             ScrollPanel(m) {
                 PuzzleHeader(vm, compact = false)
-                QuestionSection(vm)
-                StartSection(vm)
+                SetupSection(vm)
                 TimelineSection(vm)
             }
         })
@@ -197,8 +196,7 @@ private fun StackedLayout(vm: PuzzleViewModel, modifier: Modifier) {
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             PuzzleHeader(vm, compact = true)
-            QuestionSection(vm, collapsible = true)
-            StartSection(vm)
+            SetupSection(vm, collapsible = true)
             TimelineSection(vm)
             BoardEditorSection(vm)
             Box(Modifier.onGloballyPositioned { resultsTop = it.positionInParent().y.toInt() }) { ResultsSection(vm) }

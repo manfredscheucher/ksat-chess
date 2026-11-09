@@ -2,7 +2,6 @@
   "id": "demos/fools-mate",
   "title": "Fool's mate",
   "description": "The quickest mate: Black mates on move 2. Find every move order.",
-  "question": "helpmate",
   "plies": 4,
   "start": {
     "board": "startpos"

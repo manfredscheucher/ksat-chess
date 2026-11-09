@@ -48,7 +48,6 @@ CHESS_COM_NAME = "chess.com article by FM Mike Klein"
 CHESS_COM = [
     ("puzzle1.puzzle", "1", {
         "title": "Four moves each",
-        "question": "proofGame",
         "description": (
             "From the initial position, how can this position be reached after "
             "exactly four moves by each side? The moves need not be good, only "
@@ -58,7 +57,6 @@ CHESS_COM = [
     # chess-com-5/2.json (3-ply window, "white king or empty" squares) is hand-written: not converted.
     ("puzzle3.puzzle", "3", {
         "title": "Mate after a king walk",
-        "question": "helpmate",
         "goal": "checkmate",
         "moves": {"0": "f3", "2": "Kf2", "4": "Kg3", "6": "Kh4"},
         # The Python end position keeps all black men on their home squares,
@@ -73,7 +71,6 @@ CHESS_COM = [
     }),
     ("puzzle4.puzzle", "4", {
         "title": "Four moves each, harder",
-        "question": "proofGame",
         "composer": "Tibor Orban",
         "description": (
             "It looks like a copy of puzzle 1 but is much harder: from the initial "
@@ -111,7 +108,7 @@ def convert(d):
 
 def ordered(p):
     """Stable key order for the written JSON."""
-    keys = ["id", "title", "composer", "source", "description", "question", "plies",
+    keys = ["id", "title", "composer", "source", "description", "plies",
             "start", "positions", "squares", "moves", "goal", "shortest", "project",
             "expected"]
     return {k: p[k] for k in keys if k in p}

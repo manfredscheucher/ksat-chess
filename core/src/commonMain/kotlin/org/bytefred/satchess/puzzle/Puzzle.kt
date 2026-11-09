@@ -15,7 +15,6 @@ data class Puzzle(
     val source: Source? = null,
     /** Our own short description (never copied text from the source). */
     val description: String? = null,
-    val question: Question = Question.CUSTOM,
     val plies: Int = 0,
     val start: Start = Start(),
     /** Board constraints at plies other than 0, keyed by ply ("8" -> FEN placement with '?'). */
@@ -77,13 +76,4 @@ enum class Goal {
     @SerialName("check") CHECK,
     @SerialName("checkmate") CHECKMATE,
     @SerialName("stalemate") STALEMATE,
-}
-
-@Serializable
-enum class Question {
-    @SerialName("proofGame") PROOF_GAME,
-    @SerialName("lastMoves") LAST_MOVES,
-    @SerialName("helpmate") HELPMATE,
-    @SerialName("unknownPiece") UNKNOWN_PIECE,
-    @SerialName("custom") CUSTOM,
 }

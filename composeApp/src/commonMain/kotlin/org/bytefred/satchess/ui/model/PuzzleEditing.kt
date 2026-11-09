@@ -5,12 +5,11 @@ import org.bytefred.satchess.chess.Sq
 import org.bytefred.satchess.puzzle.Goal
 import org.bytefred.satchess.puzzle.MovePattern
 import org.bytefred.satchess.puzzle.Puzzle
-import org.bytefred.satchess.puzzle.Question
 import org.bytefred.satchess.sat.puzzleProblems
 
 /**
  * Pure functions mapping between a [Puzzle] (the file format, doc/spec.md section 4) and what the
- * editor shows: one board per ply, the plies/moves sentence, question presets, FEN text.
+ * editor shows: one board per ply, the plies/moves sentence, FEN text.
  * The editor keeps the Puzzle itself as its state, so import/export/share are lossless.
  */
 
@@ -83,33 +82,14 @@ fun puzzleProblem(puzzle: Puzzle): String? {
     return (puzzleProblems(puzzle) + editor).distinct().takeIf { it.isNotEmpty() }?.joinToString("; ")
 }
 
-// ── plies vs moves ────────────────────────────────────────────────────────────
-
-enum class PliesUnit { PLIES, MOVES }
-
-/** Plies as (full) moves: 13 -> "6.5", 12 -> "6". */
-fun formatMoves(plies: Int): String = if (plies % 2 == 0) "${plies / 2}" else "${plies / 2}.5"
-
-/** Text of the N field in the given unit. */
-fun formatPlies(plies: Int, unit: PliesUnit): String =
-    if (unit == PliesUnit.PLIES) plies.toString() else formatMoves(plies)
+// ── plies ────────────────────────────────────────────────────────────────────
 
 const val MAX_PLIES = 200
 
 private val PLIES_INPUT = Regex("\\d{1,4}")
-private val MOVES_INPUT = Regex("(\\d{0,4})(?:[.,]([05]))?")
 
-/** Parses the N field: plies are whole numbers, moves may end in ".5" (or ",5"). Null = invalid input. */
-fun parsePliesInput(text: String, unit: PliesUnit): Int? {
-    val t = text.trim()
-    val plies = when (unit) {
-        PliesUnit.PLIES -> PLIES_INPUT.matchEntire(t)?.let { t.toInt() }
-        PliesUnit.MOVES -> MOVES_INPUT.matchEntire(t)
-            ?.takeIf { it.groupValues[1].isNotEmpty() || it.groupValues[2].isNotEmpty() }
-            ?.let { m -> (m.groupValues[1].ifEmpty { "0" }.toInt()) * 2 + if (m.groupValues[2] == "5") 1 else 0 }
-    }
-    return plies?.takeIf { it in 0..MAX_PLIES }
-}
+/** Parses the plies field: a whole number 0..[MAX_PLIES]. Null = invalid input. */
+fun parsePliesInput(text: String): Int? = PLIES_INPUT.matchEntire(text.trim())?.let { text.trim().toInt() }?.takeIf { it in 0..MAX_PLIES }
 
 private fun colorName(side: Char): String = if (side == 'w') "White" else "Black"
 private fun other(side: Char): Char = if (side == 'w') 'b' else 'w'
@@ -122,80 +102,20 @@ fun sideToMoveAt(startSide: String, t: Int): Char? {
 
 /**
  * The live sentence next to the N field, e.g.
- * "13 plies = 6.5 moves · White starts · White moves last · Black to move at B".
+ * "13 plies · White starts · White moves last · Black to move at the end (B)".
  */
 fun pliesSentence(plies: Int, startSide: String): String {
-    val head = "$plies ${if (plies == 1) "ply" else "plies"} = ${formatMoves(plies)} moves"
+    val head = "$plies ${if (plies == 1) "ply" else "plies"}"
     val start = sideToMoveAt(startSide, 0) ?: return "$head · either side starts"
     if (plies == 0) return "$head · position only · ${colorName(start)} to move"
     val lastMover = sideToMoveAt(startSide, plies - 1)!!
     val atB = sideToMoveAt(startSide, plies)!!
-    return "$head · ${colorName(start)} starts · ${colorName(lastMover)} moves last · ${colorName(atB)} to move at B"
+    return "$head · ${colorName(start)} starts · ${colorName(lastMover)} moves last · ${colorName(atB)} to move at the end (B)"
 }
-
-// ── question presets ──────────────────────────────────────────────────────────
-
-/**
- * Applies a question preset (spec section 7: "the preset fills A, B, N, goal and projection").
- * Boards the user already entered are not thrown away: a preset that resets A or opens B first moves
- * a concrete board from there to the other end if that end is still open (and N > 0).
- */
-fun applyPreset(puzzle: Puzzle, question: Question): Puzzle {
-    val p = puzzle.copy(question = question)
-    val n = p.plies.toString()
-    val aOpen = p.boardAt(0) == OPEN_BOARD
-    val bOpen = p.positions[n] == null
-    return when (question) {
-        Question.PROOF_GAME -> {
-            // Proof game: A is the initial position; a custom A board becomes the target B if B is open.
-            val a = p.boardAt(0)
-            val withB = if (bOpen && !aOpen && a != INITIAL_BOARD && p.plies > 0) p.withBoardAt(p.plies, a) else p
-            withB.copy(
-                start = withB.start.copy(board = "startpos", sideToMove = "w", castling = "auto", enPassant = "-"),
-                goal = Goal.NONE,
-                project = listOf("moves"),
-            )
-        }
-        Question.LAST_MOVES -> {
-            // "What were the last moves?": the given position is B, the earlier one A is open.
-            val withB = if (bOpen && !aOpen && p.plies > 0) p.withBoardAt(p.plies, p.boardAt(0)) else p
-            withB.copy(
-                start = withB.start.copy(board = placementText(OPEN_BOARD), sideToMove = "?", castling = "?", enPassant = "-"),
-                goal = Goal.NONE,
-                project = listOf("moves"),
-            )
-        }
-        Question.HELPMATE -> {
-            // Helpmate: the given position is A, Black moves first, B is open, mate at the end.
-            val withA = if (aOpen && !bOpen && p.plies > 0) p.withBoardAt(0, p.boardAt(p.plies)) else p
-            withA.copy(
-                start = withA.start.copy(sideToMove = "b"),
-                positions = withA.positions - n,
-                goal = Goal.CHECKMATE,
-                project = listOf("moves"),
-            )
-        }
-        Question.UNKNOWN_PIECE -> {
-            val unknown = p.boardAt(0).withIndex().filter { it.value == UNKNOWN }
-            val project = if (unknown.size == 1) "square@0:${Sq.name(unknown.single().index)}" else "board@0"
-            p.copy(goal = Goal.NONE, project = listOf(project))
-        }
-        Question.CUSTOM -> p
-    }
-}
-
-val Question.label: String
-    get() = when (this) {
-        Question.PROOF_GAME -> "Proof game"
-        Question.LAST_MOVES -> "Last moves"
-        Question.HELPMATE -> "Helpmate"
-        Question.UNKNOWN_PIECE -> "Unknown piece"
-        Question.CUSTOM -> "Custom"
-    }
 
 val Goal.label: String
     get() = when (this) {
-        Goal.NONE -> "none"
+        Goal.NONE -> "any"
         Goal.CHECK -> "check"
         Goal.CHECKMATE -> "checkmate"
         Goal.STALEMATE -> "stalemate"

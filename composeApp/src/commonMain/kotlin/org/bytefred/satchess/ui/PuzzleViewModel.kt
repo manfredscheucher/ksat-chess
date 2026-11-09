@@ -15,7 +15,6 @@ import org.bytefred.satchess.puzzle.Goal
 import org.bytefred.satchess.puzzle.MovePattern
 import org.bytefred.satchess.puzzle.Puzzle
 import org.bytefred.satchess.puzzle.PuzzleJson
-import org.bytefred.satchess.puzzle.Question
 import org.bytefred.satchess.sat.Solution
 import org.bytefred.satchess.sat.SolveEvent
 import org.bytefred.satchess.sat.SolveOptions
@@ -23,14 +22,11 @@ import org.bytefred.satchess.ui.model.CLEAR_BOARD
 import org.bytefred.satchess.ui.model.INITIAL_BOARD
 import org.bytefred.satchess.ui.model.OPEN_BOARD
 import org.bytefred.satchess.ui.model.OPTIONS_TOOL
-import org.bytefred.satchess.ui.model.PliesUnit
 import org.bytefred.satchess.ui.model.SimilarGroup
 import org.bytefred.satchess.ui.model.SimilarGrouper
 import org.bytefred.satchess.ui.model.applyFenText
-import org.bytefred.satchess.ui.model.applyPreset
 import org.bytefred.satchess.ui.model.boardAt
 import org.bytefred.satchess.ui.model.fenTextAt
-import org.bytefred.satchess.ui.model.formatPlies
 import org.bytefred.satchess.ui.model.movePiece
 import org.bytefred.satchess.ui.model.optionsAt
 import org.bytefred.satchess.ui.model.paletteClick
@@ -93,10 +89,10 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
 
     /** The ply whose board the editor shows (0 = A, plies = B). */
     var selectedPly by mutableIntStateOf(0); private set
-    var paletteSelection by mutableStateOf('P')
+    /** The palette piece a board click places, or [OPTIONS_TOOL] (the default: a click opens the square's options); null = nothing selected, clicks do nothing. */
+    var paletteSelection by mutableStateOf<Char?>(OPTIONS_TOOL)
 
-    var pliesUnit by mutableStateOf(PliesUnit.PLIES); private set
-    var pliesText by mutableStateOf(formatPlies(NEW_PUZZLE.plies, PliesUnit.PLIES)); private set
+    var pliesText by mutableStateOf(NEW_PUZZLE.plies.toString()); private set
     var pliesError by mutableStateOf(false); private set
 
     var fenText by mutableStateOf(NEW_PUZZLE.fenTextAt(0)); private set
@@ -154,7 +150,7 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
         update(p)
         savedPuzzle = p
         selectedPly = if (p.positions.containsKey(p.plies.toString())) p.plies else 0
-        pliesText = formatPlies(p.plies, pliesUnit)
+        pliesText = p.plies.toString()
         pliesError = false
         undoStack.clear()
         redoStack.clear()
@@ -253,13 +249,7 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
         message = text
     }
 
-    // ── question, plies, goal ───────────────────────────────────────────────
-
-    fun setQuestion(question: Question) {
-        update(applyPreset(puzzle, question))
-        selectedPly = selectedPly.coerceAtMost(puzzle.plies)
-        syncFen()
-    }
+    // ── plies, goal ─────────────────────────────────────────────────────────
 
     /**
      * While N is being typed, every keystroke re-derives the window from the puzzle as it was before the
@@ -267,7 +257,7 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
      */
     fun setPliesInput(text: String) {
         pliesText = text
-        val plies = parsePliesInput(text, pliesUnit)
+        val plies = parsePliesInput(text)
         pliesError = plies == null
         if (plies == null) return
         val base = pliesEditBase ?: (puzzle to selectedPly).also { pliesEditBase = it }
@@ -282,11 +272,6 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
     /** The puzzle and selected ply before the current run of N keystrokes; any other edit ends it. */
     private var pliesEditBase: Pair<Puzzle, Int>? = null
 
-    fun changePliesUnit(unit: PliesUnit) {
-        pliesUnit = unit
-        pliesText = formatPlies(puzzle.plies, unit)
-        pliesError = false
-    }
 
     fun setGoal(goal: Goal) = update(puzzle.copy(goal = goal))
 
@@ -306,7 +291,16 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
 
     /** Hybrid input: place the palette selection, or with the options tool open the square's options. */
     fun clickSquare(sq: Int) {
-        if (paletteSelection == OPTIONS_TOOL) openOptions(OptionsTarget.Square(sq)) else editBoard(paletteClick(board, sq, paletteSelection))
+        when (val selected = paletteSelection) {
+            null -> return
+            OPTIONS_TOOL -> openOptions(OptionsTarget.Square(sq))
+            else -> editBoard(paletteClick(board, sq, selected))
+        }
+    }
+
+    /** Palette click: selects the piece; clicking the selected one again deselects it. */
+    fun selectPalette(cell: Char) {
+        paletteSelection = if (paletteSelection == cell) null else cell
     }
 
     fun dragPiece(from: Int, to: Int) = editBoard(movePiece(board, from, to))
@@ -393,7 +387,7 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
         puzzle = p
         pliesEditBase = null
         selectedPly = selectedPly.coerceAtMost(p.plies)
-        pliesText = formatPlies(p.plies, pliesUnit)
+        pliesText = p.plies.toString()
         pliesError = false
         optionsTarget = null
         syncFen()
@@ -493,7 +487,6 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
         /** "New": a 4-ply proof game from the initial position with B still open. */
         val NEW_PUZZLE = Puzzle(
             title = "New puzzle",
-            question = Question.PROOF_GAME,
             plies = 4,
             project = listOf("moves"),
         )

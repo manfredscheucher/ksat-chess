@@ -6,7 +6,6 @@ import org.bytefred.satchess.puzzle.Goal
 import org.bytefred.satchess.puzzle.MovePattern
 import org.bytefred.satchess.puzzle.Puzzle
 import org.bytefred.satchess.puzzle.PuzzleJson
-import org.bytefred.satchess.puzzle.Question
 import org.bytefred.satchess.puzzle.Source
 import org.bytefred.satchess.puzzle.Start
 import kotlin.test.Test
@@ -83,94 +82,32 @@ class PuzzleEditingTest {
         assertNotNull(puzzleProblem(proofGame.copy(squares = mapOf("x" to emptyMap()))))
     }
 
-    // ── plies vs moves ──
+    // ── plies ──
 
     @Test
-    fun movesFormatting() {
-        assertEquals("6.5", formatMoves(13))
-        assertEquals("6", formatMoves(12))
-        assertEquals("0", formatMoves(0))
-    }
-
-    @Test
-    fun pliesInputInBothUnits() {
-        assertEquals(13, parsePliesInput("13", PliesUnit.PLIES))
-        assertEquals(13, parsePliesInput("6.5", PliesUnit.MOVES))
-        assertEquals(12, parsePliesInput("6", PliesUnit.MOVES))
-        assertEquals(1, parsePliesInput(".5", PliesUnit.MOVES))
-        assertNull(parsePliesInput("6.5", PliesUnit.PLIES))
-        assertNull(parsePliesInput("-1", PliesUnit.PLIES))
-        assertNull(parsePliesInput("", PliesUnit.PLIES))
-        assertNull(parsePliesInput("abc", PliesUnit.MOVES))
-        assertNull(parsePliesInput("1000", PliesUnit.PLIES))
-        assertEquals(13, parsePliesInput("6,5", PliesUnit.MOVES))
-        assertNull(parsePliesInput("-0.5", PliesUnit.MOVES))
-        assertNull(parsePliesInput("+5", PliesUnit.PLIES))
-        assertNull(parsePliesInput("6.3", PliesUnit.MOVES))
-        assertNull(parsePliesInput(".", PliesUnit.MOVES))
+    fun pliesInput() {
+        assertEquals(13, parsePliesInput("13"))
+        assertEquals(0, parsePliesInput(" 0 "))
+        assertNull(parsePliesInput("6.5"))
+        assertNull(parsePliesInput("-1"))
+        assertNull(parsePliesInput(""))
+        assertNull(parsePliesInput("abc"))
+        assertNull(parsePliesInput("1000"))
+        assertNull(parsePliesInput("+5"))
     }
 
     @Test
     fun pliesSentence() {
         assertEquals(
-            "13 plies = 6.5 moves · White starts · White moves last · Black to move at B",
+            "13 plies · White starts · White moves last · Black to move at the end (B)",
             pliesSentence(13, "w"),
         )
         assertEquals(
-            "4 plies = 2 moves · Black starts · White moves last · Black to move at B",
+            "4 plies · Black starts · White moves last · Black to move at the end (B)",
             pliesSentence(4, "b"),
         )
-        assertEquals("1 ply = 0.5 moves · either side starts", pliesSentence(1, "?"))
-        assertEquals("0 plies = 0 moves · position only · White to move", pliesSentence(0, "w"))
-    }
-
-    // ── presets ──
-
-    @Test
-    fun proofGamePresetStartsFromTheInitialPosition() {
-        val p = applyPreset(Puzzle(plies = 4, start = Start(board = target, sideToMove = "b"), goal = Goal.CHECK), Question.PROOF_GAME)
-        assertEquals(Question.PROOF_GAME, p.question)
-        assertEquals(Start(), p.start)
-        assertEquals(Goal.NONE, p.goal)
-        assertEquals(listOf("moves"), p.project)
-    }
-
-    @Test
-    fun proofGamePresetMovesACustomABoardToAnOpenB() {
-        val p = applyPreset(Puzzle(plies = 2, start = Start(board = target)), Question.PROOF_GAME)
-        assertEquals(INITIAL_BOARD, p.boardAt(0))
-        assertEquals(Fen.parsePattern(target).cells, p.boardAt(2))
-    }
-
-    @Test
-    fun lastMovesPresetKeepsTheGivenPositionAsB() {
-        val p = applyPreset(Puzzle(plies = 2, start = Start(board = target)), Question.LAST_MOVES)
-        assertEquals(OPEN_BOARD, p.boardAt(0))
-        assertEquals(Fen.parsePattern(target).cells, p.boardAt(2))
-        assertEquals("?", p.start.sideToMove)
-    }
-
-    @Test
-    fun helpmatePresetKeepsTheGivenPositionAsA() {
-        val p = applyPreset(Puzzle(plies = 4, start = Start(board = placementText(OPEN_BOARD)), positions = mapOf("4" to target)), Question.HELPMATE)
-        assertEquals(Fen.parsePattern(target).cells, p.boardAt(0))
-        assertEquals(OPEN_BOARD, p.boardAt(4))
-        assertEquals(Goal.CHECKMATE, p.goal)
-        assertEquals("b", p.start.sideToMove)
-    }
-
-    @Test
-    fun unknownPiecePresetProjectsOnTheSingleUnknownSquare() {
-        val board = setSquareText(INITIAL_BOARD, "h4", UNKNOWN)
-        val p = applyPreset(Puzzle(plies = 2).withBoardAt(0, board), Question.UNKNOWN_PIECE)
-        assertEquals(listOf("square@0:h4"), p.project)
-        val two = applyPreset(Puzzle(plies = 2).withBoardAt(0, setSquareText(board, "a3", UNKNOWN)), Question.UNKNOWN_PIECE)
-        assertEquals(listOf("board@0"), two.project)
-    }
-
-    @Test
-    fun customPresetOnlyChangesTheQuestion() {
-        assertEquals(proofGame.copy(question = Question.CUSTOM), applyPreset(proofGame, Question.CUSTOM))
+        assertEquals("1 ply · either side starts", pliesSentence(1, "?"))
+        assertEquals("0 plies · position only · White to move", pliesSentence(0, "w"))
     }
 
     // ── FEN field ──

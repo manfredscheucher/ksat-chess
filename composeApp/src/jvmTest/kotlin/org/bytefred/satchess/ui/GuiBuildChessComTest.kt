@@ -30,10 +30,10 @@ import kotlin.test.assertEquals
  * view model is only read for the final comparison. Each step is logged with a running count
  * (see the test's system-out).
  *
- * Gap: the projection (`project`) has no UI any more (removed on purpose, 2026-11-09). Only the
- * question preset sets it. For puzzles 1, 3, 4 (A = initial position) "moves" and the file's default
- * "moves, board@0" are the same thing; puzzle 5 gets its "square@0:h4" from the preset; puzzle 2's
- * "piece@3:K" cannot be reached (see [puzzle2ProjectionPieceAt3K]).
+ * Gap: the projection (`project`) has no UI any more (removed on purpose, 2026-11-09); a built puzzle
+ * keeps New's "moves". For puzzles 1, 3, 4 (A = initial position) that equals the file's default
+ * "moves, board@0"; puzzle 2's "piece@3:K" and puzzle 5's "square@2:h4" cannot be entered (see
+ * [puzzle2ProjectionPieceAt3K]).
  */
 @OptIn(ExperimentalTestApi::class)
 class GuiBuildChessComTest {
@@ -65,8 +65,8 @@ class GuiBuildChessComTest {
         onNodeWithText("New").performClick(); s.step("New")
     }
 
-    private fun ComposeUiTest.question(s: Steps, label: String) {
-        onNodeWithTag("question").performScrollTo().performClick(); s.step("Question dropdown")
+    private fun ComposeUiTest.goal(s: Steps, label: String) {
+        onNodeWithTag("goal").performScrollTo().performClick(); s.step("Goal dropdown")
         onNodeWithText(label).performClick(); s.step("pick '$label'")
     }
 
@@ -115,8 +115,7 @@ class GuiBuildChessComTest {
 
     private fun ComposeUiTest.movePattern(s: Steps, plyChip: String, san: String) {
         ply(s, plyChip)
-        onNodeWithTag("timelineAdd").performScrollTo().performClick(); s.step("timeline '+'")
-        onNodeWithText("Move pattern ...").performClick(); s.step("'Move pattern ...'")
+        onNodeWithTag("timelineMovePattern").performScrollTo().performClick(); s.step("button 'Add move pattern ...'")
         // fields of the dialog: ply t (prefilled with the selected ply), SAN, piece, from, to, promo
         onAllNodes(hasSetTextAction() and hasAnyAncestor(isDialog()))[1].performTextReplacement(san); s.step("type SAN $san")
         onNodeWithText("Save").performClick(); s.step("Save")
@@ -137,7 +136,7 @@ class GuiBuildChessComTest {
     // ── 1: proof game in 4.0, both kingside knights gone, ...d5 ──────────────────
 
     private fun ComposeUiTest.build1() = build(1) { s ->
-        // New is already "Proof game", A = initial position
+        // New starts from the initial position, White to move
         plies(s, 8)
         ply(s, "B")
         button(s, "Initial")
@@ -157,7 +156,6 @@ class GuiBuildChessComTest {
     // ── 2: where is the white king? ─────────────────────────────────────────────
 
     private fun ComposeUiTest.build2() = build(2) { s ->
-        question(s, "Unknown piece")
         plies(s, 3)
         // A: everything open, side to move and castling free
         button(s, "All ?")
@@ -177,13 +175,12 @@ class GuiBuildChessComTest {
     fun puzzle2WhereIsTheWhiteKing() = runComposeUiTest {
         val b = bundled(2)
         val built = build2()
-        // the preset sees no single '?' on A and projects the whole A board; the UI has no way to ask
-        // "where is the white king at ply 3" (piece@3:K)
-        assertEquals(listOf("board@0"), built.project)
+        // the UI has no way to ask "where is the white king at ply 3" (piece@3:K)
+        assertEquals(listOf("moves"), built.project)
         assertEquals(b, built.withMetaOf(b).copy(project = b.project))
     }
 
-    @Ignore // The projection field has no UI (removed 2026-11-09); no preset yields piece@3:K.
+    @Ignore // The projection field has no UI (removed 2026-11-09); piece@3:K cannot be entered.
     @Test
     fun puzzle2ProjectionPieceAt3K() = runComposeUiTest {
         val b = bundled(2)
@@ -193,8 +190,7 @@ class GuiBuildChessComTest {
     // ── 3: helpmate, White plays f3 Kf2 Kg3 Kh4 ─────────────────────────────────
 
     private fun ComposeUiTest.build3() = build(3) { s ->
-        question(s, "Helpmate") // also sets goal checkmate, but Black to move first
-        button(s, "White")
+        goal(s, "checkmate")
         plies(s, 8)
         movePattern(s, "A", "f3")
         movePattern(s, "2", "Kf2")
@@ -232,7 +228,6 @@ class GuiBuildChessComTest {
     // ── 5: the piece on h4 (Smullyan): a 2-ply window, the diagram at B ──────────
 
     private fun ComposeUiTest.build5() = build(5) { s ->
-        question(s, "Unknown piece")
         plies(s, 2)
         // A: everything open, side to move free
         button(s, "All ?")
@@ -256,9 +251,8 @@ class GuiBuildChessComTest {
     fun puzzle5ThePieceOnH4() = runComposeUiTest {
         val b = bundled(5)
         val built = build5()
-        // the preset only looks at A (all '?', so it projects the whole A board); "the piece on h4 at
-        // ply 2" (square@2:h4) has no UI
-        assertEquals(listOf("board@0"), built.project)
+        // "the piece on h4 at ply 2" (square@2:h4) has no UI
+        assertEquals(listOf("moves"), built.project)
         assertEquals(b, built.withMetaOf(b).copy(project = b.project))
     }
 }

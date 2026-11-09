@@ -8,7 +8,6 @@
     "year": 1976
   },
   "description": "Same question as puzzle 1, different position: reach it from the starting position in exactly four moves for each side.",
-  "question": "proofGame",
   "plies": 8,
   "start": {
     "board": "startpos"
