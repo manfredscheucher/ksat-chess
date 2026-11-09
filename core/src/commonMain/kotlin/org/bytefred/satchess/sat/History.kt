@@ -19,8 +19,9 @@ import kotlin.math.abs
  *    ends there (alive, captured, or promoted on the last rank).
  * 2. Identity: each board square holds exactly one unit; a bishop (original or promoted) stays on
  *    the colour of its home / promotion square; the king never dies.
- * 3. Captures: each diagonal pawn step kills exactly one enemy unit that died on that square (en
- *    passant: a pawn that had just double-stepped to the square behind); a unit dies once.
+ * 3. Captures: each diagonal pawn step has a victim, an enemy unit that died on that square (en
+ *    passant: a pawn that had just double-stepped to the square behind); a death is matched to
+ *    at most one pawn capture.
  * 4. Home squares: a pawn still standing on its home square has never moved, so nothing else was
  *    ever on that square: no pawn visited it, no unit died there.
  * 5. Boxed bishops: a bishop whose two neighbouring pawns still stand at home never moved, so it is
@@ -219,8 +220,7 @@ internal class History(private val cnf: Cnf, private val at: (sq: Int, piece: Pi
                 for (o in originals) cnf.add(-o.alive[sq], cell)
             }
             for (p in side.pawns) {
-                val a = p.alivePromo[sq]
-                cnf.add(intArrayOf(-a) + Encoding.PROMOTIONS.map { at(sq, Piece.of(color, it)) })
+                val a = p.alivePromo[sq] // implies promoted, hence one promoType, hence that cell
                 for ((i, type) in Encoding.PROMOTIONS.withIndex()) {
                     val cell = at(sq, Piece.of(color, type))
                     cnf.add(-a, -p.promoType[i], cell)
@@ -322,7 +322,7 @@ internal class History(private val cnf: Cnf, private val at: (sq: Int, piece: Pi
 
     private fun encodeCrossing(side: Side) {
         for (w in side.pawns) for (sq in 0 until 64) {
-            if (w.alivePawn[sq] == 0 || Sq.col(sq) != w.file) continue
+            if (w.alivePawn[sq] == 0 || Sq.col(sq) != w.file) continue // off its file: excluded by straight anyway
             for (b in side.enemy.pawns) for (other in 0 until 64) {
                 if (Sq.col(other) != w.file || (Sq.row(other) - Sq.row(sq)) * side.forward < 0) continue
                 val r = reach(b, other)

@@ -280,10 +280,10 @@ Rules, each sound for every legal game:
    every unit is on at most one square; each original is alive or died exactly once; a promoted
    bishop keeps the colour of its promotion square. Material counts, promotions versus missing
    pawns and bishop colours all follow.
-3. **Captures**: each diagonal step of a pawn onto `sq` needs exactly one victim: an enemy unit
-   whose death square is `sq`, or (on the e.p. target row) the enemy pawn of that file that died on
-   the square behind after its double step. A death is matched to at most one pawn capture;
-   captures by pieces are free.
+3. **Captures**: each diagonal step of a pawn onto `sq` needs a victim: an enemy unit whose
+   death square is `sq`, or (on the e.p. target row) the enemy pawn of that file that died on the
+   square behind after its double step. A death is matched to at most one pawn capture, so the
+   victims are distinct; captures by pieces are free.
 4. **Home squares**: a pawn alive on its home square never moved, so nothing else was ever on that
    square: no enemy pawn visited it, no unit of either side died there.
 5. **Boxed bishops**: if both neighbouring pawns of a bishop's home stand at home, the bishop is at
