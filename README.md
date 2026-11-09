@@ -1,9 +1,9 @@
-# sat-chess-kotlin
+# ksat-chess
 
 Retro chess puzzles solved with SAT, in the browser: set up a position, and the solver finds every
 legal way the game can have reached it. Every solution is checked by playing it through.
 
-**Try it in the browser: <https://manfredscheucher.github.io/sat-chess-kotlin/>**
+**Try it in the browser: <https://manfredscheucher.github.io/ksat-chess/>**
 
 <p>
   <img src="doc/screenshot.png" height="400" alt="SAT chess on the desktop: board editor, question and a solved puzzle with replay">

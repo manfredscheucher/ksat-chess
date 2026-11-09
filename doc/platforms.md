@@ -23,9 +23,9 @@ git push origin gh-pages
 the branch `gh-pages` and commits it locally. It does not push. Same procedure as ktoy.
 
 One-time setup: create the repo on github.com and add it as `origin`, then Settings -> Pages -> Deploy from a branch -> `gh-pages` / (root).
-URL: <https://manfredscheucher.github.io/sat-chess-kotlin/>
+URL: <https://manfredscheucher.github.io/ksat-chess/>
 
-All paths in the bundle are relative, so it works under the `/sat-chess-kotlin/` subpath. The solver
+All paths in the bundle are relative, so it works under the `/ksat-chess/` subpath. The solver
 worker `solver-worker.js` is part of the bundle (`syncSolverWorker`).
 
 ## Tests

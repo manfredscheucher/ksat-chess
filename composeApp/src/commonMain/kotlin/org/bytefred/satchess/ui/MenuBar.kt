@@ -280,7 +280,7 @@ private fun AboutDialog(onDismiss: () -> Unit) {
                     Spacer(Modifier.height(8.dp))
                     FeedbackBox()
                     Spacer(Modifier.height(8.dp))
-                    ProjectLine("sat-chess-kotlin", "https://github.com/manfredscheucher/sat-chess-kotlin", "this app")
+                    ProjectLine("ksat-chess", "https://github.com/manfredscheucher/ksat-chess", "this app")
                     ProjectLine("ksat", "https://github.com/manfredscheucher/ksat", "the SAT solvers")
                     ProjectLine("cburnett", CBURNETT_URL, "chess pieces by Colin M.L. Burnett", license = "BSD 3-clause")
                     ProjectLine("chess.com article", CHESS_COM_ARTICLE_URL, "example puzzles, by FM Mike Klein", license = null)

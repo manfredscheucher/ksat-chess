@@ -21,7 +21,7 @@ if (config.devServer) {
 }
 // runWeb.sh opens Chrome itself. Stop webpack from auto-opening a browser.
 // Fixed dev-server port per app (see ~/github/.dev-ports.md) so apps started at
-// the same time don't collide. sat-chess-kotlin = 8608.
+// the same time don't collide. ksat-chess = 8608.
 if (config.devServer) {
     config.devServer.open = false
     config.devServer.port = 8608

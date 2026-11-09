@@ -252,7 +252,7 @@ abstract class GenerateLicenses : DefaultTask() {
 
 val satSolversDir = project(":ksat").projectDir.parentFile
 val licenseNotices = listOf(
-    "sat-chess-kotlin (MIT)" to rootProject.file("LICENSE"),
+    "ksat-chess (MIT)" to rootProject.file("LICENSE"),
     "Chess pieces: cburnett (BSD 3-clause)" to rootProject.file("doc/licenses/LICENSE_CBURNETT.txt"),
     "ksat (MIT)" to satSolversDir.resolve("LICENSE"),
     "MicroSAT (MIT)" to satSolversDir.resolve("licenses/microsat-LICENSE.txt"),

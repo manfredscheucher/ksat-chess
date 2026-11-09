@@ -168,7 +168,7 @@ private fun writeDimacs(puzzle: Puzzle, path: String, options: Options) {
         val encoding = Encoding(puzzle, side, EncoderOptions(options.moveAmo))
         val file = if (sides.size == 1) File(path) else File(path.removeSuffix(".cnf") + ".${side.fen}.cnf")
         val comments = listOf(
-            "sat-chess-kotlin: ${puzzle.id.ifEmpty { "puzzle" }}, ${puzzle.plies} plies, ${side.name.lowercase()} to move at ply 0",
+            "ksat-chess: ${puzzle.id.ifEmpty { "puzzle" }}, ${puzzle.plies} plies, ${side.name.lowercase()} to move at ply 0",
             "projected variables (solutions are distinct over these): see the ind lines",
         ) + Projection(encoding).variables.chunked(20).map { "ind ${it.joinToString(" ")} 0" }
         file.bufferedWriter().use { encoding.cnf.writeDimacs(it, comments) }
