@@ -130,6 +130,7 @@ object PuzzleSolver {
                 onEvent(SolveEvent.Encoded(encoding.cnf.numVars, encoding.cnf.numClauses, millis()))
                 val projection = Projection(encoding)
                 val search = Search(encoding, projection, options.solver, options.refinement)
+                if (search.startUnreachable) onEvent(SolveEvent.Info(START_UNREACHABLE))
                 if (!projection.includesSide) for (names in found) projection.blockNames(names)?.let(search::addClause)
                 while (true) {
                     if (isCancelled()) {
@@ -241,6 +242,9 @@ object PuzzleSolver {
 
 private val OPEN_BOARD = List(8) { "????????" }.joinToString("/")
 
+/** Info message when the start board fails the history check. */
+const val START_UNREACHABLE = "the start position cannot arise from the initial array"
+
 /** The board pattern that has the fixed cells of all [boards], or null if two of them differ. */
 internal fun mergeBoards(boards: List<String>): String? {
     val cells = MutableList(64) { '?' }
@@ -297,6 +301,13 @@ internal class Search(
     var refinements = 0
         private set
 
+    /** The given start board cannot arise from the initial array ([Encoding.historyCheck], solved once). */
+    val startUnreachable: Boolean = e.historyCheck?.let { h ->
+        val k = Ksat(solverChoice, h.numVars)
+        h.forEachClause { k.addClause(it) }
+        k.solve() != SatResult.SAT
+    } == true
+
     private fun newSolver(): Ksat = Ksat(solverChoice, e.cnf.numVars).also { k ->
         e.cnf.forEachClause { k.addClause(it) }
         for (c in extra) k.addClause(c)
@@ -308,6 +319,7 @@ internal class Search(
     }
 
     fun next(): ((Int) -> Boolean)? {
+        if (startUnreachable) return null
         val refine = e.puzzle.goal == Goal.CHECKMATE || e.puzzle.goal == Goal.STALEMATE
         while (true) {
             if (!incremental) sat = newSolver()

@@ -302,6 +302,10 @@ Black promoted (3 knights or a second dark bishop would be needed otherwise), it
 leave the h-file (rule 4 / 6 with h2 unmoved) and enter the g-file at g2 (rule 6 with g3 unmoved),
 all five Black pawn captures were on light squares, so White's dark-squared bishop never died.
 
-Cost: about 18,000 variables and 60,000 clauses for both sides; on a fixed board most of it is
-decided by propagation. Unreachable test positions are now rejected, e.g. chessprogramming's
+Cost: about 18,000 variables and 60,000 clauses for both sides. With a fully given start board
+the history shares no variable with the search, so it is built as a CNF of its own
+(`Encoding.historyCheck`) and solved once by `Search` (milliseconds; UNSAT = the puzzle has no
+solution, reported as an Info line). Carried along in the main CNF it had tripled the time of
+Fool's mate in the browser (3.5 s to 11 s). With unknown squares at ply 0 it is part of the main
+CNF. Unreachable test positions are now rejected, e.g. chessprogramming's
 perft "position 5" (five white pawn captures, one missing black man).

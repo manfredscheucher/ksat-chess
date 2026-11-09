@@ -38,6 +38,12 @@ class Encoding(
     val cnf = Cnf()
     val plies: Int = puzzle.plies
     val patterns: Map<Int, BoardPattern>
+    /**
+     * The [History] of a fully given start board, as a CNF of its own: it shares nothing with the
+     * search then, so [Search] checks it once instead of carrying it through every solve. With
+     * unknown squares at ply 0 the history is part of [cnf] and this is null.
+     */
+    val historyCheck: Cnf?
 
     fun side(t: Int): Color = if (t % 2 == 0) sideToMove else sideToMove.opposite
 
@@ -96,7 +102,7 @@ class Encoding(
         encodeStart()
         for (t in 0 until plies) encodePly(t)
         for (t in 0..plies) encodeKingSafety(t)
-        History(cnf) { sq, piece -> at(0, sq, piece) }
+        historyCheck = encodeHistory()
         encodeGoal()
         encodeMovePatterns(this)
     }
@@ -376,6 +382,22 @@ class Encoding(
         CastleRight.entries.first { it.color == c && Geometry.castles.getValue(it).kingTo == kingTo }
 
     // ---- rules -------------------------------------------------------------------------------
+
+    private fun encodeHistory(): Cnf? {
+        val start = patterns.getValue(0)
+        if (!start.isFixed) {
+            History(cnf) { sq, piece -> at(0, sq, piece) }
+            return null
+        }
+        val h = Cnf()
+        val base = h.newVars(64 * PIECES)
+        for (sq in 0 until 64) {
+            val given = cellIndex(start.cells[sq], "board at ply 0")
+            for (p in 0 until PIECES) h.add(if (p == given) base + sq * PIECES + p else -(base + sq * PIECES + p))
+        }
+        History(h) { sq, piece -> base + sq * PIECES + pieceIndex(piece) }
+        return h
+    }
 
     /** The side NOT to move at ply t is not in check (it just moved, or it is the start position). */
     private fun encodeKingSafety(t: Int) {

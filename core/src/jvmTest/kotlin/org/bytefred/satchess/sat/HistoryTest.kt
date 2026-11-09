@@ -17,7 +17,12 @@ class HistoryTest {
     @Test fun bareKings() = assertEquals(1, consistent("4k3/8/8/8/8/8/8/4K3"))
 
     // identity: counts and bishop colours fall out of the matching
-    @Test fun ninePawns() = assertEquals(0, consistent("4k3/8/8/8/P7/8/PPPPPPPP/4K3"))
+    @Test
+    fun ninePawns() {
+        val result = solveAll(Puzzle(plies = 0, start = Start(board = "4k3/8/8/8/P7/8/PPPPPPPP/4K3", castling = "-")))
+        assertEquals(0, result.count)
+        assertEquals(listOf(START_UNREACHABLE), result.infos)
+    }
     @Test fun threeKnightsNeedAPromotion() = assertEquals(0, consistent("4k3/8/8/8/8/N7/PPPPPPPP/1N2K1N1"))
     @Test fun threeKnightsWithSevenPawns() = assertEquals(1, consistent("4k3/8/8/8/8/N7/PPPPPPP1/1N2K1N1"))
     @Test fun twoDarkBishops() = assertEquals(0, consistent("4k3/8/8/8/8/8/PPPPPPPP/2B1K1B1"))
