@@ -166,9 +166,9 @@ Reviewed by a fresh UX reviewer; decisions:
   off the board removes them. Settings offer one alternative, "click opens a dialog",
   because Manfred asked for switchable input modes.
 - **Question preset first** (Proof game / Last moves / Helpmate / Unknown piece / Custom; until
-  2026-11-09 "Last move(s)?", "Helpmate in k", "Find unknown piece"). The preset fills A, B, N, goal and projection. Max solutions, Shortest and
-  square domains live under "Advanced" (solver choice, the projection field and the rule
-  switches were removed on 2026-11-09).
+  2026-11-09 "Last move(s)?", "Helpmate in k", "Find unknown piece"). The preset fills A, B, N, goal and projection. (The "Advanced" section with
+  solver choice, projection, rule switches, max solutions, Shortest and the square-domain editor
+  was removed step by step on 2026-11-09.)
 - **Plies vs moves**: one number with a unit toggle plus a live sentence, e.g.
   "13 plies = 6.5 moves · White starts · White moves last · Black to move at B".
 - **Timeline**: `(A)─1─2─…─(B)` chips; the icon shows fixed / partial / open (derived from
@@ -266,8 +266,9 @@ results as their own view.
   - "nimm die janko sachen raus": the 20 janko.at shorties are removed, also from the git history
     (rewritten before the first push; local backup tag `backup/before-janko-removal`). chess.com
     puzzles and demos stay.
-  - Demos no longer say "Own demo": Fool's mate is "Well-known", the Ruy Lopez one "Standard
-    opening", the others "Rule demo".
+  - Demos no longer say "Own demo"; first relabelled "Well-known" / "Standard opening" / "Rule
+    demo", then (Manfred: "des is immer nur arrogant … sei normal") the demos carry no source or
+    composer line at all.
   - The loaded puzzle shows a "Source" link next to its credits (before: only in the Examples dialog).
   - "lass die solver auswahl weg": no solver choice in the UI, it always uses kissat (as fast as or
     faster than CaDiCaL in every measurement in `encoding.md`, and incremental).
@@ -298,6 +299,12 @@ results as their own view.
     (Ctrl/Cmd+Z, Shift for redo, 100 steps, a run of N keystrokes is one step); the bundled
     monospace font is gone ("brauchst ja nie nen andren font typ"), with it the resources plugin
     and the DejaVu notice.
+  - **No Advanced section** (Manfred: "das ganze advanced kannst wegschmeißen"): the solver
+    always enumerates all solutions, the Solve button turns into Cancel while it runs; "Shortest"
+    and the square-domain editor are gone from the UI (`shortest` and `squares` stay in the file
+    format; the board's "one of several" options still write `squares`). The timeline moved to
+    the bottom of the left column, the puzzle header sits in a card like the sections, and the
+    demos carry no source line.
   - About like ktoy: one line per part with link and license (app, ksat, cburnett pieces,
     chess.com article); the full license texts only behind "License texts". Developer notes
     on the piece graphics moved from `composeApp/NOTICE-pieces.md` to `doc/pieces.md`; the app

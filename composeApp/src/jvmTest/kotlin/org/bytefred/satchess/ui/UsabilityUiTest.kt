@@ -15,7 +15,6 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
-import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -139,9 +138,9 @@ class UsabilityUiTest {
         runOnIdle { link.linkInteractionListener!!.onClick(link) }
         runOnIdle { assertEquals(listOf(puzzle.source?.url), opened) }
 
-        // no URL, no link
+        // demos have no source: no credit line at all
         runOnIdle { vm.load(loadExamples().first { it.puzzle.id == "demos/fools-mate" }.puzzle) }
-        onNodeWithTag("puzzleSource").assertTextEquals("Well-known")
+        onNodeWithTag("puzzleSource").assertDoesNotExist()
     }
 
     @Test

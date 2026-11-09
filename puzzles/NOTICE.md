@@ -16,10 +16,8 @@ https://www.chess.com/article/view/can-you-solve-these-5-easy-retrograde-puzzles
 (puzzle 4 by Tibor Orban, Die Schwalbe 1976; puzzle 5 by Raymond Smullyan,
 *The Chess Mysteries of Sherlock Holmes*, 1979).
 
-The puzzles in `demos/` only show the rules and the puzzle format. Two of them
-are standard chess knowledge (Fool's mate, the Ruy Lopez opening); the others are
-minimal positions for one rule each. They are covered by the MIT license like the
-code.
+The puzzles in `demos/` only show the rules and the puzzle format; they are
+covered by the MIT license like the code.
 
 ## Removal on request
 

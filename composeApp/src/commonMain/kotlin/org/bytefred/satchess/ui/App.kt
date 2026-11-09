@@ -6,9 +6,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -120,7 +123,7 @@ fun App(vm: PuzzleViewModel = viewModel { PuzzleViewModel() }) {
 }
 
 /**
- * Left: what is asked (header, question, start, advanced). Middle: timeline and board. Right (from
+ * Left: what is asked (header, question, start, timeline). Middle: the board. Right (from
  * [THREE_COLUMNS] on): Solve and the results; with two columns they follow the board.
  */
 @Composable
@@ -131,12 +134,11 @@ private fun SideBySideLayout(vm: PuzzleViewModel, threeColumns: Boolean, modifie
                 PuzzleHeader(vm, compact = false)
                 QuestionSection(vm)
                 StartSection(vm)
-                AdvancedSection(vm)
+                TimelineSection(vm)
             }
         })
         add(SplitPanel("board") { m ->
             ScrollPanel(m) {
-                TimelineSection(vm)
                 BoardEditorSection(vm)
                 if (!threeColumns) {
                     SolveBar(vm)
@@ -199,7 +201,6 @@ private fun StackedLayout(vm: PuzzleViewModel, modifier: Modifier) {
             StartSection(vm)
             TimelineSection(vm)
             BoardEditorSection(vm)
-            AdvancedSection(vm)
             Box(Modifier.onGloballyPositioned { resultsTop = it.positionInParent().y.toInt() }) { ResultsSection(vm) }
         }
     }
@@ -213,7 +214,13 @@ private fun StackedLayout(vm: PuzzleViewModel, modifier: Modifier) {
 private fun PuzzleHeader(vm: PuzzleViewModel, compact: Boolean) {
     val p = vm.puzzle
     var expanded by remember(p) { mutableStateOf(!compact) }
-    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+    // the same card as the sections, so the header lines up with them
+    Card(
+        Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = CardDefaults.outlinedCardBorder(),
+    ) {
+      Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Text(p.title.ifEmpty { "Untitled puzzle" }, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.testTag("puzzleTitle"))
         val meta = creditLine(p)
         val url = p.source?.url
@@ -238,5 +245,6 @@ private fun PuzzleHeader(vm: PuzzleViewModel, compact: Boolean) {
                 modifier = Modifier.clickable { expanded = !expanded },
             )
         }
+      }
     }
 }

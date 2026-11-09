@@ -1,12 +1,6 @@
 {
   "id": "demos/castling",
   "title": "Castling both ways",
-  "composer": null,
-  "source": {
-    "name": "Rule demo",
-    "url": null,
-    "year": null
-  },
   "description": "Kings and rooks only, all castling rights. One move each: White ends up castled short, Black castled long.",
   "question": "custom",
   "plies": 2,

@@ -1,12 +1,6 @@
 {
   "id": "demos/black-to-move",
   "title": "Black moves first",
-  "composer": null,
-  "source": {
-    "name": "Standard opening",
-    "url": null,
-    "year": null
-  },
   "description": "The game starts after 1. e4, Black to move. Reach this position in 4 plies.",
   "question": "proofGame",
   "plies": 4,

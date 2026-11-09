@@ -59,7 +59,6 @@ enum class InputMode { HYBRID, DIALOG }
 enum class LayoutMode { AUTO, PORTRAIT, LANDSCAPE }
 
 /** "Max solutions" in Advanced: 1, a number N, or all. */
-enum class SolutionLimit { ONE, N, ALL }
 
 /** Target of the square options dialog: one square of the selected ply, or the ply's '?' default. */
 sealed interface OptionsTarget {
@@ -115,11 +114,6 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
 
     /** The open square options dialog, or null. */
     var optionsTarget by mutableStateOf<OptionsTarget?>(null); private set
-
-    // Advanced solver options (not part of the puzzle file). Capped by default: an open B can have
-    // hundreds of thousands of lines; "all" stays selectable.
-    var limit by mutableStateOf(SolutionLimit.N)
-    var limitN by mutableIntStateOf(DEFAULT_LIMIT)
 
     var run by mutableStateOf(SolveRun()); private set
 
@@ -291,7 +285,6 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
     }
 
     fun setGoal(goal: Goal) = update(puzzle.copy(goal = goal))
-    fun setShortest(on: Boolean) = update(puzzle.copy(shortest = on))
 
     // ── start parameters ─────────────────────────────────────────────────────
 
@@ -407,17 +400,12 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
     fun solve() {
         if (!canSolve) return
         val solving = puzzle
-        val maxSolutions = when (limit) {
-            SolutionLimit.ONE -> 1
-            SolutionLimit.N -> limitN.coerceAtLeast(1)
-            SolutionLimit.ALL -> 0
-        }
         run = SolveRun(running = true, puzzle = solving)
         clearSolutions()
         runStart = TimeSource.Monotonic.markNow()
         selectedSolution = 0
         replayPly = 0
-        solverService.solve(solving, SolveOptions(Solver.KISSAT, maxSolutions), ::onSolveEvent)
+        solverService.solve(solving, SolveOptions(Solver.KISSAT, maxSolutions = 0), ::onSolveEvent)
     }
 
     fun cancel() {
@@ -497,7 +485,6 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
         private val compactJson = Json(from = PuzzleJson.json) { prettyPrint = false }
 
         /** Default "Max solutions" N. */
-        const val DEFAULT_LIMIT = 100
 
         /** "New": a 4-ply proof game from the initial position with B still open. */
         val NEW_PUZZLE = Puzzle(

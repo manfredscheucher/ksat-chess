@@ -9,12 +9,6 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
     ExampleSource("Demos", """{
   "id": "demos/fools-mate",
   "title": "Fool's mate",
-  "composer": null,
-  "source": {
-    "name": "Well-known",
-    "url": null,
-    "year": null
-  },
   "description": "The quickest mate: Black mates on move 2. Find every move order.",
   "question": "helpmate",
   "plies": 4,
@@ -30,12 +24,6 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
     ExampleSource("Demos", """{
   "id": "demos/last-move",
   "title": "What was the last move?",
-  "composer": null,
-  "source": {
-    "name": "Rule demo",
-    "url": null,
-    "year": null
-  },
   "description": "Black is in check from the knight on f7. Where did it come from?",
   "question": "lastMoves",
   "plies": 1,
@@ -53,12 +41,6 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
     ExampleSource("Demos", """{
   "id": "demos/black-to-move",
   "title": "Black moves first",
-  "composer": null,
-  "source": {
-    "name": "Standard opening",
-    "url": null,
-    "year": null
-  },
   "description": "The game starts after 1. e4, Black to move. Reach this position in 4 plies.",
   "question": "proofGame",
   "plies": 4,
@@ -77,12 +59,6 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
     ExampleSource("Demos", """{
   "id": "demos/en-passant",
   "title": "En passant",
-  "composer": null,
-  "source": {
-    "name": "Rule demo",
-    "url": null,
-    "year": null
-  },
   "description": "Black to move, a white pawn on e5. Two plies later a white pawn stands on d6 and d5 is empty. Which two moves?",
   "question": "custom",
   "plies": 2,
@@ -102,12 +78,6 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
     ExampleSource("Demos", """{
   "id": "demos/castling",
   "title": "Castling both ways",
-  "composer": null,
-  "source": {
-    "name": "Rule demo",
-    "url": null,
-    "year": null
-  },
   "description": "Kings and rooks only, all castling rights. One move each: White ends up castled short, Black castled long.",
   "question": "custom",
   "plies": 2,
@@ -126,12 +96,6 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
     ExampleSource("Demos", """{
   "id": "demos/promotion",
   "title": "Promotion choices",
-  "composer": null,
-  "source": {
-    "name": "Rule demo",
-    "url": null,
-    "year": null
-  },
   "description": "The pawn on b7 moves to b8. What can stand on b8 afterwards?",
   "question": "custom",
   "plies": 1,
@@ -149,12 +113,6 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
     ExampleSource("Demos", """{
   "id": "demos/which-piece",
   "title": "Which piece on a1?",
-  "composer": null,
-  "source": {
-    "name": "Rule demo",
-    "url": null,
-    "year": null
-  },
   "description": "Black is in check. On a1 stands a white queen, rook, bishop or knight: which of them fit?",
   "question": "unknownPiece",
   "plies": 0,

@@ -46,7 +46,6 @@ import kotlinx.coroutines.delay
 import org.bytefred.satchess.chess.Fen
 import org.bytefred.satchess.chess.Sq
 import org.bytefred.satchess.puzzle.UNKNOWN_SQUARES
-import org.bytefred.satchess.sat.ShortestCheck
 import org.bytefred.satchess.sat.Solution
 import org.bytefred.satchess.ui.board.BoardView
 import org.bytefred.satchess.ui.model.answerSummary
@@ -56,79 +55,6 @@ import org.bytefred.satchess.ui.model.isPathProjection
 import org.bytefred.satchess.ui.model.sanLine
 import org.bytefred.satchess.ui.model.similaritySummary
 import org.bytefred.satchess.ui.model.squareDomainError
-
-// ── advanced ────────────────────────────────────────────────────────────────
-
-/** Max solutions, shortest and square domains (collapsible). */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-fun AdvancedSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
-    var expanded by remember { mutableStateOf(false) }
-    val p = vm.puzzle
-    Section("Advanced", modifier, expanded = expanded, onToggle = { expanded = !expanded }) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            ChoiceChips("Max solutions", vm.limit, SolutionLimit.entries, {
-                when (it) { SolutionLimit.ONE -> "1"; SolutionLimit.N -> "limit"; SolutionLimit.ALL -> "all" }
-            }) { vm.limit = it }
-            if (vm.limit == SolutionLimit.N) {
-                Spacer(Modifier.width(8.dp))
-                CompactField(
-                    value = vm.limitN.toString(),
-                    onValueChange = { text -> text.toIntOrNull()?.takeIf { it > 0 }?.let { vm.limitN = it } },
-                    modifier = Modifier.width(90.dp),
-                    label = "how many",
-                )
-            }
-        }
-        CheckRow("Shortest: also prove that two plies less are not enough", p.shortest, vm::setShortest)
-        SquareDomains(vm)
-    }
-}
-
-@Composable
-private fun CheckRow(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable { onChange(!checked) }) {
-        Checkbox(checked = checked, onCheckedChange = onChange)
-        Text(label, style = MaterialTheme.typography.bodyMedium)
-    }
-}
-
-/** Per-ply square domains, e.g. ply 0, h4 must hold one of QRBNqrbn. */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun SquareDomains(vm: PuzzleViewModel) {
-    val p = vm.puzzle
-    FieldLabel("Allowed on a square ('.' = empty)")
-    for ((ply, domains) in p.squares.entries.sortedBy { it.key.toIntOrNull() ?: 0 }) {
-        for ((square, allowed) in domains) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                val where = if (square == UNKNOWN_SQUARES) "every '?' square" else square
-                Text("ply ${plyName(ply.toIntOrNull() ?: 0, p.plies)}: $where in $allowed", style = MaterialTheme.typography.bodyMedium)
-                Spacer(Modifier.width(8.dp))
-                TextButton(onClick = { vm.setSquareDomain(ply.toIntOrNull() ?: 0, square, "") }) { Text("Remove") }
-            }
-        }
-    }
-    var ply by remember { mutableStateOf("0") }
-    var square by remember { mutableStateOf("") }
-    var allowed by remember { mutableStateOf("") }
-    val t = ply.trim().toIntOrNull()?.takeIf { it in 0..p.plies }
-    val sqOk = Sq.parse(square.trim()) != null
-    val allowedError = squareDomainError(allowed.trim())
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), itemVerticalAlignment = Alignment.CenterVertically) {
-        CompactField(ply, { ply = it }, Modifier.width(72.dp), label = "Ply", isError = t == null)
-        CompactField(square, { square = it }, Modifier.width(90.dp), label = "Square")
-        CompactField(allowed, { allowed = it }, Modifier.width(140.dp), label = "Allowed")
-        OutlinedButton(
-            onClick = {
-                vm.setSquareDomain(t ?: 0, square.trim(), allowed.trim())
-                square = ""
-                allowed = ""
-            },
-            enabled = t != null && sqOk && allowedError == null,
-        ) { Text("Add") }
-    }
-}
 
 // ── solve bar ───────────────────────────────────────────────────────────────
 
@@ -208,7 +134,6 @@ fun ResultsSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
                 color = if (unverified > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.testTag("countSummary"),
             )
-            done.shortestCheck?.let { Text(shortestLabel(it, solved.plies), style = MaterialTheme.typography.bodyMedium) }
         }
         if (solutions.isEmpty()) {
             if (run.running) Text("No solution yet ...", style = MaterialTheme.typography.bodyMedium)
@@ -224,14 +149,6 @@ fun ResultsSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
         HorizontalDivider()
         ReplayPanel(vm)
     }
-}
-
-private fun shortestLabel(check: ShortestCheck, plies: Int): String = when (check) {
-    ShortestCheck.PROVEN -> "Shortest: yes, ${plies - 2} plies are impossible."
-    ShortestCheck.NOT_SHORTEST -> "Shortest: no, ${plies - 2} plies are enough."
-    ShortestCheck.NOT_PROVEN_RELAXED ->
-        "Shortest: unclear. ${plies - 2} plies are enough without the move patterns and middle boards."
-    ShortestCheck.CANCELLED -> "Shortest: not checked."
 }
 
 /**

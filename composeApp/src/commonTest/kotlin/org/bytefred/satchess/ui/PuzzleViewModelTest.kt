@@ -130,11 +130,9 @@ class PuzzleViewModelTest {
 
     @Test
     fun solveCollectsEventsAndCancelStopsTheRun() {
-        vm.limit = SolutionLimit.N
-        vm.limitN = 5
         vm.solve()
         assertTrue(vm.run.running)
-        assertEquals(5, solver.lastOptions?.maxSolutions)
+        assertEquals(0, solver.lastOptions?.maxSolutions) // always every solution; Cancel stops
         assertEquals(Solver.KISSAT, solver.lastOptions?.solver)
         solver.emit(SolveEvent.Encoded(100, 2000, 5))
         solver.emit(SolveEvent.Found(0, Solution(listOf("a", "b"), emptyList(), "key", true), 10))
@@ -161,10 +159,8 @@ class PuzzleViewModelTest {
     }
 
     @Test
-    fun solutionsAreCappedByDefaultAndAppendedInPlace() {
-        assertEquals(SolutionLimit.N, vm.limit)
+    fun solutionsAreAppendedInPlace() {
         vm.solve()
-        assertEquals(PuzzleViewModel.DEFAULT_LIMIT, solver.lastOptions?.maxSolutions)
         val line = Solution(listOf("a", "b"), emptyList(), "key", true)
         repeat(50_000) { solver.emit(SolveEvent.Found(it, line, 0)) }
         assertEquals(50_000, vm.solutions.size)
