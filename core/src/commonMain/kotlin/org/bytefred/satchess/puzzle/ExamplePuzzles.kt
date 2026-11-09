@@ -41,7 +41,7 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
     ExampleSource("Demos", """{
   "id": "demos/black-to-move",
   "title": "Black moves first",
-  "description": "The game starts after 1. e4, Black to move. Reach this position in 4 plies.",
+  "description": "The game starts after 1. e4, Black to move. Reach the Ruy Lopez in 4 plies.",
   "question": "proofGame",
   "plies": 4,
   "start": {
