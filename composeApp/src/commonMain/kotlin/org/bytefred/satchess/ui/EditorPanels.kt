@@ -332,22 +332,17 @@ fun BoardEditorSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        if ('?' in vm.board) {
+            OutlinedButton(
+                onClick = { vm.openOptions(OptionsTarget.UnknownSquares) },
+                modifier = Modifier.testTag("unknownSquaresOptions"),
+            ) { Text("Set all '?' squares to ...") }
+        }
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Set board to", style = MaterialTheme.typography.bodyMedium)
             OutlinedButton(onClick = vm::setInitialBoard) { Text("Initial") }
             OutlinedButton(onClick = vm::clearBoard) { Text("Clear") }
             OutlinedButton(onClick = vm::openBoard) { Text("All ?") }
-        }
-        if ('?' in vm.board) Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                "Every '?' square: ${optionsLabel(p.defaultOptionsAt(t))}",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.weight(1f, fill = false),
-            )
-            Spacer(Modifier.width(8.dp))
-            TextButton(
-                onClick = { vm.openOptions(OptionsTarget.UnknownSquares) },
-                modifier = Modifier.testTag("unknownSquaresOptions"),
-            ) { Text("Change ...") }
         }
         CompactField(
             value = vm.fenText,
@@ -366,7 +361,7 @@ fun BoardEditorSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
                     is SquareState.Fixed -> setOf(state.cell)
                     is SquareState.Options -> state.allowed
                 }
-            OptionsTarget.UnknownSquares -> "Every '?' square, ${boardName(t, p.plies)}" to p.defaultOptionsAt(t)
+            OptionsTarget.UnknownSquares -> "All '?' squares, ${boardName(t, p.plies)}" to p.defaultOptionsAt(t)
         }
         OptionsDialog(heading, initial, onApply = vm::applyOptions, onDismiss = vm::closeOptions)
     }

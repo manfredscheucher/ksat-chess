@@ -454,6 +454,16 @@ the examples (File > Examples), or encode a board yourself to figure out how you
 "If something is unclear, Help explains the puzzle, the board input and the results."; the repo
 link; then the feedback box with the e-mail.
 
+### Board buttons: "Set all '?' squares to ..." and "Set board to" (Manfred, 2026-11-10)
+
+Manfred: the "Every '?' square anything ..." line seemed unnecessary; put Initial / Clear / All ?
+below it and relabel: "Set all '?' squares to ..." and below it "Set board to Initial / Clear /
+All ?". Built that way: one button "Set all '?' squares to ..." (still only while the board has a
+'?' square; it opens the options dialog, now titled "All '?' squares, Board t"), then a row "Set
+board to [Initial] [Clear] [All ?]". The line no longer shows the current '?' default. What the
+button is for: it says what every '?' square may hold, e.g. chess.com #2 sets "white king or
+empty" for all of them at once.
+
 ## 8. Open points / follow-ups
 
 - Idea (Manfred, 2026-11-09): the goal belongs to the board, not the Question row, so a goal

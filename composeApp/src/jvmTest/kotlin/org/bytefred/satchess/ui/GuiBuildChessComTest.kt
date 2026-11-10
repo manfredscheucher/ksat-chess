@@ -151,7 +151,7 @@ class GuiBuildChessComTest {
         place(s, 'b', "d5")
         place(s, 'B', "a4")
         place(s, 'k', "d1")
-        onNodeWithTag("unknownSquaresOptions").performScrollTo().performClick(); s.step("'Every ? square: Change ...'")
+        onNodeWithTag("unknownSquaresOptions").performScrollTo().performClick(); s.step("'Set all ? squares to ...'")
         onNodeWithText("White king or empty").performClick(); s.step("shortcut 'White king or empty'")
         onNodeWithTag("applyOptions").performClick(); s.step("Apply")
     }
