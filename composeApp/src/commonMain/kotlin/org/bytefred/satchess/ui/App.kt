@@ -69,7 +69,7 @@ fun App(vm: PuzzleViewModel = viewModel { PuzzleViewModel() }) {
       val examplesState = remember { ExamplesTreeState() }
       val snackbar = remember { SnackbarHostState() }
       LaunchedEffect(Unit) {
-          vm.start(sharedPuzzleJson(), examples)
+          vm.start(sharedPuzzleJson())
           listenForShareLinks { json -> vm.leave { vm.openShareLink(json) } }
       }
       LaunchedEffect(vm.message) {

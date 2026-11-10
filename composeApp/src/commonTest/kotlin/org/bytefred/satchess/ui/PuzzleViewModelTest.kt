@@ -47,12 +47,11 @@ class PuzzleViewModelTest {
     private val vm = PuzzleViewModel(solver)
 
     @Test
-    fun startsWithTheFirstExampleOrASharedPuzzle() {
-        val example = Example("Demo", Puzzle(title = "first", plies = 2))
-        vm.start(null, listOf(example))
-        assertEquals("first", vm.puzzle.title)
+    fun startsWithANewPuzzleOrASharedPuzzle() {
+        vm.start(null)
+        assertEquals(PuzzleViewModel.NEW_PUZZLE, vm.puzzle)
         val other = PuzzleViewModel(FakeSolverService())
-        other.start("""{"title": "shared", "plies": 3}""", listOf(example))
+        other.start("""{"title": "shared", "plies": 3}""")
         assertEquals("shared", other.puzzle.title)
     }
 

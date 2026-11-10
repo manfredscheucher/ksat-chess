@@ -443,6 +443,17 @@ types a number; that number is kept until another puzzle is loaded or the number
 reading: a valid value is a whole number from 1 to the number of boards (k + 1); anything else
 shows an error and the grid keeps the last valid value.
 
+### Start with a new puzzle, "How to start" in the Welcome dialog (Manfred, 2026-11-10)
+
+Manfred: "by default immer mit new starten, also nicht fools mate als start example ... beim ersten
+start sagen sowas wie how to start: look at one of the examples, encode a board by yourself to
+figure out how you got there ... auch darauf verweisen dass in help erklärung gibt ... darunter
+erst die email ... direkt nach der erklärung was das tool ist". The app opens "New puzzle" (a
+shared link still wins). The Welcome dialog: what the tool does; "How to start: look at one of
+the examples (File > Examples), or encode a board yourself to figure out how you got there.";
+"If something is unclear, Help explains the puzzle, the board input and the results."; the repo
+link; then the feedback box with the e-mail.
+
 ## 8. Open points / follow-ups
 
 - Idea (Manfred, 2026-11-09): the goal belongs to the board, not the Question row, so a goal

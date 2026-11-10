@@ -340,6 +340,13 @@ private fun WelcomeDialog(close: () -> Unit) {
         text = {
             Column {
                 Text("Set up a position, and a SAT solver finds every legal move sequence that fits.")
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    "How to start: look at one of the examples (File > Examples), or encode a board yourself " +
+                        "to figure out how you got there.",
+                )
+                Spacer(Modifier.height(6.dp))
+                Text("If something is unclear, Help explains the puzzle, the board input and the results.")
                 Spacer(Modifier.height(6.dp))
                 Row { Text("Code and puzzles: "); LinkText("github.com/manfredscheucher/ksat-chess", REPO_URL) }
                 Spacer(Modifier.height(10.dp))

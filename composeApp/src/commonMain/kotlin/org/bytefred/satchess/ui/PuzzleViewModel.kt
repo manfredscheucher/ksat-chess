@@ -188,12 +188,12 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
 
     private var started = false
 
-    /** First screen: a puzzle shared via link wins, else the first bundled example, else "New". */
-    fun start(sharedJson: String?, examples: List<Example>) {
+    /** First screen: a puzzle shared via link, else "New". */
+    fun start(sharedJson: String?) {
         if (started) return
         started = true
         if (sharedJson != null && openShareLink(sharedJson)) return
-        examples.firstOrNull()?.let { load(it.puzzle) }
+        newPuzzle()
     }
 
     private var openingShareLink = false
