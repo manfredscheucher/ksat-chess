@@ -453,6 +453,18 @@ shared link still wins). The Welcome dialog: what the tool does; "How to start: 
 the examples (File > Examples), or encode a board yourself to figure out how you got there.";
 "If something is unclear, Help explains the puzzle, the board input and the results."; the repo
 link; then the feedback box with the e-mail.
+Then Manfred: "sag im start dialog einfach dass man über file -> example beispiele öffnen kann ...
+oder direkt mit neuem feld loslegt (ply und eigene konfiguration eingibt, und versucht das zu
+lösen)". After a fresh review the line reads: "How to start: open an example via File > Examples,
+or use the new puzzle that is already open. Enter the number of plies and your own boards, then
+press Solve." (">" because the web font has no arrow glyph.)
+
+### Demo "How did we get here?" (Manfred, 2026-11-10)
+
+Manfred: add a game he rebuilt as a demo, without naming or linking where it comes from. Start
+position, 8 plies, the board after 1. d4 d5 2. Bf4 Nc6 3. e3 Bf5 4. Bd3 g6 fixed; 12 move orders
+(White's order is forced, Black has 4!/2 because Bf5 needs d5 first). Checked by the solver and by
+a fresh reviewer.
 
 ### Board buttons: "Set all '?' squares to ..." and "Set board to" (Manfred, 2026-11-10)
 

@@ -342,8 +342,8 @@ private fun WelcomeDialog(close: () -> Unit) {
                 Text("Set up a position, and a SAT solver finds every legal move sequence that fits.")
                 Spacer(Modifier.height(10.dp))
                 Text(
-                    "How to start: look at one of the examples (File > Examples), or encode a board yourself " +
-                        "to figure out how you got there.",
+                    "How to start: open an example via File > Examples, or use the new puzzle that is already open. " +
+                        "Enter the number of plies and your own boards, then press Solve.",
                 )
                 Spacer(Modifier.height(6.dp))
                 Text("If something is unclear, Help explains the puzzle, the board input and the results.")

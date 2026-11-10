@@ -141,6 +141,22 @@ val EXAMPLE_PUZZLE_SOURCES: List<ExampleSource> = listOf(
   ],
   "expected": 2
 }"""),
+    ExampleSource("Demos", """{
+  "id": "demos/how-did-we-get-here",
+  "title": "How did we get here?",
+  "description": "A position after four moves each. Find every move order that leads to it.",
+  "plies": 8,
+  "start": {
+    "board": "startpos"
+  },
+  "positions": {
+    "8": "r2qkbnr/ppp1pp1p/2n3p1/3p1b2/3P1B2/3BP3/PPP2PPP/RN1QK1NR"
+  },
+  "project": [
+    "moves"
+  ],
+  "expected": 12
+}"""),
     ExampleSource("chess.com: 5 easy retrograde puzzles", """{
   "id": "chess-com-5/1",
   "title": "Four moves each",
