@@ -347,12 +347,25 @@ private fun ReplayPanel(vm: PuzzleViewModel) {
     }
 }
 
-/** All k + 1 boards of [solution] in a grid with [staticColumns] columns, ply 0 (A) first. */
+/**
+ * All k + 1 boards of [solution] in a grid, Board 0 first. Columns: [staticColumns] by default, or
+ * the number typed in the field above the grid.
+ */
 @Composable
 private fun StaticBoards(vm: PuzzleViewModel, solution: Solution) {
     val plies = solution.moves.size
-    val columns = staticColumns(plies)
+    val boards = plies + 1
+    val columns = vm.columnsOverride?.takeIf { it in 1..boards } ?: staticColumns(plies)
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        val error = vm.staticColumnsError(boards)
+        CompactField(
+            value = vm.staticColumnsText ?: staticColumns(plies).toString(),
+            onValueChange = { vm.setStaticColumnsInput(it, boards) },
+            modifier = Modifier.width(150.dp).testTag("staticColumns"),
+            label = "Columns",
+            isError = error,
+            supporting = if (error) "A whole number from 1 to $boards" else null,
+        )
         for (row in (0..plies).chunked(columns)) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 for (t in row) {

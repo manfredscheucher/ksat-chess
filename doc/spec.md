@@ -433,6 +433,16 @@ right click); the line "Every '?' square: ... [Change ...]" shows only while the
 '?' square; the collapsed Setup card on the phone reads "4 plies · ends in checkmate" (nothing
 after the plies when the goal is "any"); the FEN label stays short.
 
+### Columns input for the static solution view (Manfred, 2026-11-10)
+
+Manfred: "für die static anzeige noch nen integer input machn, für anzahl der spalten, mit
+default setzn (über wurzel berechnen), danach wert merken ... solang bis neues spiel bzw ply zahl
+geändert wird". A "Columns" field above the static grid shows ceil(sqrt(k + 1)) until the user
+types a number; that number is kept until another puzzle is loaded or the number of plies changes
+(typing, undo or redo), then the default applies again. Not stored across reloads. Claude's
+reading: a valid value is a whole number from 1 to the number of boards (k + 1); anything else
+shows an error and the grid keeps the last valid value.
+
 ## 8. Open points / follow-ups
 
 - Idea (Manfred, 2026-11-09): the goal belongs to the board, not the Question row, so a goal

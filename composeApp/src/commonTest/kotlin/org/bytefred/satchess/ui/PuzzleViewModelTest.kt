@@ -3,6 +3,7 @@ package org.bytefred.satchess.ui
 import androidx.compose.ui.input.key.Key
 import org.bytefred.ksat.facade.Solver
 import org.bytefred.satchess.chess.Sq
+import org.bytefred.satchess.puzzle.Goal
 import org.bytefred.satchess.puzzle.MovePattern
 import org.bytefred.satchess.puzzle.Puzzle
 import org.bytefred.satchess.puzzle.Start
@@ -236,6 +237,27 @@ class PuzzleViewModelTest {
         vm.dragPiece(Sq.parse("e1")!!, 0)
         assertEquals('K', vm.board[0])
         assertEquals(mapOf("?" to "K."), vm.puzzle.squares["0"])
+    }
+
+    @Test
+    fun staticColumnsAreKeptUntilAnotherPuzzleOrOtherPlies() {
+        vm.load(Puzzle(plies = 4))
+        assertNull(vm.columnsOverride)
+        vm.setStaticColumnsInput("5", boards = 5)
+        assertEquals(5, vm.columnsOverride)
+        vm.setStaticColumnsInput("0", boards = 5) // invalid: the last valid value stays
+        assertEquals(5, vm.columnsOverride)
+        assertTrue(vm.staticColumnsError(5))
+        vm.setStaticColumnsInput("2", boards = 5)
+        vm.setGoal(Goal.CHECK) // other edits keep it
+        assertEquals(2, vm.columnsOverride)
+        vm.setPliesInput("6")
+        assertNull(vm.columnsOverride)
+        assertNull(vm.staticColumnsText)
+
+        vm.setStaticColumnsInput("3", boards = 7)
+        vm.load(Puzzle(plies = 6))
+        assertNull(vm.columnsOverride)
     }
 
     @Test

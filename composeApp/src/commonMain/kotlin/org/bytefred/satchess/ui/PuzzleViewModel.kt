@@ -108,6 +108,27 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
     var layoutMode by mutableStateOf(LayoutMode.entries.firstOrNull { it.name == loadPref(LAYOUT_PREF) } ?: LayoutMode.AUTO)
     var solutionView by mutableStateOf(SolutionView.entries.firstOrNull { it.name == loadPref(SOLUTION_VIEW_PREF) } ?: SolutionView.ANIMATED)
 
+    /**
+     * Columns of the static solution view as typed by the user; null = the default
+     * [staticColumns]. Kept until another puzzle is loaded or the number of plies changes.
+     */
+    var staticColumnsText by mutableStateOf<String?>(null); private set
+    var columnsOverride by mutableStateOf<Int?>(null); private set
+
+    /** The columns typed in the static view: a whole number from 1 to the number of boards. */
+    fun setStaticColumnsInput(text: String, boards: Int) {
+        staticColumnsText = text
+        text.trim().toIntOrNull()?.takeIf { it in 1..boards }?.let { columnsOverride = it }
+    }
+
+    fun staticColumnsError(boards: Int): Boolean =
+        staticColumnsText?.trim()?.toIntOrNull()?.takeIf { it in 1..boards } == null && staticColumnsText != null
+
+    private fun resetStaticColumns() {
+        staticColumnsText = null
+        columnsOverride = null
+    }
+
     /** The shares of the side-by-side panels, per panel key. */
     var panelWeights by mutableStateOf<Map<String, Float>>(emptyMap())
 
@@ -146,6 +167,7 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
     fun load(p: Puzzle) {
         solverService.cancel()
         if (!openingShareLink) clearShareLink()
+        resetStaticColumns()
         update(p)
         savedPuzzle = p
         selectedPly = if (p.positions.containsKey(p.plies.toString())) p.plies else 0
@@ -264,6 +286,7 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
         val (basePuzzle, baseSelected) = base
         val next = basePuzzle.withPlies(plies)
         if (next != puzzle && undoStack.lastOrNull() !== basePuzzle) remember(basePuzzle) // one undo step per run of keystrokes
+        if (next.plies != puzzle.plies) resetStaticColumns()
         puzzle = next
         selectedPly = if (baseSelected == basePuzzle.plies) plies else baseSelected.coerceAtMost(plies)
         selectedMove = selectedMove?.takeIf { it < plies }
@@ -392,6 +415,7 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
     }
 
     private fun restore(p: Puzzle) {
+        if (p.plies != puzzle.plies) resetStaticColumns()
         puzzle = p
         pliesEditBase = null
         selectedPly = selectedPly.coerceAtMost(p.plies)
