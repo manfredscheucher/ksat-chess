@@ -358,10 +358,11 @@ private fun StaticBoards(vm: PuzzleViewModel, solution: Solution) {
     val columns = vm.columnsOverride?.takeIf { it in 1..boards } ?: staticColumns(plies)
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         val error = vm.staticColumnsError(boards)
-        CompactField(
+        NumberField(
             value = vm.staticColumnsText ?: staticColumns(plies).toString(),
             onValueChange = { vm.setStaticColumnsInput(it, boards) },
-            modifier = Modifier.width(150.dp).testTag("staticColumns"),
+            range = 1..boards,
+            tag = "staticColumns",
             label = "Columns",
             isError = error,
             supporting = if (error) "A whole number from 1 to $boards" else null,

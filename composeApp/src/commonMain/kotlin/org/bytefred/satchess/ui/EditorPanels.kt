@@ -115,10 +115,11 @@ fun SetupSection(vm: PuzzleViewModel, modifier: Modifier = Modifier, collapsible
             verticalArrangement = Arrangement.spacedBy(8.dp),
             itemVerticalAlignment = Alignment.CenterVertically,
         ) {
-            CompactField(
+            NumberField(
                 value = vm.pliesText,
                 onValueChange = vm::setPliesInput,
-                modifier = Modifier.width(150.dp).testTag("plies"),
+                range = 0..MAX_PLIES,
+                tag = "plies",
                 label = "Plies (half-moves)",
                 isError = vm.pliesError,
             )

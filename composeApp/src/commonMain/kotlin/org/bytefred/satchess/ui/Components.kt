@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -34,6 +35,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 
 /** A titled card; with [expanded] / [onToggle] it collapses to its header. */
@@ -142,32 +147,95 @@ fun CompactField(
     isError: Boolean = false,
     supporting: String? = null,
 ) {
-    val colors = MaterialTheme.colorScheme
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
         label?.let { FieldLabel(it) }
-        BasicTextField(
-            value = value,
-            onValueChange = onValueChange,
-            singleLine = true,
-            textStyle = MaterialTheme.typography.bodyMedium.copy(color = colors.onSurface),
-            cursorBrush = SolidColor(colors.onSurface),
-            modifier = modifier.height(ButtonDefaults.MinHeight),
-            // centre the text vertically instead of fixed padding, so a larger font scale doesn't clip it
-            decorationBox = { inner ->
-                Box(
-                    Modifier.fillMaxSize()
-                        .border(1.dp, if (isError) colors.error else colors.outline, RoundedCornerShape(4.dp))
-                        .padding(horizontal = 8.dp),
-                    contentAlignment = Alignment.CenterStart,
-                ) { inner() }
-            },
-        )
-        supporting?.let {
-            Text(
-                it,
-                style = MaterialTheme.typography.bodySmall,
-                color = if (isError) colors.error else colors.onSurfaceVariant,
-            )
-        }
+        CompactInput(value, onValueChange, modifier, isError)
+        supporting?.let { Supporting(it, isError) }
     }
+}
+
+/**
+ * A whole-number input like [CompactField], as wide as the longest allowed value (the digits of
+ * [range]'s maximum) instead of a fixed width, with "−"/"+" buttons that step by 1 within [range]
+ * (ktoy's steps/sec field). Typing works as before: [onValueChange] gets the text, the caller
+ * validates. Test tags: [tag] on the field, "<tag>-minus" / "<tag>-plus" on the buttons.
+ */
+@Composable
+fun NumberField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    range: IntRange,
+    tag: String,
+    label: String? = null,
+    isError: Boolean = false,
+    supporting: String? = null,
+) {
+    val current = value.trim().toIntOrNull()
+    fun step(by: Int) {
+        current?.let { onValueChange((it + by).coerceIn(range).toString()) }
+    }
+    val style = MaterialTheme.typography.bodyMedium
+    val measurer = rememberTextMeasurer()
+    val digits = range.last.toString().length
+    val textPx = remember(digits, style) { measurer.measure("0".repeat(digits), style).size.width }
+    // + 2 dp for the cursor after the last digit
+    val width = with(LocalDensity.current) { textPx.toDp() } + INPUT_PADDING * 2 + 2.dp
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        label?.let { FieldLabel(it) }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            OutlinedButton(
+                onClick = { step(-1) },
+                enabled = current != null && current > range.first,
+                modifier = Modifier.testTag("$tag-minus"),
+            ) { Text("−") }
+            CompactInput(value, onValueChange, Modifier.width(width).testTag(tag), isError, KeyboardType.Number)
+            OutlinedButton(
+                onClick = { step(1) },
+                enabled = current != null && current < range.last,
+                modifier = Modifier.testTag("$tag-plus"),
+            ) { Text("+") }
+        }
+        supporting?.let { Supporting(it, isError) }
+    }
+}
+
+private val INPUT_PADDING = 8.dp
+
+/** The low bordered text field of [CompactField] and [NumberField]; red border when [isError]. */
+@Composable
+private fun CompactInput(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier,
+    isError: Boolean,
+    keyboardType: KeyboardType = KeyboardType.Text,
+) {
+    val colors = MaterialTheme.colorScheme
+    BasicTextField(
+        value = value,
+        onValueChange = onValueChange,
+        singleLine = true,
+        textStyle = MaterialTheme.typography.bodyMedium.copy(color = colors.onSurface),
+        cursorBrush = SolidColor(colors.onSurface),
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+        modifier = modifier.height(ButtonDefaults.MinHeight),
+        // centre the text vertically instead of fixed padding, so a larger font scale doesn't clip it
+        decorationBox = { inner ->
+            Box(
+                Modifier.fillMaxSize()
+                    .border(1.dp, if (isError) colors.error else colors.outline, RoundedCornerShape(4.dp))
+                    .padding(horizontal = INPUT_PADDING),
+                contentAlignment = Alignment.CenterStart,
+            ) { inner() }
+        },
+    )
+}
+
+@Composable
+private fun Supporting(text: String, isError: Boolean) {
+    Text(
+        text,
+        style = MaterialTheme.typography.bodySmall,
+        color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+    )
 }

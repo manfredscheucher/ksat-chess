@@ -16,12 +16,14 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.compose.ui.text.LinkAnnotation
@@ -258,6 +260,61 @@ class UsabilityUiTest {
         runOnIdle { assertEquals(SolutionView.STATIC.name, loadPref(SOLUTION_VIEW_PREF)) }
         onNodeWithTag("solutionViewToggle").performScrollTo().performClick()
         onNodeWithTag("replayBoard").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun pliesFieldIsCompactAndStepsWithMinusPlus() = runComposeUiTest {
+        val vm = PuzzleViewModel(FakeSolverService())
+        setContent { App(vm) }
+        val field = onNodeWithTag("plies").performScrollTo()
+        // as high as a button, as wide as "200" (Material's text field is 280 x 56 dp)
+        val b = field.getUnclippedBoundsInRoot()
+        assertEquals(40.dp, b.bottom - b.top)
+        assertTrue(b.right - b.left < 60.dp, "width ${b.right - b.left}")
+        val start = vm.puzzle.plies
+        onNodeWithTag("plies-plus").performClick()
+        runOnIdle { assertEquals(start + 1, vm.puzzle.plies) }
+        onNodeWithTag("plies-minus").performClick()
+        onNodeWithTag("plies-minus").performClick()
+        runOnIdle { assertEquals(start - 1, vm.puzzle.plies) }
+        field.performTextReplacement("200")
+        onNodeWithTag("plies-plus").assertIsNotEnabled()
+        runOnIdle { assertEquals(200, vm.puzzle.plies) }
+        field.performTextReplacement("0")
+        onNodeWithTag("plies-minus").assertIsNotEnabled()
+        onNodeWithTag("plies-plus").performClick()
+        runOnIdle { assertEquals(1, vm.puzzle.plies) }
+        // not a number: the error as before, no stepping
+        field.performTextReplacement("x")
+        runOnIdle { assertTrue(vm.pliesError) }
+        onNodeWithText("Plies must be a whole number", substring = true).assertExists()
+        onNodeWithTag("plies-plus").assertIsNotEnabled()
+        onNodeWithTag("plies-minus").assertIsNotEnabled()
+    }
+
+    @Test
+    fun staticColumnsStepWithMinusPlus() = runComposeUiTest {
+        val solver = FakeSolverService()
+        val vm = PuzzleViewModel(solver)
+        setContent { App(vm) }
+        onNodeWithTag("solve").performScrollTo().performClick()
+        runOnIdle {
+            solver.emit(SolveEvent.Found(0, sampleSolution("f3", "e5", "g4", "Qh4#"), 40))
+            solver.emit(SolveEvent.Done(1, complete = true, millis = 50))
+        }
+        onNodeWithTag("solutionViewToggle").performScrollTo().performClick()
+        // 5 boards, 3 columns by default
+        onNodeWithTag("staticColumns").performScrollTo().assertTextContains("3")
+        onNodeWithTag("staticColumns-plus").performClick()
+        onNodeWithTag("staticColumns-plus").performClick()
+        runOnIdle { assertEquals(5, vm.columnsOverride) }
+        onNodeWithTag("staticColumns-plus").assertIsNotEnabled()
+        onNodeWithTag("staticColumns").performTextReplacement("1")
+        runOnIdle { assertEquals(1, vm.columnsOverride) }
+        onNodeWithTag("staticColumns-minus").assertIsNotEnabled()
+        onNodeWithTag("staticColumns").performTextReplacement("9")
+        onNodeWithText("A whole number from 1 to 5").assertExists()
+        runOnIdle { assertEquals(1, vm.columnsOverride) }
     }
 
     @Test

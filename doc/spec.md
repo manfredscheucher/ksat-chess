@@ -476,6 +476,17 @@ board to [Initial] [Clear] [All ?]". The line no longer shows the current '?' de
 button is for: it says what every '?' square may hold, e.g. chess.com #2 sets "white king or
 empty" for all of them at once.
 
+### Compact number fields (Manfred, 2026-11-18)
+
+Manfred: integer inputs are huge, make them reasonable everywhere (Material's text field is at
+least 280 dp wide and 56 dp high). The two number inputs, "Plies (half-moves)" and the static
+view's "Columns", were already low (CompactField) but 150 dp wide. They are now a NumberField
+modelled on ktoy's steps/sec field: as high as the buttons, as wide as the longest allowed value
+(3 digits for 0-200 plies, the digits of the number of boards for Columns), with "−"/"+" buttons
+that step by 1 within that range (both are counts). The label stays above the field like the
+app's other fields; the red border and the existing error texts are unchanged, typing and
+validation too. The text fields (moves, squares, FEN) stay as they are.
+
 ## 8. Open points / follow-ups
 
 - Idea (Manfred, 2026-11-09): the goal belongs to the board, not the Question row, so a goal
