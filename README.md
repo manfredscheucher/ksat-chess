@@ -28,7 +28,7 @@ is wide and stacked when it's narrow (View -> Layout to force portrait or landsc
 - **Question**: N in plies or moves, goal at the end (check, checkmate, stalemate), side to move, castling.
 - **Results**: all solutions, optionally grouped, with a replay board (Reset, Back, Step, Run).
 
-File -> Examples, Load, Save (JSON) and Share link (the puzzle in the URL). Help explains the rest.
+Puzzle -> Examples, New, Load, Save (JSON) and Share link (the puzzle in the URL). Help explains the rest.
 
 ## The code
 

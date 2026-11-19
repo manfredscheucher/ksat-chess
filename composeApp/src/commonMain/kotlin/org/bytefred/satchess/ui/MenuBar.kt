@@ -404,7 +404,7 @@ A board can be given completely, have '?' squares (unknown), or be all '?'. A sq
 
 Goal at the end: check, checkmate or stalemate. Both sides cooperate, as in a helpmate. The solver does not look for forced mates.
 
-File -> Save writes the puzzle as JSON, Load reads it back, Share link puts it into the address bar."""
+Puzzle -> Save writes the puzzle as JSON, Load reads it back, Share link puts it into the address bar."""
 
 private const val INPUT_HELP = """Pick a piece, click a square to put it there. Click again with the same piece to empty the square. Drag a piece to move it, drag it off the board to remove it. "One of several ..." lets a square hold one of a few pieces (a long press or right click does the same).
 

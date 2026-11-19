@@ -492,7 +492,8 @@ validation too. The text fields (moves, squares, FEN) stay as they are.
 Manfred: in all the tools the first menu is often just "File"; find a better name (ArrView has
 "Arrangement", PoCoView "Point set", for ksat-chess maybe "Puzzle"). The menu holds Examples, New,
 Load, Save and Share link, all of them acting on a puzzle, so it is now called "Puzzle" (test tag
-`menu-Puzzle`; the Welcome text says "Puzzle > Examples"). Also: the demo "How did we get here?"
+`menu-Puzzle`; the Welcome text says "Puzzle > Examples", the Help text and the README
+say "Puzzle ->"). Also: the demo "How did we get here?"
 is the puzzle shown at start-up (web and JVM) instead of "New puzzle"; a shared link still wins
 (`PuzzleViewModel.START_PUZZLE`). The Welcome line now says "use the puzzle that is already open".
 
