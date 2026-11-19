@@ -18,6 +18,7 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -56,7 +57,7 @@ class UsabilityUiTest {
     @Test
     fun oneClickSwitchesFromOneMenuToAnotherAndTheOpenTitleCloses() = runComposeUiTest {
         setContent { App(PuzzleViewModel(FakeSolverService())) }
-        onNodeWithTag("menu-File").performClick()
+        onNodeWithTag("menu-Puzzle").performClick()
         onNodeWithText("Load…").assertIsDisplayed()
         onNodeWithTag("menu-View").performClick()
         onNodeWithText("Coordinates", substring = true).assertIsDisplayed()
@@ -68,7 +69,7 @@ class UsabilityUiTest {
     @Test
     fun escapeClosesAnOpenMenu() = runComposeUiTest {
         setContent { App(PuzzleViewModel(FakeSolverService())) }
-        onNodeWithTag("menu-File").performClick()
+        onNodeWithTag("menu-Puzzle").performClick()
         onNodeWithText("Load…").assertIsDisplayed()
         onNodeWithTag("menu-bar").assertIsFocused()
         onNodeWithTag("menu-bar").performKeyInput { pressKey(Key.Escape) }
@@ -106,7 +107,7 @@ class UsabilityUiTest {
         setContent { App(vm) }
         waitForIdle()
         val before = vm.puzzle.title
-        onNodeWithTag("menu-File").performClick()
+        onNodeWithTag("menu-Puzzle").performClick()
         onNodeWithText("Examples…").performClick()
         onNodeWithTag("loadExample").assertIsNotEnabled()
         onNodeWithText("Demos").performClick()
@@ -116,7 +117,7 @@ class UsabilityUiTest {
         onNodeWithTag("loadExample").assertIsEnabled()
         onNodeWithText("Cancel").performClick()
 
-        onNodeWithTag("menu-File").performClick()
+        onNodeWithTag("menu-Puzzle").performClick()
         onNodeWithText("Examples…").performClick()
         onNodeWithText("En passant").assertIsDisplayed()
         onNodeWithTag("loadExample").assertIsEnabled().performClick()
@@ -162,7 +163,7 @@ class UsabilityUiTest {
 
         // no edit: New just happens, also after a solver run
         vm.solve()
-        onNodeWithTag("menu-File").performClick()
+        onNodeWithTag("menu-Puzzle").performClick()
         onNodeWithText("New").performClick()
         onNodeWithText("Save changes?").assertDoesNotExist()
         runOnIdle { assertEquals(PuzzleViewModel.NEW_PUZZLE, vm.puzzle) }
@@ -170,14 +171,14 @@ class UsabilityUiTest {
         // an edit asks; Cancel keeps it, Discard goes on
         runOnIdle { vm.clearBoard() }
         val edited = vm.puzzle
-        onNodeWithTag("menu-File").performClick()
+        onNodeWithTag("menu-Puzzle").performClick()
         onNodeWithText("New").performClick()
         onNodeWithText("Save changes?").assertIsDisplayed()
         onNodeWithText("Cancel").performClick()
         runOnIdle { assertEquals(edited, vm.puzzle) }
         assertNull(vm.pendingLeave)
 
-        onNodeWithTag("menu-File").performClick()
+        onNodeWithTag("menu-Puzzle").performClick()
         onNodeWithText("New").performClick()
         onNodeWithText("Discard").performClick()
         runOnIdle { assertEquals(PuzzleViewModel.NEW_PUZZLE, vm.puzzle) }
@@ -207,7 +208,7 @@ class UsabilityUiTest {
         val vm = PuzzleViewModel(solver)
         vm.layoutMode = LayoutMode.PORTRAIT
         setContent { App(vm) }
-        onNodeWithText("Puzzle").assertDoesNotExist()
+        onAllNodesWithText("Puzzle").assertCountEquals(1)   // the menu title only, no tab
         onNodeWithTag("solve").performClick()
         runOnIdle {
             solver.emit(SolveEvent.Found(0, sampleSolution("f3", "e5", "g4", "Qh4#"), 40))

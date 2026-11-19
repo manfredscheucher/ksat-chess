@@ -487,6 +487,15 @@ that step by 1 within that range (both are counts). The label stays above the fi
 app's other fields; the red border and the existing error texts are unchanged, typing and
 validation too. The text fields (moves, squares, FEN) stay as they are.
 
+### Menu "Puzzle" instead of "File", demo as start puzzle (Manfred, 2026-11-19)
+
+Manfred: in all the tools the first menu is often just "File"; find a better name (ArrView has
+"Arrangement", PoCoView "Point set", for ksat-chess maybe "Puzzle"). The menu holds Examples, New,
+Load, Save and Share link, all of them acting on a puzzle, so it is now called "Puzzle" (test tag
+`menu-Puzzle`; the Welcome text says "Puzzle > Examples"). Also: the demo "How did we get here?"
+is the puzzle shown at start-up (web and JVM) instead of "New puzzle"; a shared link still wins
+(`PuzzleViewModel.START_PUZZLE`). The Welcome line now says "use the puzzle that is already open".
+
 ## 8. Open points / follow-ups
 
 - Idea (Manfred, 2026-11-09): the goal belongs to the board, not the Question row, so a goal

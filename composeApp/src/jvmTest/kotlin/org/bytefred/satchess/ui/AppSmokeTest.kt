@@ -34,7 +34,7 @@ class AppSmokeTest {
         val vm = PuzzleViewModel(solver)
         setContent { App(vm) }
 
-        onNodeWithTag("menu-File").performClick()
+        onNodeWithTag("menu-Puzzle").performClick()
         onNodeWithText("Examples…").performClick()
         onNodeWithText("Demos").performClick()
         onNodeWithText("Black moves first").performClick()

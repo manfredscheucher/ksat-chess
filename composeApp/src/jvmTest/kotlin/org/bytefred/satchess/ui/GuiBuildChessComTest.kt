@@ -21,7 +21,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * Builds the five bundled chess.com puzzles (puzzles/chess-com-5) from File > New using only what a
+ * Builds the five bundled chess.com puzzles (puzzles/chess-com-5) from Puzzle > New using only what a
  * human can do in the GUI: menus, dropdowns, chips, palette, board clicks, text fields, dialogs. The
  * view model is only read for the final comparison. Each step is logged with a running count
  * (see the test's system-out).
@@ -56,7 +56,7 @@ class GuiBuildChessComTest {
     }
 
     private fun ComposeUiTest.newPuzzle(s: Steps) {
-        onNodeWithTag("menu-File").performClick(); s.step("File menu")
+        onNodeWithTag("menu-Puzzle").performClick(); s.step("Puzzle menu")
         onNodeWithText("New").performClick(); s.step("New")
     }
 

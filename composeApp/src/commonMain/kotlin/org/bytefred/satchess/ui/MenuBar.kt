@@ -66,7 +66,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
-/** The ktoy menu bar: File (examples, load, save, share), View (board input, layout), Help. */
+/** The ktoy menu bar: Puzzle (examples, new, load, save, share), Edit, View (board input, layout), Help. */
 @Composable
 fun MenuBar(vm: PuzzleViewModel, onExamples: () -> Unit) {
     var openMenu by remember { mutableStateOf<String?>(null) }
@@ -103,7 +103,7 @@ fun MenuBar(vm: PuzzleViewModel, onExamples: () -> Unit) {
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            MenuButton("File", openMenu, { openMenu = it }) {
+            MenuButton("Puzzle", openMenu, { openMenu = it }) {
                 Item("Examples…", onClick = onExamples)
                 Item("New") { vm.leave(vm::newPuzzle) }
                 Item("Load…") { vm.leave(loadFromDisk) }
@@ -342,7 +342,7 @@ private fun WelcomeDialog(close: () -> Unit) {
                 Text("Set up a position, and a SAT solver finds every legal move sequence that fits.")
                 Spacer(Modifier.height(10.dp))
                 Text(
-                    "How to start: open an example via File > Examples, or use the new puzzle that is already open. " +
+                    "How to start: open an example via Puzzle > Examples, or use the puzzle that is already open. " +
                         "Enter the number of plies and your own boards, then press Solve.",
                 )
                 Spacer(Modifier.height(6.dp))

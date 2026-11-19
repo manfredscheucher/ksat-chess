@@ -37,8 +37,8 @@ class BigDialogTest {
     @Test fun helpFillsThePhone() = fills(360, 640) { menu("Help", "Board input") }
     @Test fun aboutFillsTheDesktopWindow() = fills(1280, 800) { menu("Help", "About ksat-chess") }
     @Test fun aboutFillsThePhone() = fills(360, 640) { menu("Help", "About ksat-chess") }
-    @Test fun examplesFillTheDesktopWindow() = fills(1280, 800) { menu("File", "Examples…") }
-    @Test fun examplesFillThePhone() = fills(360, 640) { menu("File", "Examples…") }
+    @Test fun examplesFillTheDesktopWindow() = fills(1280, 800) { menu("Puzzle", "Examples…") }
+    @Test fun examplesFillThePhone() = fills(360, 640) { menu("Puzzle", "Examples…") }
 
     /** The help texts are flowing paragraphs: they wrap at the dialog width, not at fixed line breaks. */
     @Test
@@ -63,7 +63,7 @@ class BigDialogTest {
     fun theExamplesStillLoad() = runDesktopComposeUiTest(1280, 800) {
         val vm = PuzzleViewModel(FakeSolverService())
         setContent { App(vm) }
-        menu("File", "Examples…")
+        menu("Puzzle", "Examples…")
         onNodeWithText("Demos").performClick()
         onNodeWithText("Black moves first").performClick()
         onNodeWithTag("loadExample").performClick()

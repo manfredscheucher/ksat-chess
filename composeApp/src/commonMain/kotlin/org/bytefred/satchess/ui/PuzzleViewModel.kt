@@ -15,6 +15,7 @@ import org.bytefred.satchess.puzzle.Goal
 import org.bytefred.satchess.puzzle.MovePattern
 import org.bytefred.satchess.puzzle.Puzzle
 import org.bytefred.satchess.puzzle.PuzzleJson
+import org.bytefred.satchess.puzzle.examplePuzzles
 import org.bytefred.satchess.sat.Solution
 import org.bytefred.satchess.sat.SolveEvent
 import org.bytefred.satchess.sat.SolveOptions
@@ -188,12 +189,12 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
 
     private var started = false
 
-    /** First screen: a puzzle shared via link, else "New". */
+    /** First screen: a puzzle shared via link, else the demo "How did we get here?". */
     fun start(sharedJson: String?) {
         if (started) return
         started = true
         if (sharedJson != null && openShareLink(sharedJson)) return
-        newPuzzle()
+        load(START_PUZZLE)
     }
 
     private var openingShareLink = false
@@ -523,5 +524,8 @@ class PuzzleViewModel(private val solverService: SolverService = createSolverSer
             plies = 4,
             project = listOf("moves"),
         )
+
+        /** The puzzle shown at start-up: the demo "How did we get here?". */
+        val START_PUZZLE: Puzzle = examplePuzzles().map { it.second }.first { it.id == "demos/how-did-we-get-here" }
     }
 }
