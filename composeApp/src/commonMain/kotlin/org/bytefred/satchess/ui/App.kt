@@ -1,6 +1,7 @@
 package org.bytefred.satchess.ui
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -18,13 +19,17 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
@@ -52,6 +57,9 @@ private val WIDE_LAYOUT = 900.dp
 
 /** Width from which the results get their own (third) panel. */
 private val THREE_COLUMNS = 1200.dp
+
+/** Gives the keyboard focus back to the app root, so the shortcuts keep working (see [App]). */
+val LocalKeyFocus = staticCompositionLocalOf<() -> Unit> { {} }
 
 /**
  * The app root (doc/spec.md section 7): menu bar, then panels side by side with draggable dividers,
@@ -84,12 +92,20 @@ fun App(vm: PuzzleViewModel = viewModel { PuzzleViewModel() }) {
           }
           // Replay keys bubble up here from any focused element that does not use them (text fields do).
           val files = rememberFileActions(vm)
+          // The root holds the focus when nothing else does, so the shortcuts work after a click
+          // on the board, the palette or the timeline (Compose sends keys only to a focused node).
+          val rootFocus = remember { FocusRequester() }
+          val keyFocus = remember { { runCatching { rootFocus.requestFocus() }; Unit } }
           val keys = Modifier
               .onPreviewKeyEvent { shortcutKey(vm, files, it, preview = true) }
               .onKeyEvent { event ->
                   shortcutKey(vm, files, event, preview = false) ||
                       (event.type == KeyEventType.KeyDown && vm.replayKey(event.key))
               }
+              .focusRequester(rootFocus)
+              .focusable()
+          LaunchedEffect(Unit) { keyFocus() }
+          CompositionLocalProvider(LocalKeyFocus provides keyFocus) {
           Scaffold(
               modifier = keys,
               topBar = { MenuBar(vm, files, onExamples = { showExamples = true }) },
@@ -106,6 +122,7 @@ fun App(vm: PuzzleViewModel = viewModel { PuzzleViewModel() }) {
               } else {
                   SideBySideLayout(vm, threeColumns = maxWidth >= THREE_COLUMNS, Modifier.padding(padding))
               }
+          }
           }
       }
 

@@ -505,6 +505,9 @@ save, Ctrl/Cmd+O load. S and O are caught before a focused text field (so the br
 "Save page" / "Open file" never opens); Z and Y only when no text field used them (a text field
 keeps its own undo). The Puzzle and Edit menus show the keys on the right; Help > Board input
 lists them. Before this, Help already claimed Ctrl+Z / Ctrl+Shift+Z although no handler existed.
+Compose web sends keys only to a focused node, so the app root is focusable and takes the focus
+at start, after the Welcome dialog, and on a click on the board, the palette or a timeline row
+(pattern from RotSysView/ArrView). Browser check pending.
 
 ## 8. Open points / follow-ups
 

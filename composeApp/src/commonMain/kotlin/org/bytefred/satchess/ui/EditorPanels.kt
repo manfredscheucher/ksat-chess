@@ -195,8 +195,9 @@ private fun TimelineRow(
     tag: String,
 ) {
     val colors = MaterialTheme.colorScheme
+    val keyFocus = LocalKeyFocus.current
     Surface(
-        onClick = onClick,
+        onClick = { keyFocus(); onClick() },
         shape = RoundedCornerShape(8.dp),
         color = if (selected) colors.primary else if (constrains) colors.tertiaryContainer else colors.surfaceContainer,
         contentColor = if (selected) colors.onPrimary else if (constrains) colors.onTertiaryContainer else colors.onSurface,
@@ -314,6 +315,7 @@ fun BoardEditorSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
     val side = sideToMoveAt(p.start.sideToMove, t)
     val title = boardName(t, p.plies) + " · " + (side?.let { if (it == 'w') "White to move" else "Black to move" } ?: "side to move free")
     val openOptions = { sq: Int -> vm.openOptions(OptionsTarget.Square(sq)) }
+    val keyFocus = LocalKeyFocus.current
 
     Section(title, modifier) {
         BoardView(
@@ -321,13 +323,13 @@ fun BoardEditorSection(vm: PuzzleViewModel, modifier: Modifier = Modifier) {
             modifier = Modifier.widthIn(max = BOARD_MAX_WIDTH).fillMaxWidth().testTag("editorBoard"),
             options = vm.boardOptions,
             showCoordinates = vm.showCoordinates,
-            onTap = vm::clickSquare,
-            onMove = vm::dragPiece,
+            onTap = { keyFocus(); vm.clickSquare(it) },
+            onMove = { from, to -> keyFocus(); vm.dragPiece(from, to) },
             onDropOff = vm::dragOff,
             onOptions = openOptions,
         )
         BoardLegend()
-        Palette(vm.paletteSelection, withOptionsTool = true, onSelect = vm::selectPalette)
+        Palette(vm.paletteSelection, withOptionsTool = true, onSelect = { keyFocus(); vm.selectPalette(it) })
         Text(
             "Pick a piece, then click squares. Drag to move, drag off the board to remove.",
             style = MaterialTheme.typography.bodySmall,

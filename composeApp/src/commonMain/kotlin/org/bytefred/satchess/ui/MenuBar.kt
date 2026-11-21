@@ -200,7 +200,8 @@ fun MenuBar(vm: PuzzleViewModel, files: FileActions, onExamples: () -> Unit) {
     }
     help?.let { (title, text) -> TextDialog(title, text) { help = null } }
     if (showAbout) AboutDialog { showAbout = false }
-    if (showWelcome) WelcomeDialog { showWelcome = false }
+    val keyFocus = LocalKeyFocus.current
+    if (showWelcome) WelcomeDialog { showWelcome = false; keyFocus() }
 }
 
 /**
