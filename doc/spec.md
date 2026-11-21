@@ -497,6 +497,15 @@ say "Puzzle ->"). Also: the demo "How did we get here?"
 is the puzzle shown at start-up (web and JVM) instead of "New puzzle"; a shared link still wins
 (`PuzzleViewModel.START_PUZZLE`). The Welcome line now says "use the puzzle that is already open".
 
+### Keyboard shortcuts (Manfred, 2026-11-21, relayed from the RotSysView session)
+
+Manfred: "shortcuts vlt bei allen? ctrl+z undo und so standard zeugs? ctrl s speichern". Same set
+as RotSysView, ArrView and PoCoView: Ctrl/Cmd+Z undo, Ctrl/Cmd+Shift+Z and Ctrl+Y redo, Ctrl/Cmd+S
+save, Ctrl/Cmd+O load. S and O are caught before a focused text field (so the browser's own
+"Save page" / "Open file" never opens); Z and Y only when no text field used them (a text field
+keeps its own undo). The Puzzle and Edit menus show the keys on the right; Help > Board input
+lists them. Before this, Help already claimed Ctrl+Z / Ctrl+Shift+Z although no handler existed.
+
 ## 8. Open points / follow-ups
 
 - Idea (Manfred, 2026-11-09): the goal belongs to the board, not the Question row, so a goal

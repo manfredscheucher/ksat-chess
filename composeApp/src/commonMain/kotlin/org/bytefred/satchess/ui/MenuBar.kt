@@ -42,8 +42,14 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.platform.testTag
@@ -66,9 +72,46 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
+/** Load and save of the puzzle file, shared by the Puzzle menu and the keyboard shortcuts. */
+class FileActions(val load: () -> Unit, val save: () -> Unit)
+
+@Composable
+fun rememberFileActions(vm: PuzzleViewModel): FileActions {
+    val loadFromDisk = rememberFileLoader { text -> if (vm.importJson(text)) vm.showMessage("Puzzle loaded") }
+    val saveToDisk = rememberFileSaver(vm::fileSaved)
+    return FileActions(
+        load = { vm.leave(loadFromDisk) },
+        save = { saveToDisk(vm.suggestedFileName(), vm.exportJson()) },
+    )
+}
+
+/**
+ * Ctrl (or Cmd) + S / O / Z / Shift+Z / Y. [preview] runs before a focused text field sees the key,
+ * so S and O never reach the browser's own "Save page" / "Open file"; Z and Y are handled after it,
+ * so a text field keeps its own undo.
+ */
+fun shortcutKey(vm: PuzzleViewModel, files: FileActions, event: KeyEvent, preview: Boolean): Boolean {
+    if (event.type != KeyEventType.KeyDown || !(event.isCtrlPressed || event.isMetaPressed)) return false
+    if (preview) {
+        when (event.key) {
+            Key.S -> files.save()
+            Key.O -> files.load()
+            else -> return false
+        }
+        return true
+    }
+    when {
+        event.key == Key.Z && event.isShiftPressed -> vm.redo()
+        event.key == Key.Z -> vm.undo()
+        event.key == Key.Y -> vm.redo()
+        else -> return false
+    }
+    return true
+}
+
 /** The ktoy menu bar: Puzzle (examples, new, load, save, share), Edit, View (board input, layout), Help. */
 @Composable
-fun MenuBar(vm: PuzzleViewModel, onExamples: () -> Unit) {
+fun MenuBar(vm: PuzzleViewModel, files: FileActions, onExamples: () -> Unit) {
     var openMenu by remember { mutableStateOf<String?>(null) }
     var help by remember { mutableStateOf<Pair<String, String>?>(null) }   // title to text
     var showAbout by remember { mutableStateOf(false) }
@@ -76,15 +119,14 @@ fun MenuBar(vm: PuzzleViewModel, onExamples: () -> Unit) {
     val barFocus = remember { FocusRequester() }
     // the popup does not take the focus, so the bar must have it for Escape to reach it
     LaunchedEffect(openMenu) { if (openMenu != null) barFocus.requestFocus() }
-    val loadFromDisk = rememberFileLoader { text -> if (vm.importJson(text)) vm.showMessage("Puzzle loaded") }
-    val saveToDisk = rememberFileSaver(vm::fileSaved)
-    fun save() = saveToDisk(vm.suggestedFileName(), vm.exportJson())
+    fun save() = files.save()
 
     // a menu entry: closes the menu, then runs [onClick]
     @Composable
-    fun Item(label: String, enabled: Boolean = true, onClick: () -> Unit) = DropdownMenuItem(
+    fun Item(label: String, enabled: Boolean = true, shortcut: String? = null, onClick: () -> Unit) = DropdownMenuItem(
         text = { Text(label) },
         enabled = enabled,
+        trailingIcon = shortcut?.let { { Text(it, style = MaterialTheme.typography.labelMedium) } },
         onClick = { openMenu = null; onClick() },
     )
 
@@ -106,8 +148,8 @@ fun MenuBar(vm: PuzzleViewModel, onExamples: () -> Unit) {
             MenuButton("Puzzle", openMenu, { openMenu = it }) {
                 Item("Examples…", onClick = onExamples)
                 Item("New") { vm.leave(vm::newPuzzle) }
-                Item("Load…") { vm.leave(loadFromDisk) }
-                Item("Save…") { save() }
+                Item("Load…", shortcut = "Ctrl+O") { files.load() }
+                Item("Save…", shortcut = "Ctrl+S") { save() }
                 if (shareSupported) {
                     Item("Share link") {
                         shareLink(vm.shareJson()) { copied ->
@@ -117,8 +159,8 @@ fun MenuBar(vm: PuzzleViewModel, onExamples: () -> Unit) {
                 }
             }
             MenuButton("Edit", openMenu, { openMenu = it }) {
-                Item("Undo", enabled = vm.canUndo) { vm.undo() }
-                Item("Redo", enabled = vm.canRedo) { vm.redo() }
+                Item("Undo", enabled = vm.canUndo, shortcut = "Ctrl+Z") { vm.undo() }
+                Item("Redo", enabled = vm.canRedo, shortcut = "Ctrl+Shift+Z") { vm.redo() }
             }
             MenuButton("View", openMenu, { openMenu = it }) {
                 CheckItem("Coordinates", vm.showCoordinates) {
@@ -410,7 +452,9 @@ private const val INPUT_HELP = """Pick a piece, click a square to put it there. 
 
 Squares that may hold one of several pieces are hatched amber.
 
-Edit -> Undo / Redo (Ctrl+Z, Ctrl+Shift+Z) take puzzle and board changes back."""
+Edit -> Undo / Redo take puzzle and board changes back.
+
+Keys (Cmd instead of Ctrl on a Mac): Ctrl+Z undo, Ctrl+Shift+Z or Ctrl+Y redo, Ctrl+S save, Ctrl+O load."""
 
 private const val RESULTS_HELP = """Solve lists every solution; each one is checked by playing the moves through.
 

@@ -26,6 +26,8 @@ import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.pressKey
+import androidx.compose.ui.test.requestFocus
+import androidx.compose.ui.test.withKeyDown
 import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.unit.Density
@@ -53,6 +55,25 @@ class UsabilityUiTest {
 
     @BeforeTest fun before() = resetPrefs()
     @AfterTest fun after() = resetPrefs()
+
+    @Test
+    fun ctrlZUndoesAndCtrlShiftZOrCtrlYRedoes() = runComposeUiTest {
+        val vm = PuzzleViewModel(FakeSolverService())
+        setContent { App(vm) }
+        val before = runOnIdle { vm.puzzle.plies }
+        val after = before + 2
+        runOnIdle { vm.setPliesInput(after.toString()) }
+        val bar = onNodeWithTag("menu-bar")
+        runOnIdle { bar.requestFocus() }
+        bar.performKeyInput { withKeyDown(Key.CtrlLeft) { pressKey(Key.Z) } }
+        runOnIdle { assertEquals(before, vm.puzzle.plies) }
+        bar.performKeyInput { withKeyDown(Key.CtrlLeft) { withKeyDown(Key.ShiftLeft) { pressKey(Key.Z) } } }
+        runOnIdle { assertEquals(after, vm.puzzle.plies) }
+        bar.performKeyInput { withKeyDown(Key.MetaLeft) { pressKey(Key.Z) } }
+        runOnIdle { assertEquals(before, vm.puzzle.plies) }
+        bar.performKeyInput { withKeyDown(Key.CtrlLeft) { pressKey(Key.Y) } }
+        runOnIdle { assertEquals(after, vm.puzzle.plies) }
+    }
 
     @Test
     fun oneClickSwitchesFromOneMenuToAnotherAndTheOpenTitleCloses() = runComposeUiTest {

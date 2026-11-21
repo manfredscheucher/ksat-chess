@@ -25,13 +25,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.isCtrlPressed
-import androidx.compose.ui.input.key.isMetaPressed
-import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
@@ -86,12 +83,16 @@ fun App(vm: PuzzleViewModel = viewModel { PuzzleViewModel() }) {
               LayoutMode.LANDSCAPE -> false
           }
           // Replay keys bubble up here from any focused element that does not use them (text fields do).
-          val replayKeys = Modifier.onKeyEvent { event ->
-              event.type == KeyEventType.KeyDown && vm.replayKey(event.key)
-          }
+          val files = rememberFileActions(vm)
+          val keys = Modifier
+              .onPreviewKeyEvent { shortcutKey(vm, files, it, preview = true) }
+              .onKeyEvent { event ->
+                  shortcutKey(vm, files, event, preview = false) ||
+                      (event.type == KeyEventType.KeyDown && vm.replayKey(event.key))
+              }
           Scaffold(
-              modifier = replayKeys,
-              topBar = { MenuBar(vm, onExamples = { showExamples = true }) },
+              modifier = keys,
+              topBar = { MenuBar(vm, files, onExamples = { showExamples = true }) },
               bottomBar = {
                   if (stacked) {
                       SolveBar(vm, Modifier.padding(8.dp))
