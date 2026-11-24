@@ -509,6 +509,13 @@ Compose web sends keys only to a focused node, so the app root is focusable and 
 at start, after the Welcome dialog, and on a click on the board, the palette or a timeline row
 (pattern from RotSysView/ArrView). Browser check pending.
 
+No Google fonts (Manfred, 2026-11-24). Compose web downloads Noto fallback fonts from
+fonts.gstatic.com when typed or pasted text has glyphs the app font lacks (CJK, emoji, symbols);
+the page load itself makes no outside request. `index.html` sets the CSP
+`connect-src 'self'`, so these downloads are blocked and such glyphs show as boxes. Checked in
+headless Chrome: without the CSP, typing "日本語✓→😀" into the FEN field fetched five gstatic
+fonts; with it, none left the browser, and the demo still solves (12 solutions).
+
 ## 8. Open points / follow-ups
 
 - Idea (Manfred, 2026-11-09): the goal belongs to the board, not the Question row, so a goal
