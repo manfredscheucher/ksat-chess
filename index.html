@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <!-- No requests to other sites (Compose would fetch fallback fonts from fonts.gstatic.com for missing glyphs). -->
+    <meta http-equiv="Content-Security-Policy" content="connect-src 'self'">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ksat-chess</title>
     <style>
