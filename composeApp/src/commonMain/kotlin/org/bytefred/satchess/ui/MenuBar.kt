@@ -10,11 +10,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -38,8 +38,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
@@ -53,13 +53,19 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 import org.bytefred.satchess.GeneratedLicenses
 import org.bytefred.satchess.GeneratedVersionInfo
 import org.bytefred.satchess.ui.platform.isWeb
@@ -69,9 +75,6 @@ import org.bytefred.satchess.ui.platform.rememberFileSaver
 import org.bytefred.satchess.ui.platform.savePref
 import org.bytefred.satchess.ui.platform.shareLink
 import org.bytefred.satchess.ui.platform.shareSupported
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.TimeMark
-import kotlin.time.TimeSource
 
 /** Load and save of the puzzle file, shared by the Puzzle menu and the keyboard shortcuts. */
 class FileActions(val load: () -> Unit, val save: () -> Unit)
@@ -314,12 +317,6 @@ internal fun helpText(body: String) = buildAnnotatedString {
     }
 }
 
-/** About, web build only (doc/spec.md section 7): no fonts from Google. */
-private const val WEB_FONTS_NOTE =
-    "The app is built with Compose Multiplatform. Compose would like to fetch extra fonts from Google " +
-        "when you type characters its built-in fonts don't know (emoji, Chinese, ...). That's switched off " +
-        "here: everything this page loads comes from GitHub Pages, so such characters just show up as boxes."
-
 /** About: description, feedback box, the projects with their licenses, build identity, license texts. */
 @Composable
 private fun AboutDialog(onDismiss: () -> Unit) {
@@ -337,7 +334,7 @@ private fun AboutDialog(onDismiss: () -> Unit) {
                 ProjectLine("chess.com article", CHESS_COM_ARTICLE_URL, "example puzzles, by FM Mike Klein", license = null)
                 if (isWeb) {
                     Spacer(Modifier.height(8.dp))
-                    Text(WEB_FONTS_NOTE, style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("webFontsNote"))
+                    TermsAndPrivacy()
                 }
                 Spacer(Modifier.height(8.dp))
                 Text(
@@ -473,3 +470,70 @@ private const val RESULTS_HELP = """Solve lists every solution; each one is chec
 Replay: Reset, Back, Step, Run, the slider, a click on a move, or the arrow keys and Home / End. "Show static" (or View -> Solutions) shows all boards of the solution at once instead.
 
 Group similar solutions puts solutions with the same moves in a different order together."""
+
+private const val GITHUB_PRIVACY_URL =
+    "https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement"
+
+/**
+ * Terms & privacy, About in the web build only (doc/spec.md section 7). Word for word from the
+ * shared draft ~/github/misc/turingmachine/doc/privacy-github-pages.md, approved by Manfred.
+ */
+@Composable
+private fun TermsAndPrivacy() {
+    val uri = LocalUriHandler.current
+    val linkStyle = TextLinkStyles(SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline))
+    val bold = SpanStyle(fontWeight = FontWeight.SemiBold)
+    val body = MaterialTheme.typography.bodySmall
+    Column(Modifier.testTag("termsPrivacy"), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text("Terms & privacy", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+        Text(
+            buildAnnotatedString {
+                withStyle(bold) { append("Privacy.") }
+                append(
+                    " I don't collect anything. This site has no server of its own, no ads, no analytics and no " +
+                        "trackers, and it sets no cookies. Your browser downloads the scripts, and then everything " +
+                        "runs locally on your machine. Whatever you do on this site stays on your computer.",
+                )
+            },
+            style = body,
+        )
+        Text(
+            "Your preferred settings are kept in your browser's local storage, so they're still there next time. " +
+                "They never leave your computer. Clearing your browser data removes them.",
+            style = body,
+        )
+        Text(
+            "The app is built with Compose Multiplatform. Compose would like to fetch extra fonts from Google when you " +
+                "type characters its built-in fonts don't know (emoji, Chinese, ...). That's switched off here: " +
+                "everything this page loads comes from GitHub Pages, so such characters just show up as boxes.",
+            style = body,
+        )
+        Text(
+            buildAnnotatedString {
+                append(
+                    "The site is hosted on GitHub Pages. Like most web hosts, GitHub keeps server logs that include " +
+                        "visitors' IP addresses, for security purposes; details are in GitHub's ",
+                )
+                withLink(LinkAnnotation.Clickable("privacy", linkStyle) { openUriSafely(uri, GITHUB_PRIVACY_URL) }) {
+                    append("privacy statement")
+                }
+                append(". I don't have access to these logs. You might also download the source and run it locally.")
+            },
+            style = body,
+        )
+        Text(
+            buildAnnotatedString {
+                withStyle(bold) { append("Terms.") }
+                append(
+                    " There is no guarantee of correctness or availability. I'll do my best to keep this site running " +
+                        "and to fix problems. If you experience problems or have general feedback or ideas, ",
+                )
+                withLink(LinkAnnotation.Clickable("feedback", linkStyle) { openUriSafely(uri, FEEDBACK_MAILTO) }) {
+                    append("please let me know")
+                }
+                append("!")
+            },
+            style = body,
+        )
+    }
+}
