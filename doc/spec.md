@@ -520,6 +520,8 @@ Help > About, web build only (`isWeb`), has a "Terms & privacy" section: the dra
 2026-11-24, with his two corrections: "downloads the scripts" without "once", and "They never leave
 your computer." because all apps share the scheucher.dev origin). It includes the Compose-fonts
 paragraph; "please let me know" opens the feedback e-mail.
+Collapsed by default like the license texts (Manfred): TextButton "Terms & privacy" /
+"Hide terms & privacy".
 
 ## 8. Open points / follow-ups
 

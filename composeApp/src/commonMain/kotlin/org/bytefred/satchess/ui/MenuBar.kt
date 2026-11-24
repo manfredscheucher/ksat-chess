@@ -475,8 +475,9 @@ private const val GITHUB_PRIVACY_URL =
     "https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement"
 
 /**
- * Terms & privacy, About in the web build only (doc/spec.md section 7). Word for word from the
- * shared draft ~/github/misc/turingmachine/doc/privacy-github-pages.md, approved by Manfred.
+ * Terms & privacy, About in the web build only, collapsed like the license texts (doc/spec.md
+ * section 7). Word for word from the shared draft ~/github/misc/turingmachine/doc/privacy-github-pages.md,
+ * approved by Manfred.
  */
 @Composable
 private fun TermsAndPrivacy() {
@@ -484,8 +485,12 @@ private fun TermsAndPrivacy() {
     val linkStyle = TextLinkStyles(SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline))
     val bold = SpanStyle(fontWeight = FontWeight.SemiBold)
     val body = MaterialTheme.typography.bodySmall
+    var show by remember { mutableStateOf(false) }
+    TextButton(onClick = { show = !show }, modifier = Modifier.testTag("termsPrivacyToggle")) {
+        Text(if (show) "Hide terms & privacy" else "Terms & privacy")
+    }
+    if (!show) return
     Column(Modifier.testTag("termsPrivacy"), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text("Terms & privacy", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
         Text(
             buildAnnotatedString {
                 withStyle(bold) { append("Privacy.") }
