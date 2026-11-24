@@ -15,13 +15,12 @@ The web dev-server port is **8608** (see `~/github/.dev-ports.md`), set in
 
 ```bash
 ./scripts/deployPages.sh
-git push --force origin gh-pages
+git push origin gh-pages
 ```
 
 `deployPages.sh` builds the production bundle (`scripts/buildWeb.sh`, output
 `composeApp/build/dist/js/productionExecutable/`), copies it into the git worktree `.gh-pages/` of
-the branch `gh-pages` and commits it locally. It does not push. `gh-pages` always has exactly one
-commit, no deploy history (Manfred, 2026-11-24), hence the force push.
+the branch `gh-pages` and commits it locally. It does not push. Same procedure as ktoy.
 
 One-time setup: create the repo on github.com and add it as `origin`, then Settings -> Pages -> Deploy from a branch -> `gh-pages` / (root).
 URL: <https://manfredscheucher.github.io/ksat-chess/>
