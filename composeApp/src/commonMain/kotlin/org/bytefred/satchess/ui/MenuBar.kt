@@ -62,6 +62,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import org.bytefred.satchess.GeneratedLicenses
 import org.bytefred.satchess.GeneratedVersionInfo
+import org.bytefred.satchess.ui.platform.isWeb
 import org.bytefred.satchess.ui.platform.loadPref
 import org.bytefred.satchess.ui.platform.rememberFileLoader
 import org.bytefred.satchess.ui.platform.rememberFileSaver
@@ -313,6 +314,12 @@ internal fun helpText(body: String) = buildAnnotatedString {
     }
 }
 
+/** About, web build only (doc/spec.md section 7): no fonts from Google. */
+private const val WEB_FONTS_NOTE =
+    "The app is built with Compose Multiplatform. Compose would like to fetch extra fonts from Google " +
+        "when you type characters its built-in fonts don't know (emoji, Chinese, ...). That's switched off " +
+        "here: everything this page loads comes from GitHub Pages, so such characters just show up as boxes."
+
 /** About: description, feedback box, the projects with their licenses, build identity, license texts. */
 @Composable
 private fun AboutDialog(onDismiss: () -> Unit) {
@@ -328,6 +335,10 @@ private fun AboutDialog(onDismiss: () -> Unit) {
                 ProjectLine("ksat", "https://github.com/manfredscheucher/ksat", "the SAT solvers")
                 ProjectLine("cburnett", CBURNETT_URL, "chess pieces by Colin M.L. Burnett", license = "BSD 3-clause")
                 ProjectLine("chess.com article", CHESS_COM_ARTICLE_URL, "example puzzles, by FM Mike Klein", license = null)
+                if (isWeb) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(WEB_FONTS_NOTE, style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("webFontsNote"))
+                }
                 Spacer(Modifier.height(8.dp))
                 Text(
                     buildLine(),

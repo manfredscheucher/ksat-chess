@@ -515,6 +515,9 @@ the page load itself makes no outside request. `index.html` sets the CSP
 `connect-src 'self'`, so these downloads are blocked and such glyphs show as boxes. Checked in
 headless Chrome: without the CSP, typing "日本語✓→😀" into the FEN field fetched five gstatic
 fonts; with it, none left the browser, and the demo still solves (12 solutions).
+Help > About says so in the web build only (`isWeb`), with the paragraph from the shared draft
+(~/github/misc/turingmachine/doc/privacy-github-pages.md). The full terms & privacy note waits for
+Manfred.
 
 ## 8. Open points / follow-ups
 
